@@ -22,9 +22,17 @@ from typing import Any, Callable, get_type_hints
 from zoneinfo import ZoneInfo
 
 from langfuse import observe
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
+
+ESCALATE_TOOL = "escalate_to_human"
+
+
+class ToolArgs(BaseModel):
+    """Base para argumentos de ferramentas: rejeita campos inventados pelo LLM."""
+
+    model_config = ConfigDict(extra="forbid")
 
 
 @dataclass
@@ -83,16 +91,36 @@ class ToolRegistry:
         try:
             return {"ok": True, "result": tool.fn(args)}
         except Exception as exc:  # noqa: BLE001 — a falha vira observação p/ o agente
-            logger.exception("Falha na ferramenta %s", name)
+            logger.warning("Ferramenta %s falhou: %s: %s", name, type(exc).__name__, exc)
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
 registry = ToolRegistry()
 
 
-# --- Ferramenta de exemplo (genérica; substitua/adicione as do produto) --------
+# --- Ferramentas genéricas (infra). As do produto entram em arquivos próprios --
 
-class CurrentTimeArgs(BaseModel):
+class EscalateArgs(ToolArgs):
+    reason: str = Field(description="Por que um humano precisa decidir/agir")
+    summary: str = Field(description="O que já foi feito e o que falta")
+    question: str = Field(description="A pergunta/decisão objetiva para o humano")
+    recommendation: str | None = Field(default=None, description="Sua recomendação, se houver")
+
+
+@registry.tool(
+    name=ESCALATE_TOOL,
+    description=(
+        "Encerra a execução e escala para um humano. Use quando: a decisão é sobre pessoas "
+        "(contratar, demitir, salário, avaliação); falta um dado crítico; a instrução é ambígua; "
+        "ou as ferramentas falharam repetidamente."
+    ),
+)
+def escalate_to_human(args: EscalateArgs) -> dict:
+    # Ponto de integração do human-in-the-loop (Slack, e-mail, fila no Supabase...).
+    return {"escalated": True, **args.model_dump()}
+
+
+class CurrentTimeArgs(ToolArgs):
     timezone: str = Field(default="America/Recife", description="Fuso IANA, ex.: America/Sao_Paulo")
 
 

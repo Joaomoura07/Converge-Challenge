@@ -32,6 +32,13 @@ Base de infraestrutura para um agente autônomo (ou sistema multiagente) em Pyth
 | `src/database.py` | Cliente Supabase e persistência das execuções |
 | `src/main.py` | Rotas HTTP (`/health`, `/agent/run`) |
 | `sql/` | Migrations SQL (rodar no SQL Editor do Supabase) |
+| `scripts/check_setup.py` | Testa Featherless (chat + tool calling), Langfuse e Supabase |
+| `skills/` | Skills do time para Claude Code, Codex e ChatGPT ([como usar](skills/README.md)) |
+| `AGENTS.md` / `CLAUDE.md` | Regras do repo para assistentes de código |
+
+### Comportamento do agente
+
+O loop ReAct usa tool calling nativo e termina com um destes `status`: `completed`, `escalated` (chamou `escalate_to_human` ou teve 3 falhas de tool seguidas), `max_steps_reached` ou `error`. Em 400/503, ele tenta o `FEATHERLESS_MODEL_FALLBACK`. Cada resposta traz `cost_usd`, tokens, latência e `trace_url` do Langfuse.
 
 ## Setup rápido
 
@@ -44,6 +51,7 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env             # preencha suas chaves
+python -m scripts.check_setup    # valida Featherless, tool calling, Langfuse e Supabase
 uvicorn src.main:app --reload
 ```
 
@@ -66,7 +74,8 @@ curl -X POST http://localhost:8000/agent/run \
 | `FEATHERLESS_API_KEY` | Chave da Featherless (cada integrante usa a sua) |
 | `FEATHERLESS_BASE_URL` | `https://api.featherless.ai/v1` |
 | `FEATHERLESS_MODEL` | Modelo principal (padrão `zai-org/GLM-5.2`) |
-| `FEATHERLESS_MODEL_FAST` | Modelo barato para texto simples (opcional) |
+| `FEATHERLESS_MODEL_FAST` | Modelo barato para texto simples (padrão `google/gemma-4-31B-it`) |
+| `FEATHERLESS_MODEL_FALLBACK` | Reserva em 400/503, com tool calling nativo (padrão `Qwen/Qwen3-32B`) |
 | `SUPABASE_URL` | URL do projeto Supabase |
 | `SUPABASE_KEY` | `service_role` key (somente backend) |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Chaves do projeto Langfuse |
@@ -77,11 +86,13 @@ Lista completa em [`.env.example`](.env.example). **Nunca** faça commit do `.en
 
 ## Adicionando uma ferramenta
 
-```python
-from pydantic import BaseModel, Field
-from src.tools import registry
+Detalhes em [`skills/01-react-agent-pattern.md`](skills/01-react-agent-pattern.md).
 
-class BuscarCandidatoArgs(BaseModel):
+```python
+from pydantic import Field
+from src.tools import ToolArgs, registry
+
+class BuscarCandidatoArgs(ToolArgs):
     candidato_id: str = Field(description="ID do candidato no ATS")
 
 @registry.tool(description="Busca os dados de um candidato no ATS.")

@@ -31,7 +31,8 @@ def save_agent_run(task: str, result: AgentResult) -> str | None:
         row = {
             "task": task,
             **result.model_dump(include={"status", "output", "model", "prompt_tokens",
-                                         "completion_tokens", "latency_ms", "trace_id"}),
+                                         "completion_tokens", "cost_usd", "latency_ms",
+                                         "trace_id", "trace_url"}),
             "steps": [step.model_dump(mode="json") for step in result.steps],
         }
         response = get_supabase().table("agent_runs").insert(row).execute()

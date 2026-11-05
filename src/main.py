@@ -32,6 +32,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 class RunRequest(BaseModel):
     task: str
     context: dict | None = None
+    session_id: str | None = None   # agrupa execuções no Langfuse (ex.: uma conversa/caso)
+    tags: list[str] | None = None   # ex.: ["demo"] para filtrar no Demo Day
     persist: bool = True
 
 
@@ -55,6 +57,6 @@ def health() -> dict:
 @app.post("/agent/run", response_model=RunResponse)
 def run_agent(req: RunRequest) -> RunResponse:
     # Endpoint síncrono: o FastAPI executa em threadpool, sem bloquear o event loop.
-    result = Agent().run(req.task, req.context)
+    result = Agent().run(req.task, req.context, session_id=req.session_id, tags=req.tags)
     run_id = save_agent_run(req.task, result) if req.persist and settings.supabase_configured else None
     return RunResponse(**result.model_dump(), run_id=run_id)

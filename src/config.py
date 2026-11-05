@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_model: str = "zai-org/GLM-5.2"
     featherless_model_fast: str = ""
+    featherless_model_fallback: str = ""
     llm_temperature: float = 0.2
     llm_timeout_seconds: float = 60
     llm_max_retries: int = 3
