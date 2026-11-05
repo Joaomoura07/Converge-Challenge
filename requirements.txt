@@ -1,0 +1,26 @@
+# --- API ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.4
+python-dotenv>=1.0
+
+# --- HTTP ---
+httpx>=0.27
+requests>=2.32
+
+# --- LLM (Featherless via SDK OpenAI-compatible) ---
+openai>=1.40
+
+# --- Observabilidade ---
+langfuse>=3.0
+
+# --- Persistência ---
+supabase>=2.6
+
+# --- Utilitários ---
+tzdata>=2024.1        # fusos horários no Windows (zoneinfo)
+
+# --- Opcional: descomente se o time optar por LangChain/LangGraph ---
+# langchain-openai>=0.2
+# langgraph>=0.2
