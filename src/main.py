@@ -22,7 +22,11 @@ logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     yield
-    get_client().flush()  # garante envio dos traces pendentes ao desligar
+    if settings.langfuse_active:
+        try:
+            get_client().flush()  # garante envio dos traces pendentes ao desligar
+        except Exception:  # noqa: BLE001
+            logging.getLogger(__name__).warning("Falha ao enviar traces pendentes ao Langfuse")
 
 
 app = FastAPI(title="Converge Agents API", version="0.1.0", lifespan=lifespan)
@@ -48,7 +52,7 @@ def health() -> dict:
         "env": settings.app_env,
         "llm": settings.llm_configured,
         "supabase": settings.supabase_configured,
-        "langfuse": settings.langfuse_configured,
+        "langfuse": settings.langfuse_active,
         "model": settings.featherless_model,
         "tools": registry.names(),
     }

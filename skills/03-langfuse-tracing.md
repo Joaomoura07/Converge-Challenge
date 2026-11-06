@@ -25,7 +25,8 @@ Esse rastro é o que prova "autonomia com auditoria" para a banca.
 ## 2. Configuração
 
 - Variáveis: `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST`. O SDK lê direto do ambiente.
-- Sem chaves, o SDK **desativa sozinho** e só emite um aviso. O app continua funcionando.
+- Sem chaves reais (vazias ou placeholder), ou com `LANGFUSE_ENABLED=false`, `get_settings()` desliga o SDK (`LANGFUSE_TRACING_ENABLED=false`) e o app funciona normalmente, só sem traces.
+- **Telemetria nunca derruba a resposta.** Toda chamada ao Langfuse fora do `@observe` (ex. `get_trace_url`, que consulta a API) fica em `try/except`, como em `Agent._attach_trace()`. Não comente `@observe` para "consertar" erro: corrija as chaves ou use o interruptor.
 - Confira a conexão: `python -m scripts.check_setup` (usa `get_client().auth_check()`).
 - O host deve bater com a região do projeto (EU `cloud.langfuse.com` / US `us.cloud.langfuse.com`). Região errada = 401.
 
@@ -89,6 +90,7 @@ lf.flush()                                                  # obrigatório em sc
 | Sintoma | Causa provável |
 |---|---|
 | Nenhum trace aparece | Chaves ausentes ou região errada (veja o aviso no log), ou o script terminou sem `flush()` |
+| `Failed to export spans … 401` / `Invalid credentials` | Chave placeholder, chave de outro projeto ou região errada. Rode `python -m scripts.check_setup` |
 | Trace aparece "solto", sem filhos | Função chamada fora do contexto `@observe` (thread nova sem contexto OTel) |
 | Custo zerado | `usage.cost` ausente (plano por assinatura) → cadastre o preço do modelo em *Settings → Models* |
 | Generation duplicada | Wrapper `langfuse.openai` e generation manual ativos ao mesmo tempo |

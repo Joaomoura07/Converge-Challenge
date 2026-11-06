@@ -1,5 +1,7 @@
 """Configuração centralizada, lida do .env (pydantic-settings)."""
 
+import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -32,6 +34,7 @@ class Settings(BaseSettings):
     supabase_key: str = ""
 
     # Langfuse (o SDK também lê estas variáveis direto do ambiente)
+    langfuse_enabled: bool = True          # interruptor: false desliga o tracing sem mexer no código
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
     langfuse_host: str = "https://cloud.langfuse.com"
@@ -46,12 +49,27 @@ class Settings(BaseSettings):
 
     @property
     def langfuse_configured(self) -> bool:
-        return bool(self.langfuse_public_key and self.langfuse_secret_key)
+        """Chaves reais (pk-lf-<uuid>) têm ~40 caracteres; placeholders do .env.example não."""
+        def looks_real(key: str, prefix: str) -> bool:
+            return key.startswith(prefix) and len(key) >= 30 and "xxx" not in key and "..." not in key
+        return looks_real(self.langfuse_public_key, "pk-lf-") and looks_real(self.langfuse_secret_key, "sk-lf-")
+
+    @property
+    def langfuse_active(self) -> bool:
+        return self.langfuse_enabled and self.langfuse_configured
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.langfuse_active:
+        # Desliga o SDK por completo (sem 401 em background, sem quebrar a API).
+        os.environ["LANGFUSE_TRACING_ENABLED"] = "false"
+        logging.getLogger(__name__).warning(
+            "Langfuse DESLIGADO (LANGFUSE_ENABLED=false ou chaves ausentes/placeholder). "
+            "O agente funciona normalmente, só sem traces."
+        )
+    return settings
 
 
 def load_prompt(name: str, **variables: str) -> str:

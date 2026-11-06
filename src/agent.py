@@ -86,7 +86,7 @@ class Agent:
 
     @observe(as_type="generation", name="llm.featherless", capture_input=False, capture_output=False)
     def _complete_once(self, model: str, messages: list[dict]):
-        lf = get_client()
+        lf = get_client()  # com tracing desligado, os update_* abaixo são no-op
         lf.update_current_generation(model=model, input=messages,
                                      model_parameters={"temperature": self.temperature})
         response = self.client.chat.completions.create(
@@ -177,10 +177,21 @@ class Agent:
             result.status = "error"
             result.output = f"{type(exc).__name__}: {exc}"
 
-        lf = get_client()
         result.latency_ms = int((time.perf_counter() - started) * 1000)
-        result.trace_id = lf.get_current_trace_id()
-        result.trace_url = lf.get_trace_url(trace_id=result.trace_id) if result.trace_id else None
-        lf.update_current_span(output=result.model_dump(include={"status", "output"}),
-                               level="WARNING" if result.status != "completed" else None)
+        self._attach_trace(result)
         return result
+
+    @staticmethod
+    def _attach_trace(result: AgentResult) -> None:
+        """Telemetria nunca derruba a resposta: chave errada/Langfuse fora = segue sem trace."""
+        if not get_settings().langfuse_active:
+            return
+        try:
+            lf = get_client()
+            result.trace_id = lf.get_current_trace_id()
+            result.trace_url = lf.get_trace_url(trace_id=result.trace_id) if result.trace_id else None
+            lf.update_current_span(output=result.model_dump(include={"status", "output"}),
+                                   level="WARNING" if result.status != "completed" else None)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Langfuse indisponível (%s): resposta enviada sem trace_url. "
+                           "Confira LANGFUSE_* no .env ou use LANGFUSE_ENABLED=false.", type(exc).__name__)

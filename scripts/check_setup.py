@@ -21,7 +21,8 @@ OK, FAIL, WARN = "[OK]  ", "[FAIL]", "[WARN]"
 def check_featherless(model: str) -> bool:
     client = build_llm_client()
     try:
-        r = client.chat.completions.create(model=model, max_tokens=10,
+        # GLM e outros modelos de raciocínio gastam tokens "pensando" antes de responder
+        r = client.chat.completions.create(model=model, max_tokens=300,
                                            messages=[{"role": "user", "content": "Responda só: pong"}])
         u = r.usage
         print(f"{OK} chat {model}: {r.choices[0].message.content!r} | tokens {u.prompt_tokens}+"
@@ -49,11 +50,21 @@ def check_featherless(model: str) -> bool:
 
 
 def check_langfuse() -> bool:
-    if not get_settings().langfuse_configured:
-        print(f"{WARN} Langfuse: chaves ausentes (tracing desativado)")
+    s = get_settings()
+    if not s.langfuse_enabled:
+        print(f"{WARN} Langfuse: desligado por LANGFUSE_ENABLED=false")
+        return True
+    if not s.langfuse_configured:
+        print(f"{WARN} Langfuse: chaves ausentes ou placeholder (tracing desativado). "
+              f"Pegue as reais em Settings -> API Keys do projeto no Langfuse")
         return False
     from langfuse import get_client
-    ok = get_client().auth_check()
+    try:
+        ok = get_client().auth_check()
+    except Exception as exc:  # noqa: BLE001
+        print(f"{FAIL} Langfuse: {type(exc).__name__}. Chave errada ou região errada "
+              f"(LANGFUSE_HOST EU=cloud.langfuse.com / US=us.cloud.langfuse.com)")
+        return False
     print(f"{OK if ok else FAIL} Langfuse auth ({get_settings().langfuse_host})")
     return ok
 
