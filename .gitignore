@@ -22,3 +22,7 @@ Thumbs.db
 
 # Config pessoal do Claude Code (as skills em .claude/skills SÃO versionadas)
 .claude/settings.local.json
+
+# Fixtures pesadas (geradas com: python tests/importacao/gerar_fixtures.py --grandes)
+tests/importacao/fixtures/grandes/
+.pytest_cache/

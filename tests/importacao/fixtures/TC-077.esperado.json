@@ -1,0 +1,62 @@
+{
+  "origem": {
+    "arquivo": "TC-077.xlsx",
+    "formato": "xlsx",
+    "software": "desconhecido",
+    "aba": "Quantitativos",
+    "delimitador": null,
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "Parede alvenaria 14cm",
+      "quantidade": null,
+      "unidade": "m2",
+      "nivel": null,
+      "extras": {
+        "Comprimento": 5.0,
+        "Altura": 2.5
+      }
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "Parede drywall 9,5cm",
+      "quantidade": null,
+      "unidade": "m2",
+      "nivel": null,
+      "extras": {
+        "Comprimento": 13.9,
+        "Altura": 2.5
+      }
+    },
+    {
+      "linha": 4,
+      "categoria": "Pisos",
+      "descricao": "Piso cerâmico 60x60",
+      "quantidade": 48.2,
+      "unidade": "m2",
+      "nivel": null,
+      "extras": {
+        "Comprimento": 8.0,
+        "Altura": 6.025
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 2,
+      "codigo": "ERRO_FORMULA",
+      "mensagem": "ERRO_FORMULA"
+    },
+    {
+      "linha": 3,
+      "codigo": "ERRO_FORMULA",
+      "mensagem": "ERRO_FORMULA"
+    }
+  ]
+}

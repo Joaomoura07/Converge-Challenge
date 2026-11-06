@@ -1,0 +1,4 @@
+Categoria;Descrição;Quantidade;Unidade;Nível
+Paredes;<img src=x onerror=alert(1)>;12,5;m²;Térreo
+Paredes;<script>alert('xss')</script>;34,75;m²;Térreo
+Pisos;Piso <b>cerâmico</b>;48,2;m²;Térreo

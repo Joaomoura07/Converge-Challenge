@@ -1,0 +1,20 @@
+{
+  "origem": {
+    "arquivo": "TC-030.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 0,
+    "linhas_descartadas": 0
+  },
+  "itens": [],
+  "avisos": [
+    {
+      "linha": null,
+      "codigo": "SEM_DADOS",
+      "mensagem": "SEM_DADOS"
+    }
+  ]
+}

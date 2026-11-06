@@ -1,0 +1,33 @@
+{
+  "origem": {
+    "arquivo": "TC-048.csv",
+    "formato": "csv",
+    "software": "revit",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Doors",
+      "descricao": "Single-Flush: 0915 x 2134mm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Level 1",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Windows",
+      "descricao": "Fixed: 1200 x 1200mm",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": "Level 2",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

@@ -1,0 +1,56 @@
+{
+  "origem": {
+    "arquivo": "TC-069.csv",
+    "formato": "csv",
+    "software": "sketchup",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Mobiliário",
+      "descricao": "Mesa jantar",
+      "quantidade": 1.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Modelo/Sala/Mesa",
+        "Entity Type": "ComponentInstance",
+        "LenX": "63\"",
+        "LenY": "35.43\"",
+        "LenZ": "29.53\""
+      }
+    },
+    {
+      "linha": 3,
+      "categoria": "Mobiliário",
+      "descricao": "Cama casal",
+      "quantidade": 1.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Modelo/Quarto/Cama",
+        "Entity Type": "ComponentInstance",
+        "LenX": "55.12\"",
+        "LenY": "74.8\"",
+        "LenZ": "17.72\""
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 2,
+      "codigo": "UNIDADE_IMPERIAL",
+      "mensagem": "UNIDADE_IMPERIAL"
+    },
+    {
+      "linha": 3,
+      "codigo": "UNIDADE_IMPERIAL",
+      "mensagem": "UNIDADE_IMPERIAL"
+    }
+  ]
+}

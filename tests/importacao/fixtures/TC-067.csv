@@ -1,0 +1,4 @@
+Path,Entity Type,Definition Name,Tag,Quantity
+Modelo/Sala/Sofá 3 lugares,ComponentInstance,Sofá 3 lugares,Mobiliário,1
+Modelo/Cozinha/Cadeira,ComponentInstance,Cadeira madeira,Mobiliário,4
+Modelo/Banheiro/Bacia,ComponentInstance,Bacia sanitária,Louças,2

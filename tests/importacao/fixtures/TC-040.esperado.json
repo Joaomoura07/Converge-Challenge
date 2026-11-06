@@ -1,0 +1,96 @@
+{
+  "origem": {
+    "arquivo": "TC-040.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 9,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Estrutura",
+      "descricao": "Viga baldrame",
+      "quantidade": 42.0,
+      "unidade": "m",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Revestimentos",
+      "descricao": "Reboco",
+      "quantidade": 120.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Concreto",
+      "descricao": "Concreto fck 25",
+      "quantidade": 8.4,
+      "unidade": "m3",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": "Esquadrias",
+      "descricao": "Porta",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 6,
+      "categoria": "Metais",
+      "descricao": "Registro de gaveta",
+      "quantidade": 12.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 7,
+      "categoria": "Estrutura",
+      "descricao": "Aço CA-50",
+      "quantidade": 350.0,
+      "unidade": "kg",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 8,
+      "categoria": "Impermeabilização",
+      "descricao": "Manta líquida",
+      "quantidade": 18.0,
+      "unidade": "l",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 9,
+      "categoria": "Rodapés",
+      "descricao": "Rodapé",
+      "quantidade": 850.0,
+      "unidade": "cm",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 10,
+      "categoria": "Juntas",
+      "descricao": "Junta de dilatação",
+      "quantidade": 1200.0,
+      "unidade": "mm",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

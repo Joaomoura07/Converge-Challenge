@@ -1,0 +1,42 @@
+{
+  "origem": {
+    "arquivo": "TC-034.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Pisos",
+      "descricao": "Contrapiso",
+      "quantidade": 1234.56,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "Alvenaria de vedação",
+      "quantidade": 2500.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Paredes",
+      "descricao": "Parede alvenaria 14cm",
+      "quantidade": 12.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

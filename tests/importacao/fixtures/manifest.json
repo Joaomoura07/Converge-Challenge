@@ -1,0 +1,1897 @@
+{
+  "versao": 1,
+  "senha_xlsx_protegido": "teste123",
+  "casos": [
+    {
+      "id": "TC-001",
+      "bloco": "A",
+      "titulo": "CSV simples UTF-8 com vírgula",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-001.csv",
+          "esperado": "TC-001.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-002",
+      "bloco": "A",
+      "titulo": "XLSX simples, 1 aba",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-002.xlsx",
+          "esperado": "TC-002.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-003",
+      "bloco": "A",
+      "titulo": ".txt delimitado por tab (Revit)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": "D1",
+      "variantes": [
+        {
+          "entrada": "TC-003.txt",
+          "esperado": "TC-003.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-004",
+      "bloco": "A",
+      "titulo": ".xls Excel 97-2003",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": "D2",
+      "variantes": [
+        {
+          "entrada": "TC-004.xls",
+          "esperado": "TC-004.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-005",
+      "bloco": "A",
+      "titulo": ".xlsm (macro habilitada)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-005.xlsm",
+          "esperado": "TC-005.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Pacote macro-enabled sem vbaProject.bin real. Para testar com VBA de verdade, salve TC-002 como .xlsm no Excel com uma macro qualquer."
+        }
+      ]
+    },
+    {
+      "id": "TC-006",
+      "bloco": "A",
+      "titulo": ".ods (LibreOffice)",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": "D2",
+      "variantes": [
+        {
+          "entrada": "TC-006.ods",
+          "esperado": "TC-006.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-007",
+      "bloco": "A",
+      "titulo": "CSV renomeado para .xlsx",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-007.xlsx",
+          "esperado": "TC-007.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-008",
+      "bloco": "A",
+      "titulo": "Arquivo de 0 bytes",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-008.csv",
+          "esperado": "TC-008.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-009",
+      "bloco": "A",
+      "titulo": "PNG renomeado para .csv",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-009.csv",
+          "esperado": "TC-009.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-010",
+      "bloco": "B",
+      "titulo": "UTF-8 sem BOM com acentos",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-010.csv",
+          "esperado": "TC-010.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-011",
+      "bloco": "B",
+      "titulo": "UTF-8 com BOM",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-011.csv",
+          "esperado": "TC-011.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-012",
+      "bloco": "B",
+      "titulo": "Windows-1252 (Excel pt-BR)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-012.csv",
+          "esperado": "TC-012.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-013",
+      "bloco": "B",
+      "titulo": "UTF-16 LE com BOM",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-013.txt",
+          "esperado": "TC-013.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-014",
+      "bloco": "B",
+      "titulo": "Byte inválido no meio de arquivo UTF-8",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-014.csv",
+          "esperado": "TC-014.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-015",
+      "bloco": "B",
+      "titulo": "Símbolos ², ³, ø, °",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-015.csv",
+          "esperado": "TC-015.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-016",
+      "bloco": "B",
+      "titulo": "Quebras de linha CRLF, LF e CR",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-016-a-crlf.csv",
+          "esperado": "TC-016-a-crlf.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-016-b-lf.csv",
+          "esperado": "TC-016-b-lf.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-016-c-cr.csv",
+          "esperado": "TC-016-c-cr.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-017",
+      "bloco": "C",
+      "titulo": "Delimitador ponto e vírgula",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-017.csv",
+          "esperado": "TC-017.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-018",
+      "bloco": "C",
+      "titulo": "Delimitador tab em .csv",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-018.csv",
+          "esperado": "TC-018.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-019",
+      "bloco": "C",
+      "titulo": "Campo entre aspas com delimitador dentro",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-019.csv",
+          "esperado": "TC-019.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-020",
+      "bloco": "C",
+      "titulo": "Aspas escapadas dentro de campo",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-020.csv",
+          "esperado": "TC-020.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-021",
+      "bloco": "C",
+      "titulo": "Quebra de linha dentro de campo entre aspas",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-021.csv",
+          "esperado": "TC-021.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-022",
+      "bloco": "C",
+      "titulo": "Linha com colunas a mais",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-022.csv",
+          "esperado": "TC-022.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-023",
+      "bloco": "C",
+      "titulo": "Linha com colunas a menos",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-023.csv",
+          "esperado": "TC-023.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-024",
+      "bloco": "C",
+      "titulo": "Linhas em branco no meio",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-024.csv",
+          "esperado": "TC-024.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-025",
+      "bloco": "C",
+      "titulo": "Linhas só com delimitadores",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-025.csv",
+          "esperado": "TC-025.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-026",
+      "bloco": "C",
+      "titulo": "Espaços antes/depois dos valores",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-026.csv",
+          "esperado": "TC-026.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-027",
+      "bloco": "C",
+      "titulo": "Sem quebra de linha no final",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-027.csv",
+          "esperado": "TC-027.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-028",
+      "bloco": "C",
+      "titulo": "Colunas vazias à direita",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-028.csv",
+          "esperado": "TC-028.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-029",
+      "bloco": "C",
+      "titulo": "Aspas não fechadas",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-029.csv",
+          "esperado": "TC-029.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-030",
+      "bloco": "C",
+      "titulo": "Só cabeçalho",
+      "camada": "Front/API",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-030.csv",
+          "esperado": "TC-030.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-031",
+      "bloco": "D",
+      "titulo": "Decimal com vírgula",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-031.csv",
+          "esperado": "TC-031.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-032",
+      "bloco": "D",
+      "titulo": "Decimal com ponto",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-032.csv",
+          "esperado": "TC-032.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-033",
+      "bloco": "D",
+      "titulo": "Milhar com ponto, decimal com vírgula (1.234,56)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-033.csv",
+          "esperado": "TC-033.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-034",
+      "bloco": "D",
+      "titulo": "Milhar com vírgula, decimal com ponto (1,234.56)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-034.csv",
+          "esperado": "TC-034.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-035",
+      "bloco": "D",
+      "titulo": "Ambíguo 1.234 em arquivo com vírgula decimal",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": "D4",
+      "variantes": [
+        {
+          "entrada": "TC-035.csv",
+          "esperado": "TC-035.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-036",
+      "bloco": "D",
+      "titulo": "Ambíguo 1,500 em arquivo com ponto decimal",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": "D4",
+      "variantes": [
+        {
+          "entrada": "TC-036.csv",
+          "esperado": "TC-036.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-037",
+      "bloco": "D",
+      "titulo": "Unidade junto do valor (12,50 m²)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-037.csv",
+          "esperado": "TC-037.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-038",
+      "bloco": "D",
+      "titulo": "Unidade em coluna separada",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-038.csv",
+          "esperado": "TC-038.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-039",
+      "bloco": "D",
+      "titulo": "Unidade no cabeçalho: Área (m²)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-039.csv",
+          "esperado": "TC-039.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-040",
+      "bloco": "D",
+      "titulo": "Unidades variadas normalizadas",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": "D5",
+      "variantes": [
+        {
+          "entrada": "TC-040.csv",
+          "esperado": "TC-040.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-041",
+      "bloco": "D",
+      "titulo": "Unidades misturadas na mesma coluna (cm e m)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-041.csv",
+          "esperado": "TC-041.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-042",
+      "bloco": "D",
+      "titulo": "Quantidade negativa",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-042.csv",
+          "esperado": "TC-042.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-043",
+      "bloco": "D",
+      "titulo": "Quantidade vazia",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-043.csv",
+          "esperado": "TC-043.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-044",
+      "bloco": "D",
+      "titulo": "Texto na quantidade (aprox. 10, N/A, -, ?)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-044.csv",
+          "esperado": "TC-044.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-045",
+      "bloco": "D",
+      "titulo": "Moeda R$ em coluna de custo",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-045.csv",
+          "esperado": "TC-045.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-046",
+      "bloco": "D",
+      "titulo": "Dimensão em texto (0,90 x 2,10)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-046.csv",
+          "esperado": "TC-046.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-047",
+      "bloco": "E",
+      "titulo": "Cabeçalho em português (sem Nível)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-047.csv",
+          "esperado": "TC-047.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-048",
+      "bloco": "E",
+      "titulo": "Cabeçalho em inglês (Revit EN)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-048.csv",
+          "esperado": "TC-048.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-049",
+      "bloco": "E",
+      "titulo": "Variações do nome da coluna de quantidade",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-049-a-qtd.csv",
+          "esperado": "TC-049-a-qtd.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-049-b-qtde.csv",
+          "esperado": "TC-049-b-qtde.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-049-c-quant.csv",
+          "esperado": "TC-049-c-quant.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-049-d-quantidade.csv",
+          "esperado": "TC-049-d-quantidade.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-049-e-count.csv",
+          "esperado": "TC-049-e-count.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-049-f-contagem.csv",
+          "esperado": "TC-049-f-contagem.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-050",
+      "bloco": "E",
+      "titulo": "Variações de caixa e acento: AREA/área/Área/Area",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-050-a.csv",
+          "esperado": "TC-050-a.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-050-b.csv",
+          "esperado": "TC-050-b.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-050-c.csv",
+          "esperado": "TC-050-c.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-050-d.csv",
+          "esperado": "TC-050-d.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-051",
+      "bloco": "E",
+      "titulo": "Título e linha em branco antes do cabeçalho",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-051.csv",
+          "esperado": "TC-051.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-052",
+      "bloco": "E",
+      "titulo": "Cabeçalho em 2 linhas",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-052.csv",
+          "esperado": "TC-052.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-053",
+      "bloco": "E",
+      "titulo": "Colunas duplicadas (Área duas vezes)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-053.csv",
+          "esperado": "TC-053.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-054",
+      "bloco": "E",
+      "titulo": "Nenhuma coluna reconhecível",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-054.csv",
+          "esperado": "TC-054.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-055",
+      "bloco": "E",
+      "titulo": "Colunas desconhecidas vão para extras",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-055.csv",
+          "esperado": "TC-055.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-056",
+      "bloco": "E",
+      "titulo": "Colunas em ordem diferente",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-056.csv",
+          "esperado": "TC-056.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-057",
+      "bloco": "F",
+      "titulo": "Tabela de paredes pt-BR em .txt",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-057.txt",
+          "esperado": "TC-057.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-058",
+      "bloco": "F",
+      "titulo": "Tabela agrupada com Contagem",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-058.txt",
+          "esperado": "TC-058.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-059",
+      "bloco": "F",
+      "titulo": "Cabeçalhos de grupo (Nível) e subtotais",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-059.txt",
+          "esperado": "TC-059.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-060",
+      "bloco": "F",
+      "titulo": "Linha de Total geral (confere a soma)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-060-a-confere.txt",
+          "esperado": "TC-060-a-confere.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        },
+        {
+          "entrada": "TC-060-b-diverge.txt",
+          "esperado": "TC-060-b-diverge.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-061",
+      "bloco": "F",
+      "titulo": "Família e tipo com dois-pontos",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-061.txt",
+          "esperado": "TC-061.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-062",
+      "bloco": "F",
+      "titulo": "Levantamento de materiais com Área e Volume",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-062.txt",
+          "esperado": "TC-062.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-063",
+      "bloco": "F",
+      "titulo": "Pés e polegadas (Revit em inglês)",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": "D5",
+      "variantes": [
+        {
+          "entrada": "TC-063.txt",
+          "esperado": "TC-063.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-064",
+      "bloco": "F",
+      "titulo": "Campos calculados vazios",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-064.txt",
+          "esperado": "TC-064.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-065",
+      "bloco": "F",
+      "titulo": "Todos os campos entre aspas",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-065.txt",
+          "esperado": "TC-065.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-066",
+      "bloco": "F",
+      "titulo": "Tabela com 5.000 linhas (desempenho)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-066.txt",
+          "esperado": "TC-066.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Meta: menos de 3 s no navegador."
+        }
+      ]
+    },
+    {
+      "id": "TC-067",
+      "bloco": "G",
+      "titulo": "Generate Report CSV",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-067.csv",
+          "esperado": "TC-067.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Colunas aproximadas do Generate Report. Validar com uma exportação real (TC-102)."
+        }
+      ]
+    },
+    {
+      "id": "TC-068",
+      "bloco": "G",
+      "titulo": "Componentes aninhados sem dupla contagem",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-068.csv",
+          "esperado": "TC-068.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Regra: linhas 'Group' que contêm outras entidades são descartadas; componentes são contados."
+        }
+      ]
+    },
+    {
+      "id": "TC-069",
+      "bloco": "G",
+      "titulo": "Atributos dinâmicos em polegadas",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-069.csv",
+          "esperado": "TC-069.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-070",
+      "bloco": "G",
+      "titulo": "Relatório em HTML",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-070.html",
+          "esperado": "TC-070.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-071",
+      "bloco": "H",
+      "titulo": "Várias abas com dados",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": "D3",
+      "variantes": [
+        {
+          "entrada": "TC-071.xlsx",
+          "esperado": "TC-071.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-072",
+      "bloco": "H",
+      "titulo": "Aba oculta com dados",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-072.xlsx",
+          "esperado": "TC-072.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-073",
+      "bloco": "H",
+      "titulo": "Primeira aba vazia",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-073.xlsx",
+          "esperado": "TC-073.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-074",
+      "bloco": "H",
+      "titulo": "Células mescladas no cabeçalho",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-074.xlsx",
+          "esperado": "TC-074.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-075",
+      "bloco": "H",
+      "titulo": "Células mescladas na coluna Categoria",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-075.xlsx",
+          "esperado": "TC-075.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-076",
+      "bloco": "H",
+      "titulo": "Fórmulas com valor em cache",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-076.xlsx",
+          "esperado": "TC-076.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-077",
+      "bloco": "H",
+      "titulo": "Fórmula com erro (#DIV/0!, #REF!)",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-077.xlsx",
+          "esperado": "TC-077.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-078",
+      "bloco": "H",
+      "titulo": "Número armazenado como texto",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-078.xlsx",
+          "esperado": "TC-078.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-079",
+      "bloco": "H",
+      "titulo": "Formatação de número exibindo unidade",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-079.xlsx",
+          "esperado": "TC-079.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-080",
+      "bloco": "H",
+      "titulo": "Tabela do Excel com linha de totais",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-080.xlsx",
+          "esperado": "TC-080.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-081",
+      "bloco": "H",
+      "titulo": "XLSX protegido por senha",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-081.xlsx",
+          "esperado": "TC-081.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Senha: teste123 (só para conferir que o arquivo é válido)."
+        }
+      ]
+    },
+    {
+      "id": "TC-082",
+      "bloco": "H",
+      "titulo": "XLSX truncado/corrompido",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-082.xlsx",
+          "esperado": "TC-082.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-083",
+      "bloco": "H",
+      "titulo": "Formatação até a linha 1.048.576 com 50 linhas de dados",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-083.xlsx",
+          "esperado": "TC-083.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-084",
+      "bloco": "I",
+      "titulo": "CSV com 50.000 linhas",
+      "camada": "Front",
+      "prioridade": "P1",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "grandes/TC-084.csv",
+          "esperado": "TC-084.esperado.json",
+          "grande": true,
+          "status_http": null,
+          "nota": "Meta: menos de 5 s, sem travar a página (Web Worker ou leitura em partes)."
+        }
+      ]
+    },
+    {
+      "id": "TC-085",
+      "bloco": "I",
+      "titulo": "Arquivo acima do limite (25 MB)",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": "D6",
+      "variantes": [
+        {
+          "entrada": "grandes/TC-085.csv",
+          "esperado": "TC-085.esperado.json",
+          "grande": true,
+          "status_http": null,
+          "nota": "Deve ser recusado ANTES da leitura (checar file.size)."
+        }
+      ]
+    },
+    {
+      "id": "TC-086",
+      "bloco": "I",
+      "titulo": "JSON grande enviado ao n8n/FastAPI",
+      "camada": "Front/API",
+      "prioridade": "P0",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "grandes/TC-086.json",
+          "esperado": null,
+          "grande": true,
+          "status_http": 200,
+          "nota": "Corpo ~7 MB. Também testar via webhook do n8n (limite N8N_PAYLOAD_SIZE_MAX)."
+        }
+      ]
+    },
+    {
+      "id": "TC-087",
+      "bloco": "I",
+      "titulo": "LLM não recebe a tabela inteira",
+      "camada": "Agente",
+      "prioridade": "P0",
+      "tipo": "manual",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "grandes/TC-086.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": null,
+          "nota": "Enviar TC-086 e conferir no Langfuse: o prompt do LLM tem um resumo agregado (<= N itens), nunca os 50.000 itens."
+        }
+      ]
+    },
+    {
+      "id": "TC-088",
+      "bloco": "J",
+      "titulo": "Injeção de fórmula em CSV",
+      "camada": "Front/API",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-088.csv",
+          "esperado": "TC-088.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "No JSON de importação o texto fica idêntico. Se o sistema exportar planilha depois, prefixar com '."
+        }
+      ]
+    },
+    {
+      "id": "TC-089",
+      "bloco": "J",
+      "titulo": "HTML/script em célula",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-089.csv",
+          "esperado": "TC-089.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Na tela: exibido como texto, nunca interpretado como HTML."
+        }
+      ]
+    },
+    {
+      "id": "TC-090",
+      "bloco": "J",
+      "titulo": "Instrução escondida numa célula (prompt injection)",
+      "camada": "Agente",
+      "prioridade": "P0",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-090.csv",
+          "esperado": "TC-090.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "Parser: texto preservado. Agente: a resposta não pode mudar de comportamento por causa dessa célula."
+        }
+      ]
+    },
+    {
+      "id": "TC-091",
+      "bloco": "J",
+      "titulo": "Célula com 1 MB de texto",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-091.csv",
+          "esperado": "TC-091.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-092",
+      "bloco": "J",
+      "titulo": "XLSX bomba de descompressão",
+      "camada": "Front",
+      "prioridade": "P2",
+      "tipo": "parse",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-092.xlsx",
+          "esperado": "TC-092.esperado.json",
+          "grande": false,
+          "status_http": null,
+          "nota": "~200 KB que descompactam para ~200 MB. Checar o tamanho descompactado antes de processar."
+        }
+      ]
+    },
+    {
+      "id": "TC-093",
+      "bloco": "J",
+      "titulo": "Dependência do SheetJS sem vulnerabilidades",
+      "camada": "Front",
+      "prioridade": "P0",
+      "tipo": "manual",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": null,
+          "esperado": null,
+          "grande": false,
+          "status_http": null,
+          "nota": "No front: `npm ls xlsx` não deve listar xlsx@0.18.5 do npm. Instalar pelo CDN oficial (https://cdn.sheetjs.com) e rodar `npm audit` sem alertas de prototype pollution/ReDoS."
+        }
+      ]
+    },
+    {
+      "id": "TC-094",
+      "bloco": "K",
+      "titulo": "JSON válido no contrato",
+      "camada": "API",
+      "prioridade": "P0",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-094.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 200,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-095",
+      "bloco": "K",
+      "titulo": "JSON sem itens/origem",
+      "camada": "API",
+      "prioridade": "P0",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-095-a-sem-itens.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 422,
+          "nota": null
+        },
+        {
+          "entrada": "TC-095-b-sem-origem.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 422,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-096",
+      "bloco": "K",
+      "titulo": "Quantidade como string",
+      "camada": "API",
+      "prioridade": "P0",
+      "tipo": "api",
+      "decisao": "D7",
+      "variantes": [
+        {
+          "entrada": "TC-096.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 422,
+          "nota": null
+        }
+      ]
+    },
+    {
+      "id": "TC-097",
+      "bloco": "K",
+      "titulo": "Lista de itens vazia",
+      "camada": "API",
+      "prioridade": "P1",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-097.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 200,
+          "nota": "Resposta 200 com status 'sem dados'. Nunca 500."
+        }
+      ]
+    },
+    {
+      "id": "TC-098",
+      "bloco": "K",
+      "titulo": "Chamada direta com tipos errados / 1 milhão de itens",
+      "camada": "API",
+      "prioridade": "P0",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-098-a-tipos-errados.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 422,
+          "nota": null
+        },
+        {
+          "entrada": "grandes/TC-098-b-um-milhao.json",
+          "esperado": null,
+          "grande": true,
+          "status_http": 422,
+          "nota": "~140 MB. Aceito: 413 (limite de corpo) ou 422 (max 100.000 itens). Nunca travar o servidor."
+        }
+      ]
+    },
+    {
+      "id": "TC-099",
+      "bloco": "K",
+      "titulo": "Mesmo arquivo enviado duas vezes",
+      "camada": "API",
+      "prioridade": "P1",
+      "tipo": "api",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-094.json",
+          "esperado": null,
+          "grande": false,
+          "status_http": 200,
+          "nota": "Enviar TC-094 duas vezes: a segunda não cria registro duplicado (mesmo id/hash na resposta)."
+        }
+      ]
+    },
+    {
+      "id": "TC-100",
+      "bloco": "K",
+      "titulo": "Determinismo: mesmo arquivo 3 vezes",
+      "camada": "Front/API",
+      "prioridade": "P0",
+      "tipo": "determinismo",
+      "decisao": null,
+      "variantes": [
+        {
+          "entrada": "TC-001.csv",
+          "esperado": null,
+          "grande": false,
+          "status_http": null,
+          "nota": "O executor processa TC-001 três vezes e exige JSON idêntico."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "FORMATO_INVALIDO",
+    "mensagem": "O arquivo não é um CSV válido."
+  }
+}

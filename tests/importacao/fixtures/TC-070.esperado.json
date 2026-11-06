@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "FORMATO_NAO_SUPORTADO",
+    "mensagem": "Exporte o relatório do SketchUp em CSV."
+  }
+}

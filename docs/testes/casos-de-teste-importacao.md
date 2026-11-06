@@ -1,6 +1,6 @@
 # Casos de teste: importação de quantitativos (CSV / XLSX)
 
-> **Status:** especificação (planejamento). Nenhum arquivo de teste ou código foi criado ainda: os arquivos de entrada (CSV/XLSX sintéticos) e os JSON esperados serão gerados **a partir de sábado, 7/11, 10h**, conforme o regulamento.
+> **Status:** implementado. As entradas, os JSON esperados e os executores estão em [`tests/importacao/`](../../tests/importacao/README.md) e foram validados com SheetJS 0.20.3 e PapaParse 5.4.1.
 
 Arquitetura testada: o front-end (Vercel) lê o arquivo com **PapaParse** (CSV/TXT) ou **SheetJS** (XLSX) e envia ao n8n/FastAPI **somente JSON padronizado**. Por isso os testes cobrem três camadas:
 
@@ -54,13 +54,13 @@ Todo arquivo, de qualquer origem, vira este formato. Os casos abaixo dizem o res
 - Colunas não reconhecidas vão para `extras`: nada é perdido.
 - Erros que impedem a leitura retornam `{ "erro": { "codigo", "mensagem" } }`, com mensagem em português que diz como resolver.
 
-**Códigos usados nos casos:** `ARQUIVO_VAZIO`, `FORMATO_INVALIDO`, `FORMATO_NAO_SUPORTADO`, `ARQUIVO_PROTEGIDO`, `ARQUIVO_CORROMPIDO`, `ARQUIVO_GRANDE_DEMAIS`, `CSV_MALFORMADO`, `CABECALHO_NAO_ENCONTRADO`, `SEM_DADOS`, `COLUNAS_EXTRAS`, `COLUNAS_FALTANTES`, `COLUNA_DUPLICADA`, `QUANTIDADE_AUSENTE`, `VALOR_NAO_NUMERICO`, `VALOR_NEGATIVO`, `NUMERO_AMBIGUO`, `UNIDADES_MISTAS`, `UNIDADE_IMPERIAL`, `ERRO_FORMULA`, `TOTAL_DIVERGENTE`, `CODIFICACAO_INVALIDA`, `TEXTO_TRUNCADO`.
+**Códigos usados nos casos:** `ARQUIVO_VAZIO`, `FORMATO_INVALIDO`, `FORMATO_NAO_SUPORTADO`, `ARQUIVO_PROTEGIDO`, `ARQUIVO_CORROMPIDO`, `ARQUIVO_GRANDE_DEMAIS`, `CSV_MALFORMADO`, `CABECALHO_NAO_ENCONTRADO`, `SEM_DADOS`, `COLUNAS_EXTRAS`, `COLUNAS_FALTANTES`, `COLUNA_DUPLICADA`, `QUANTIDADE_AUSENTE`, `VALOR_NAO_NUMERICO`, `VALOR_NEGATIVO`, `NUMERO_AMBIGUO`, `UNIDADES_MISTAS`, `UNIDADE_IMPERIAL`, `ERRO_FORMULA`, `TOTAL_DIVERGENTE`, `CODIFICACAO_INVALIDA`, `TEXTO_TRUNCADO`, `EXTENSAO_INCORRETA` (TC-007), `CABECALHO_MULTILINHA` (TC-052/074).
 
 ---
 
 ## 2. Decisões que o time precisa tomar antes de testar
 
-Vários casos dependem de uma escolha de produto. Decidam e anotem aqui. O resultado esperado do caso passa a ser a decisão:
+Vários casos dependem de uma escolha de produto. **Os esperados gerados adotaram a coluna "Sugestão"** (detalhes e regras extras em `tests/importacao/README.md`). Se o time decidir diferente, ajuste o caso em `gerar_fixtures.py` e gere de novo:
 
 | # | Pergunta | Sugestão | Casos |
 |---|---|---|---|
@@ -252,9 +252,8 @@ Vários casos dependem de uma escolha de produto. Decidam e anotem aqui. O resul
 
 **Na pressa do hackathon:** rodem primeiro os **P0** de A, B, D, E e F. É o que vai aparecer quando um jurado subir uma exportação real do Revit em pt-BR.
 
-## 5. Próximo passo (a partir de sábado, 10h)
+## 5. Como rodar
 
-1. Gerar `tests/fixtures/importacao/TC-XXX.<ext>` (entradas sintéticas) e `TC-XXX.esperado.json`, com um script que produz todos os arquivos.
-2. No front: teste automatizado que passa cada arquivo pelo parser e compara com o `.esperado.json`.
-3. Na API: testes `pytest` dos casos 094–100 contra `POST` da rota de importação.
-4. Antes da demo, conseguir uma exportação **real** do Revit e uma do SketchUp (de um colega de arquitetura) e rodar como TC-101/102.
+Veja [`tests/importacao/README.md`](../../tests/importacao/README.md): gerar as fixtures, rodar o parser do front (`run-front.mjs`) e a API (`pytest`). Lá também estão as **8 armadilhas encontradas** ao abrir as fixtures com SheetJS/PapaParse reais. A principal: a detecção automática de delimitador do PapaParse erra nos `.txt` do Revit em pt-BR.
+
+Antes da demo, consigam uma exportação **real** do Revit e uma do SketchUp (de um colega de arquitetura) e rodem como TC-101/102.

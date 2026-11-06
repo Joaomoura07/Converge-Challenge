@@ -1,0 +1,60 @@
+{
+  "origem": {
+    "arquivo": "TC-016-c-cr.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 5,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "Parede alvenaria 14cm",
+      "quantidade": 12.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "Parede drywall 9,5cm",
+      "quantidade": 34.75,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Pisos",
+      "descricao": "Piso cerâmico 60x60",
+      "quantidade": 48.2,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": "Portas",
+      "descricao": "Porta giro 90x210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 6,
+      "categoria": "Janelas",
+      "descricao": "Janela de correr 120x120cm",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": "Superior",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

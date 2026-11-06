@@ -1,0 +1,5 @@
+Tabela de portas
+Família e tipo	Contagem	Nível
+
+Porta giro 1F: 90 x 210cm	6	Térreo
+Porta de correr 2F: 160 x 210cm	2	Térreo

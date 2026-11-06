@@ -1,0 +1,4 @@
+Wall Schedule
+Family and Type	Length	Level
+
+"Basic Wall: Generic - 8"""	"12' 6"""	Level 1

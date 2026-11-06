@@ -1,0 +1,5 @@
+Levantamento de materiais de paredes
+Material: Nome	Material: Área	Material: Volume
+
+Bloco cerâmico 14x19x29	47,25 m²	6,62 m³
+Argamassa de assentamento	47,25 m²	0,95 m³

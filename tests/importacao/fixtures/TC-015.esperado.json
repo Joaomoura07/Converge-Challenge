@@ -1,0 +1,42 @@
+{
+  "origem": {
+    "arquivo": "TC-015.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": "utf-8",
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Concreto",
+      "descricao": "Laje maciça e=12cm",
+      "quantidade": 7.8,
+      "unidade": "m3",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Hidráulica",
+      "descricao": "Tubo PVC ø100mm",
+      "quantidade": 24.0,
+      "unidade": "m",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Coberturas",
+      "descricao": "Telhado inclinação 30°",
+      "quantidade": 96.5,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

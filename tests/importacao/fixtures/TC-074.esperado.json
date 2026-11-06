@@ -1,0 +1,45 @@
+{
+  "origem": {
+    "arquivo": "TC-074.xlsx",
+    "formato": "xlsx",
+    "software": "desconhecido",
+    "aba": "Quantitativos",
+    "delimitador": null,
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 3,
+      "categoria": "Portas",
+      "descricao": "Porta giro 90x210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Dimensões / Largura": 0.9,
+        "Dimensões / Altura": 2.1
+      }
+    },
+    {
+      "linha": 4,
+      "categoria": "Janelas",
+      "descricao": "Janela de correr 120x120cm",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Dimensões / Largura": 1.2,
+        "Dimensões / Altura": 1.2
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 1,
+      "codigo": "CABECALHO_MULTILINHA",
+      "mensagem": "CABECALHO_MULTILINHA"
+    }
+  ]
+}

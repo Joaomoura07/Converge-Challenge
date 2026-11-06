@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "FORMATO_NAO_SUPORTADO",
+    "mensagem": "Formato .ods não suportado. Salve como .xlsx ou .csv."
+  }
+}

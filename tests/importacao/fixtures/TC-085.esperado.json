@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "ARQUIVO_GRANDE_DEMAIS",
+    "mensagem": "Limite de 20 MB."
+  }
+}

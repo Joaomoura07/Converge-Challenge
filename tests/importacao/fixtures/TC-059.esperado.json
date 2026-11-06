@@ -1,0 +1,42 @@
+{
+  "origem": {
+    "arquivo": "TC-059.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 8,
+    "linhas_descartadas": 5
+  },
+  "itens": [
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 12.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 6,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 34.75,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 10,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 20.0,
+      "unidade": "m2",
+      "nivel": "Superior",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

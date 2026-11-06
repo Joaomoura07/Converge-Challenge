@@ -1,0 +1,33 @@
+{
+  "origem": {
+    "arquivo": "TC-058.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 1
+  },
+  "itens": [
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Porta giro 1F: 90 x 210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Porta de correr 2F: 160 x 210cm",
+      "quantidade": 2.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

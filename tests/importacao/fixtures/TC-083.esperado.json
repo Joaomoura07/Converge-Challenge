@@ -1,0 +1,465 @@
+{
+  "origem": {
+    "arquivo": "TC-083.xlsx",
+    "formato": "xlsx",
+    "software": "desconhecido",
+    "aba": "Quantitativos",
+    "delimitador": null,
+    "codificacao": null,
+    "linhas_lidas": 50,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 1.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 4.7,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 8.4,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 12.1,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 6,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 15.8,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 7,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 19.5,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 8,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 23.2,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 9,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 26.9,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 10,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 30.6,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 11,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 34.3,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 12,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 38.0,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 13,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 41.7,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 14,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 45.4,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 15,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 49.1,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 16,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 52.8,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 17,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 56.5,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 18,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 60.2,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 19,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 63.9,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 20,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 67.6,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 21,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 71.3,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 22,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 75.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 23,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 78.7,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 24,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 82.4,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 25,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 86.1,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 26,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 89.8,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 27,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 93.5,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 28,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 97.2,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 29,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 100.9,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 30,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 4.6,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 31,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 8.3,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 32,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 12.0,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 33,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 15.7,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 34,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 19.4,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 35,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 23.1,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 36,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 26.8,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 37,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 30.5,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 38,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 34.2,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 39,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 37.9,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 40,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 41.6,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 41,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 45.3,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 42,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 49.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 43,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 52.7,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 44,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 56.4,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 45,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 60.1,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 46,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 9,5cm",
+      "quantidade": 63.8,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 47,
+      "categoria": null,
+      "descricao": "Parede básica: Drywall 12,5cm",
+      "quantidade": 67.5,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    },
+    {
+      "linha": 48,
+      "categoria": null,
+      "descricao": "Parede básica: Bloco concreto 14cm",
+      "quantidade": 71.2,
+      "unidade": "m2",
+      "nivel": "Pavimento 2",
+      "extras": {}
+    },
+    {
+      "linha": 49,
+      "categoria": null,
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 74.9,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    {
+      "linha": 50,
+      "categoria": null,
+      "descricao": "Parede básica: Vidro temperado",
+      "quantidade": 78.6,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 51,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 82.3,
+      "unidade": "m2",
+      "nivel": "Pavimento 1",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}
