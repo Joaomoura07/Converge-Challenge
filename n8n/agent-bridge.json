@@ -1,0 +1,53 @@
+{
+  "id": "AgentBridge00001",
+  "name": "Ponte: Webhook -> Agente (FastAPI) -> Resposta",
+  "active": false,
+  "nodes": [
+    {
+      "id": "0b6c2c9e-1f1a-4c1e-9a51-000000000001",
+      "name": "Recebe tarefa",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "7f0d7a3e-agent-bridge-0001",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agente",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "0b6c2c9e-1f1a-4c1e-9a51-000000000002",
+      "name": "Chama o agente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/agent/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task: $json.body.task, session_id: $json.body.session_id || null, tags: ['n8n'] }) }}",
+        "options": { "timeout": 180000 }
+      }
+    },
+    {
+      "id": "0b6c2c9e-1f1a-4c1e-9a51-000000000003",
+      "name": "Devolve resposta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [520, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: $json.status, resposta: $json.output, custo_usd: $json.cost_usd, trace_url: $json.trace_url } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Recebe tarefa": { "main": [[{ "node": "Chama o agente", "type": "main", "index": 0 }]] },
+    "Chama o agente": { "main": [[{ "node": "Devolve resposta", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

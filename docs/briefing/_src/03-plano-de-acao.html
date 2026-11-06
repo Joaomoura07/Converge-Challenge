@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>03 · Plano de Ação</title>
+<link rel="stylesheet" href="style.css"></head><body>
+
+<section class="cover">
+  <div>
+    <div class="kicker">Converge Challenge · Briefing do time · Documento 3 de 3</div>
+    <h1>Plano de Ação</h1>
+    <p class="sub">Do check-in no hotel até o palco do Demo Day: o que fazer, em que ordem, quem faz e o que já deixamos pronto.</p>
+  </div>
+  <div class="doc-n">03</div>
+  <div class="toc"><strong>Neste documento</strong>
+    <ol>
+      <li>Regras que mudam o plano (leia primeiro)</li>
+      <li>O que já está pronto</li>
+      <li>Sexta à noite: setup + ideação (sem código do projeto)</li>
+      <li>Sábado: construção, hora a hora</li>
+      <li>Domingo: polimento, submissão e Demo Day</li>
+      <li>Papéis, roteiro do pitch, checklist de submissão, prêmio AWS e plano B</li>
+    </ol>
+  </div>
+  <div class="meta">Time <strong>Avisa que é Agente</strong> · Local: <strong>Porto Digital, Av. Cais do Apolo, 222, 8º andar, Bairro do Recife</strong><br>
+  Credenciamento sábado 08h30 · Hacking a partir das 10h · Submissão até domingo 13h · Demo Day 16h</div>
+</section>
+
+<h2><span class="num">1</span>Regras que mudam o plano</h2>
+<div class="box bad"><span class="title">⛔ Nada de código do projeto antes de sábado, 10h</span>
+O guia é explícito: <em>"Ninguém escreve código do projeto antes deste horário"</em>, e os organizadores podem pedir o <strong>histórico de commits</strong>. O material de apresentação também só vale durante o evento.<br>
+<strong>Por isso, o "mão na massa da noite" (escrever o system prompt e codar as tools na sexta) saiu do plano.</strong> Na sexta, decidimos <em>o quê</em> e desenhamos no papel. No sábado às 10h, codamos.</div>
+<div class="grid2">
+  <div class="box ok"><span class="title">✅ Permitido antes</span>Pesquisa, conversar com potenciais clientes, modelagem de negócio, arquitetura no papel, preparar o ambiente (contas, chaves, Docker, repositório-base), especificar casos de teste em texto.</div>
+  <div class="box bad"><span class="title">❌ Só a partir de sábado 10h</span>Código do produto (tools do domínio, prompt do domínio, mocks, dados sintéticos em código), build, slides e vídeo.</div>
+</div>
+<div class="box warn"><span class="title">Correções do plano anterior</span>
+<ul>
+  <li><strong>Não comentem o <code>@observe</code> nem a linha do <code>trace_url</code>.</strong> O erro 500 já foi corrigido no repositório: sem chave válida do Langfuse, o tracing desliga sozinho. Basta dar <code>git pull</code>.</li>
+  <li><strong>Não precisa de <code>pip install langfuse</code>.</strong> Ele já está no <code>requirements.txt</code>. "Módulo não encontrado" significa que o ambiente virtual não foi ativado: <code>.venv\Scripts\activate</code>.</li>
+  <li>O evento é no <strong>Porto Digital</strong> (Bairro do Recife), não no CIn-UFPE.</li>
+  <li>O código de crédito da Featherless <strong>vence em 8/11</strong> e tem limite de resgates: quem ainda não resgatou, resgate hoje.</li>
+</ul></div>
+<div class="box info"><span class="title">Pergunte no grupo do WhatsApp</span>
+Nosso repositório-base (infraestrutura genérica, sem lógica de produto) foi criado antes do evento. Isso se enquadra em "preparação de ambiente", mas <strong>vale confirmar com a organização</strong>. Se disserem que não pode, recriamos o repositório no sábado a partir desses arquivos.</div>
+
+<h2><span class="num">2</span>O que já está pronto</h2>
+<table>
+  <thead><tr><th>Item</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>Repositório com FastAPI + agente ReAct + tools tipadas + Docker</td><td>✅ no GitHub</td></tr>
+    <tr><td>GLM-5.2 com tool calling nativo</td><td>✅ testado com chave real</td></tr>
+    <tr><td>Ponte n8n → API → agente → resposta (<code>n8n/agent-bridge.json</code>)</td><td>✅ testada de ponta a ponta (10,6 s, US$ 0,0022)</td></tr>
+    <tr><td>Imagem Docker do n8n baixada (cerca de 2 GB em disco)</td><td>✅ no notebook do Enzo</td></tr>
+    <tr><td>Escalonamento humano, 3 falhas → escala, modelo reserva, custo por execução</td><td>✅ testados com LLM simulado</td></tr>
+    <tr><td>Skills do time para Claude Code / Codex / ChatGPT + <code>AGENTS.md</code></td><td>✅</td></tr>
+    <tr><td><code>scripts/check_setup.py</code> (confere tudo em 1 comando)</td><td>✅</td></tr>
+    <tr><td>Chaves reais do Langfuse</td><td>⚠️ pendente (placeholder no <code>.env</code>)</td></tr>
+    <tr><td>Tabela <code>agent_runs</code> no Supabase</td><td>⚠️ pendente (rodar o SQL)</td></tr>
+    <tr><td>Túnel (ngrok/cloudflared) e deploy público</td><td>⚠️ pendente</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">3</span>Sexta à noite (hotel)</h2>
+<h3>Fase 1 · Fechar o ambiente (≈ 45 min). Todos, cada um na sua máquina</h3>
+<ul class="check">
+  <li><code>git pull</code> e ativar o venv; <code>pip install -r requirements.txt</code></li>
+  <li>Cada pessoa com a <strong>própria</strong> <code>FEATHERLESS_API_KEY</code> no <code>.env</code> (créditos resgatados)</li>
+  <li>Langfuse: criar o projeto, gerar as chaves reais (cerca de 40 caracteres) e conferir se a região bate com o <code>LANGFUSE_HOST</code>. Compartilhar o projeto com o time</li>
+  <li>Supabase: no <em>SQL Editor</em>, rodar <code>sql/001_agent_runs.sql</code></li>
+  <li><code>python -m scripts.check_setup</code> com <strong>todos os itens [OK]</strong></li>
+  <li><code>docker compose --profile n8n up -d --build</code> → importar, publicar e reiniciar a ponte (ver Documento 2) → testar o <code>curl</code> no webhook</li>
+  <li>Instalar o túnel (ngrok com authtoken, ou cloudflared) e testar <code>localhost:8000/docs</code> pela URL pública, no celular e no 4G</li>
+  <li>Escolher onde fazer o deploy (serviço que rode o <code>Dockerfile</code>) e criar a conta. Subir a base atual como teste é preparação de ambiente</li>
+  <li>Baixar tudo que for pesado <em>no hotel</em>: a rede do evento é compartilhada</li>
+  <li>Lembrete no celular: <strong>cancelar o plano da Featherless</strong> antes da primeira cobrança</li>
+</ul>
+<p class="small"><strong>Pronto quando:</strong> o webhook do n8n devolve uma resposta do agente e um trace aparece no Langfuse.</p>
+
+<h3>Fase 2 · Ideação e arquitetura no papel (≈ 1h30). Notebooks fechados</h3>
+<ol>
+  <li><strong>Escolher a dor</strong> com o Documento 1 (filtro de 6 perguntas + matriz). Recomendação: <em>Guardião de Férias e Prazos CLT</em>.</li>
+  <li><strong>Preencher o canvas de uma página</strong> (abaixo).</li>
+  <li><strong>Desenhar o fluxo ReAct</strong> do caminho feliz e da exceção estrela, passo a passo: <em>Pensa → Ferramenta → Observa → …</em></li>
+  <li><strong>Listar as ferramentas</strong>: nome, o que recebe, o que devolve, se escreve dados (aí precisa de <code>dry_run</code>). Só no papel.</li>
+  <li><strong>Escrever 6 a 8 casos de teste em português</strong> (entrada → resultado esperado), incluindo exceções. Viram os evals no sábado.</li>
+  <li><strong>Especificar os dados sintéticos</strong>: quantos colaboradores, quais campos, quais "pegadinhas" plantar (férias vencendo, conflito de datas).</li>
+</ol>
+
+<div class="card"><h3>Canvas de uma página</h3>
+<table><tbody>
+  <tr><td style="width:34%"><strong>Problema</strong> (com número)</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Quem sofre / quem paga</strong> (cargo)</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Como resolvem hoje</strong> (planilha? consultoria?)</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>O que o agente fecha</strong> (do pedido ao resultado)</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Exceção estrela</strong> da demo</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Onde o humano decide</strong></td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Ganho mensurável</strong> (R$, horas, prazo)</td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Preço / modelo de receita</strong></td><td>_______________________________________________</td></tr>
+  <tr><td><strong>Why now</strong></td><td>_______________________________________________</td></tr>
+</tbody></table></div>
+
+<h3>Fase 3 · Validação rápida (≈ 30 min)</h3>
+<ul>
+  <li>Mandar 3 perguntas por WhatsApp para alguém que trabalha com RH/DP ou contabilidade (conversar com clientes é permitido): <em>quanto tempo gasta, quanto já pagou de multa, quem compraria</em>.</li>
+  <li>Rascunhar a narrativa do pitch em tópicos, no papel (slides só no sábado).</li>
+  <li><strong>Dormir.</strong> Sábado começa às 08h30.</li>
+</ul>
+
+<h2 class="page-break"><span class="num">4</span>Sábado: construção</h2>
+<table class="timeline">
+  <thead><tr><th>Hora</th><th>O que</th><th>Marco</th></tr></thead>
+  <tbody>
+    <tr><td>08h30</td><td>Credenciamento e café. Achar mesa perto de tomada (levar extensão!)</td><td></td></tr>
+    <tr><td>09h30</td><td>Abertura e briefing. <strong>Anotar qualquer mudança de regra ou critério</strong></td><td></td></tr>
+    <tr><td>10h00</td><td>Primeiro commit do projeto. Dividir arquivos por pessoa</td><td></td></tr>
+    <tr><td>10h–12h</td><td>Dados sintéticos + mocks dos sistemas + as 2 primeiras tools, cada uma testada isolada</td><td></td></tr>
+    <tr><td>12h–14h</td><td>System prompt do domínio + loop no caminho feliz, de ponta a ponta. Almoço em turnos</td><td><strong>M1 (14h): caminho feliz rodando</strong></td></tr>
+    <tr><td>14h–16h</td><td>Exceção estrela + <code>escalate_to_human</code> + rodar os casos de teste</td><td></td></tr>
+    <tr><td>16h–17h</td><td>Mentoria com perguntas concretas (Documento 1, seção 6). Ajustar o rumo</td><td><strong>M2 (17h): demo gravável</strong></td></tr>
+    <tr><td>Noite</td><td>Deploy público · domínio + landing + e-mail (prêmio AWS) · slides v1 · evals com tag <code>eval</code> · interface simples, se sobrar tempo</td><td><strong>M3: link público estável</strong></td></tr>
+  </tbody>
+</table>
+<div class="box warn"><span class="title">Regra de corte</span>
+Se às 14h o caminho feliz não estiver rodando, <strong>cortem escopo</strong> (menos ferramentas, menos integrações), não horas de sono. Uma coisa muito bem feita vence seis pela metade.</div>
+
+<h2><span class="num">5</span>Domingo: entrega</h2>
+<table class="timeline">
+  <thead><tr><th>Hora</th><th>O que</th></tr></thead>
+  <tbody>
+    <tr><td>08h30</td><td>Café. Rodar os evals; corrigir só o que quebra a demo</td></tr>
+    <tr><td>10h30</td><td><strong>Congelar funcionalidades.</strong> Daqui em diante, só correção de bug</td></tr>
+    <tr><td>10h30–11h30</td><td>Gravar o <strong>vídeo de demonstração</strong> (também é o plano B se a demo ao vivo falhar)</td></tr>
+    <tr><td>11h30–12h30</td><td>Escrever a submissão e <strong>submeter até 12h30</strong> (o prazo é 13h; margem para imprevistos)</td></tr>
+    <tr><td>13h–16h</td><td>Ensaiar o pitch pelo menos 5 vezes, com cronômetro. Testar o link público em outro aparelho</td></tr>
+    <tr><td>16h00</td><td>Demo Day: Langfuse aberto em outra aba (filtro <code>tags = demo</code>), vídeo de reserva pronto</td></tr>
+    <tr><td>17h30</td><td>Premiação</td></tr>
+  </tbody>
+</table>
+
+<h2 class="page-break"><span class="num">6</span>Papéis, pitch, submissão e plano B</h2>
+<h3>Papéis (ajustem ao tamanho do time)</h3>
+<table>
+  <thead><tr><th>Papel</th><th>Responsável por</th><th>Arquivos</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Agente</strong></td><td>Prompt, loop, tools do domínio, evals</td><td><code>prompts/</code>, <code>src/agent.py</code>, <code>src/tools.py</code></td></tr>
+    <tr><td><strong>Integrações</strong></td><td>Mocks, dados sintéticos, Supabase, n8n, deploy, link público</td><td><code>sql/</code>, <code>n8n/</code>, <code>src/database.py</code></td></tr>
+    <tr><td><strong>Produto e pitch</strong></td><td>Números de mercado, conversas com mentores, slides, vídeo, submissão, domínio/landing (AWS)</td><td>Material de apresentação</td></tr>
+  </tbody>
+</table>
+
+<h3>Roteiro do pitch (3 minutos)</h3>
+<table class="timeline">
+  <thead><tr><th>Tempo</th><th>Conteúdo</th></tr></thead>
+  <tbody>
+    <tr><td>0:00–0:25</td><td><strong>Dor com número.</strong> Ex.: "Férias vencidas custam o dobro. Em um DP de 300 pessoas, isso é controlado em planilha."</td></tr>
+    <tr><td>0:25–0:45</td><td><strong>Solução em uma frase:</strong> "Um digital worker que conduz o processo de ponta a ponta e chama o humano só quando precisa decidir."</td></tr>
+    <tr><td>0:45–2:00</td><td><strong>Demo ao vivo:</strong> caminho feliz → exceção estrela → escalonamento → trace no Langfuse com custo da execução</td></tr>
+    <tr><td>2:00–2:35</td><td><strong>Negócio:</strong> quem paga, preço, conta de mercado, why now, Tako como prova de que o mercado compra</td></tr>
+    <tr><td>2:35–3:00</td><td><strong>Fechamento:</strong> ganho (horas/R$ por mês) × custo por execução. Próximo passo</td></tr>
+  </tbody>
+</table>
+
+<h3>Checklist de submissão (painel da Canastra, até 13h)</h3>
+<ul class="check">
+  <li>Descrição: problema, para quem, solução, <strong>como o agente funciona</strong></li>
+  <li>Sinalizar que responde ao <strong>Desafio Tako</strong> (se for o caso)</li>
+  <li>Vídeo de demonstração</li>
+  <li>Link navegável e <strong>testável pelos jurados</strong> (deploy, não o notebook)</li>
+  <li>Material de apresentação do Demo Day</li>
+  <li>Ferramentas, modelos e APIs usados: Featherless (GLM-5.2, Qwen3), Langfuse, Supabase, FastAPI, n8n, Docker, assistentes de código usados</li>
+  <li>Instruções para o jurado testar: o que digitar, o que esperar, um caso de exceção</li>
+</ul>
+
+<h3>Prêmio AWS: deixar resolvido no sábado à noite</h3>
+<div class="box info">Os créditos (US$ 5–10 mil) só são liberados com: <strong>(1)</strong> site no ar em domínio próprio, <strong>(2)</strong> e-mail corporativo no mesmo domínio (Gmail, Outlook e .edu são recusados), <strong>(3)</strong> conta AWS ativa. Registrar um <code>.com.br</code> leva minutos, e o registro não é coberto pelos créditos. Uma landing de uma página basta.</div>
+
+<h3>Plano B</h3>
+<table>
+  <thead><tr><th>Se…</th><th>Então…</th></tr></thead>
+  <tbody>
+    <tr><td>O Wi-Fi do evento cair</td><td>Hotspot do celular. Deploy público não depende do notebook</td></tr>
+    <tr><td>Featherless 503 / modelo frio</td><td>O modelo reserva entra sozinho. Se persistir, trocar <code>FEATHERLESS_MODEL</code> no <code>.env</code></td></tr>
+    <tr><td>Créditos de uma pessoa acabarem</td><td>Trocar para a chave de outro integrante</td></tr>
+    <tr><td>Langfuse fora do ar</td><td><code>LANGFUSE_ENABLED=false</code>: a API segue funcionando</td></tr>
+    <tr><td>URL do túnel mudar</td><td>Atualizar no n8n, ou usar o deploy com URL fixa</td></tr>
+    <tr><td>A demo travar no palco</td><td>Vídeo gravado no domingo de manhã, já aberto em outra aba</td></tr>
+    <tr><td>Conflito de git em cima da hora</td><td>Uma pessoa só faz merge na <code>main</code> a partir das 10h30 de domingo</td></tr>
+  </tbody>
+</table>
+<p class="muted small" style="margin-top:14px">"Prove, não afirme." Evidência ao vivo convence mais do que um slide dizendo que funciona. Boa viagem e bom descanso!</p>
+</body></html>
