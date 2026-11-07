@@ -145,7 +145,7 @@ def _porteiro() -> asyncio.Semaphore:
 def _cliente() -> AsyncOpenAI:
     s = get_settings()
     # Tempo curto + 1 nova tentativa: se o modelo principal travar, a reserva assume rápido (demo de ~30 s).
-    return AsyncOpenAI(api_key=s.featherless_api_key or "missing", base_url=s.featherless_base_url,
+    return AsyncOpenAI(api_key=s.featherless_key or "missing", base_url=s.featherless_base_url,
                        timeout=TIMEOUT_EXTRACAO_S, max_retries=1)
 
 
