@@ -34,29 +34,74 @@ type Movel =
 const caixa = (x1: number, y1: number, x2: number, y2: number, h: number, z0 = 0): Movel => ({ tipo: "caixa", x1, y1, x2, y2, z0, h });
 const cilindro = (cx: number, cy: number, r: number, h: number, z0 = 0): Movel => ({ tipo: "cilindro", cx, cy, r, z0, h });
 
-// Os mesmos contornos da planta ganham volume quando a câmera chega perto.
+// Móveis montados com as partes reais (tampo + pés, assento + encosto + braços, laterais + prateleiras…),
+// encostados em parede e fora do giro das portas. Unidade: centímetros (pé-direito 260).
+// Cômodos: estar x -1200..-300 y -800..200 · jantar x -1200..-300 y 200..800 · escritório x -300..400 y -800..100
+// banho x 400..800 y -800..250 · cozinha x 800..1200 y -800..250 · suíte x 400..1200 y 250..800 · circulação x -300..400 y 100..800
+type Lado = "n" | "s" | "l" | "o"; // para onde a pessoa sentada olha: n = -y, s = +y, l = +x, o = -x
+function pesMesa(x1: number, y1: number, x2: number, y2: number, h: number, e = 5): Movel[] {
+  return [caixa(x1 + 3, y1 + 3, x1 + 3 + e, y1 + 3 + e, h), caixa(x2 - 3 - e, y1 + 3, x2 - 3, y1 + 3 + e, h),
+    caixa(x1 + 3, y2 - 3 - e, x1 + 3 + e, y2 - 3, h), caixa(x2 - 3 - e, y2 - 3 - e, x2 - 3, y2 - 3, h)];
+}
+function cadeira(cx: number, cy: number, olha: Lado, t = 35): Movel[] {
+  const assento = caixa(cx - t, cy - t, cx + t, cy + t, 44);
+  const encosto = {
+    n: caixa(cx - t, cy + t - 12, cx + t, cy + t, 46, 44), s: caixa(cx - t, cy - t, cx + t, cy - t + 12, 46, 44),
+    l: caixa(cx - t, cy - t, cx - t + 12, cy + t, 46, 44), o: caixa(cx + t - 12, cy - t, cx + t, cy + t, 46, 44),
+  }[olha];
+  return [assento, encosto];
+}
+function planta(cx: number, cy: number): Movel[] {
+  return [cilindro(cx, cy, 22, 42), cilindro(cx, cy, 38, 50, 42)];
+}
+
 const MOVEIS: Movel[] = [
-  // estar: sofá (assento + encosto), chaise, mesa de centro, pufe
-  caixa(-1120, -700, -680, -560, 42), caixa(-1120, -700, -680, -650, 38, 42),
-  caixa(-1120, -560, -1040, -380, 42), caixa(-900, -420, -700, -300, 36), cilindro(-500, -650, 70, 40),
-  // jantar: tampo redondo sobre pé central, 4 cadeiras com encosto
+  // ESTAR: rack com TV na parede esquerda, sofá de frente, mesa de centro, tapete, poltrona, luminária e planta
+  caixa(-1195, -560, -1150, -240, 45), caixa(-1180, -520, -1172, -280, 75, 70),
+  caixa(-830, -590, -740, -210, 42), caixa(-760, -590, -740, -210, 44, 42),
+  caixa(-830, -590, -740, -570, 22, 42), caixa(-830, -230, -740, -210, 22, 42),
+  caixa(-1080, -520, -860, -280, 1),
+  caixa(-1030, -470, -900, -330, 5, 35), ...pesMesa(-1030, -470, -900, -330, 35),
+  caixa(-1000, -775, -920, -695, 40), caixa(-1000, -775, -920, -757, 45, 40),
+  caixa(-1000, -775, -985, -695, 20, 40), caixa(-935, -775, -920, -695, 20, 40),
+  cilindro(-790, -650, 14, 3), cilindro(-790, -650, 3, 148), cilindro(-790, -650, 26, 28, 148),
+  ...planta(-360, -740),
+  // JANTAR: mesa redonda com pé central e 4 cadeiras; aparador; pendente sobre a mesa
   cilindro(-750, 520, 120, 6, 72), cilindro(-750, 520, 18, 72),
-  caixa(-785, 330, -715, 390, 44), caixa(-785, 330, -715, 342, 46, 44),
-  caixa(-785, 650, -715, 710, 44), caixa(-785, 698, -715, 710, 46, 44),
-  caixa(-945, 490, -875, 550, 44), caixa(-945, 490, -933, 550, 46, 44),
-  caixa(-625, 490, -555, 550, 44), caixa(-567, 490, -555, 550, 46, 44),
-  // escritório: bancada, cadeira, duas estantes
-  caixa(-240, -760, 340, -660, 6, 72), caixa(-230, -750, -200, -670, 72), caixa(300, -750, 330, -670, 72),
-  caixa(-60, -620, 60, -520, 46), caixa(-220, -200, 0, 40, 170), caixa(160, -200, 340, 40, 170),
-  // cozinha: bancadas em L e ilha
-  caixa(820, -780, 1180, -700, 90), caixa(1100, -700, 1180, -380, 90), caixa(870, -560, 1080, -440, 90),
-  // banho: bancada e vaso
-  caixa(440, -760, 760, -620, 84), cilindro(520, -420, 40, 40), caixa(640, -300, 760, -120, 48),
-  // suíte: cama, cabeceira, travesseiros, guarda-roupa
-  caixa(520, 380, 900, 720, 48), caixa(520, 360, 900, 385, 110), caixa(560, 400, 860, 480, 14, 48),
-  caixa(940, 380, 1160, 460, 210),
-  // circulação: escrivaninha
-  caixa(-260, 300, 120, 380, 74),
+  ...cadeira(-750, 360, "s"), ...cadeira(-750, 680, "n"), ...cadeira(-910, 520, "l"), ...cadeira(-590, 520, "o"),
+  caixa(-1195, 330, -1150, 690, 80),
+  cilindro(-750, 520, 32, 16, 192), cilindro(-750, 520, 1.5, 52, 208),
+  // ESCRITÓRIO: mesa de trabalho sob a janela com monitor, cadeira giratória, estante vazada na parede, planta
+  caixa(-150, -790, 250, -660, 4, 72), ...pesMesa(-150, -790, 250, -660, 72),
+  caixa(10, -772, 130, -766, 58, 92), cilindro(70, -760, 4, 20, 76),
+  cilindro(70, -600, 30, 4), cilindro(70, -600, 4, 40, 4), cilindro(70, -600, 26, 7, 44), caixa(45, -572, 95, -566, 46, 52),
+  caixa(-295, -720, -255, -714, 190), caixa(-295, -306, -255, -300, 190),
+  ...[0, 46, 92, 138, 184].map((z) => caixa(-295, -714, -255, -306, 4, z)),
+  caixa(-290, -700, -262, -620, 34, 4), caixa(-290, -520, -262, -420, 30, 50), caixa(-290, -660, -262, -560, 32, 96),
+  caixa(-290, -440, -262, -330, 34, 142),
+  ...planta(-245, 45),
+  // BANHO: gabinete com cuba e espelho, vaso com caixa acoplada, box de vidro com chuveiro
+  caixa(460, -795, 740, -740, 82), cilindro(600, -767, 18, 4, 80), caixa(490, -799, 710, -795, 80, 110),
+  caixa(770, -625, 795, -575, 40, 40), cilindro(745, -600, 22, 40),
+  caixa(600, 60, 795, 245, 5), caixa(600, 60, 604, 245, 195, 5), caixa(604, 60, 700, 64, 195, 5),
+  cilindro(760, 215, 10, 4, 200),
+  // COZINHA: bancada em L com pia e cooktop, geladeira de duas portas, mesinha redonda com 2 cadeiras
+  caixa(820, -795, 1190, -735, 90), caixa(1130, -735, 1190, -420, 90), caixa(940, -785, 1020, -745, 3, 88),
+  cilindro(1148, -690, 8, 2, 90), cilindro(1172, -690, 8, 2, 90), cilindro(1148, -650, 8, 2, 90), cilindro(1172, -650, 8, 2, 90),
+  caixa(1120, -400, 1190, -330, 120), caixa(1120, -400, 1190, -330, 68, 123),
+  cilindro(980, 60, 55, 4, 72), cilindro(980, 60, 8, 72),
+  ...cadeira(980, -35, "s", 28), ...cadeira(980, 155, "n", 28),
+  // SUÍTE: cama de casal com cabeceira, colchão, edredom e travesseiros; criados com abajur; guarda-roupa; tapete; poltrona
+  caixa(640, 255, 820, 272, 115), caixa(650, 272, 810, 470, 30), caixa(655, 277, 805, 465, 20, 30),
+  caixa(652, 360, 808, 468, 4, 50), caixa(670, 285, 725, 325, 12, 50), caixa(735, 285, 790, 325, 12, 50),
+  caixa(585, 258, 635, 300, 50), cilindro(610, 279, 4, 25, 50), cilindro(610, 279, 15, 18, 75),
+  caixa(825, 258, 875, 300, 50), cilindro(850, 279, 4, 25, 50), cilindro(850, 279, 15, 18, 75),
+  caixa(405, 520, 465, 607, 210), caixa(405, 610, 465, 697, 210), caixa(405, 700, 465, 790, 210),
+  caixa(600, 500, 860, 650, 1),
+  caixa(1090, 690, 1170, 770, 40), caixa(1090, 752, 1170, 770, 45, 40),
+  // CIRCULAÇÃO: aparador com espelho e objeto, planta
+  caixa(-60, 755, 200, 795, 80), caixa(-20, 795, 160, 799, 90, 100), cilindro(170, 775, 10, 25, 80),
+  ...planta(-250, 740),
 ];
 
 function gerarPlanta() {
@@ -111,20 +156,12 @@ function gerarPlanta() {
   // janelas
   janelaH(-1000, -600, -800); janelaH(-100, 250, -800); janelaH(900, 1120, -800);
   janelaH(-1000, -500, 800); janelaH(550, 1050, 800); janelaV(-600, -200, -1200); janelaV(350, 650, 1200);
-  // móveis: estar
-  ret(-1120, -700, -680, -560); ret(-1120, -560, -1040, -380); ret(-900, -420, -700, -300);
-  arco(-500, -650, 70, 0, Math.PI * 2);
-  // jantar
-  arco(-750, 520, 120, 0, Math.PI * 2); arco(-750, 520, 60, 0, Math.PI * 2);
-  for (const [cx, cy] of [[-750, 360], [-750, 680], [-910, 520], [-590, 520]]) ret(cx - 35, cy - 30, cx + 35, cy + 30);
-  // escritório
-  ret(-240, -760, 340, -660); ret(-60, -620, 60, -520); ret(-220, -200, 0, 40); ret(160, -200, 340, 40);
-  // cozinha
-  ret(820, -780, 1180, -700); ret(1100, -700, 1180, -380); ret(870, -560, 1080, -440);
-  arco(960, -740, 22, 0, Math.PI * 2); arco(1040, -740, 22, 0, Math.PI * 2);
-  // banheiro e quarto
-  ret(440, -760, 760, -620); arco(520, -420, 40, 0, Math.PI * 2); ret(640, -300, 760, -120);
-  ret(520, 380, 900, 720); ret(560, 400, 860, 480); ret(940, 380, 1160, 460); ret(-260, 300, 120, 380);
+  // contorno no chão de cada móvel que encosta no piso (os pés e peças pequenas ficam de fora)
+  for (const m of MOVEIS) {
+    if (m.z0 > 1) continue;
+    if (m.tipo === "caixa" && Math.max(m.x2 - m.x1, m.y2 - m.y1) >= 20) ret(m.x1, m.y1, m.x2, m.y2);
+    if (m.tipo === "cilindro" && m.r >= 15) arco(m.cx, m.cy, m.r, 0, Math.PI * 2);
+  }
   // pisos: porcelanato (grade) na cozinha e tábuas no estar
   for (let x = 860; x < 1200; x += 70) linha(x, -800, x, 250, PISO, 0, 60);
   for (let y = -760; y < 250; y += 70) linha(800, y, 1200, y, PISO, 0, 60);
@@ -142,7 +179,7 @@ function gerarPlanta() {
   cotaV(-800, 200, -1320); cotaV(200, 800, -1320);
 
   const rotulos: Rotulo[] = [
-    { x: -900, y: -150, texto: "Estar" }, { x: -750, y: 330, texto: "Jantar" }, { x: 50, y: -300, texto: "Escritório" },
+    { x: -900, y: -150, texto: "Estar" }, { x: -1010, y: 280, texto: "Jantar" }, { x: 50, y: -300, texto: "Escritório" },
     { x: 1000, y: -120, texto: "Cozinha" }, { x: 600, y: -40, texto: "Banho" }, { x: 760, y: 560, texto: "Suíte" },
     { x: -40, y: 560, texto: "Circulação" },
     { x: -750, y: -960, texto: "9,00", cota: true }, { x: 50, y: -960, texto: "7,00", cota: true },
