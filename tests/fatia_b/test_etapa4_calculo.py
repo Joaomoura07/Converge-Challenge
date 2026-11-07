@@ -170,3 +170,21 @@ def test_etapa4_ponta_a_ponta_real():
     assert c.qtd_embalagens == 2 and c.embalagem
     assert 300 <= c.preco_emb_med <= 1500, f"preço fora do plausível para lata 18 L: {c.preco_emb_med}"
     assert c.preco_emb_min <= c.preco_emb_med <= c.preco_emb_max and c.fontes
+
+
+# ---------------------------------------------------------------- material reconhecido pela marca/linha (achado no site, 07/11)
+@pytest.mark.parametrize("produto,qtd,un,emb,n", [
+    ("Suvinil T. Seda branco neve", 520, "m2", "latão 18 L", 4),          # 520/8 ×1,05 = 68,3 L → 4 latões
+    ("Coral Decora cinza urbano", 40, "m2", "galão 3,6 L", 2),            # 40/8 ×1,05 = 5,25 L
+    ("Quartzolit AC-III", 48, "m2", "saco 20 kg", 13),                    # argamassa: 5 kg/m²
+    ("Votomassa AC-II", 48, "m2", "saco 20 kg", 13),                      # antes virava "massa" (0,6 kg/m²): 2 sacos
+    ("Selador Coral", 100, "m2", "lata 18 L", 1),                         # continua selador (11 m²/L), não tinta
+])
+def test_material_reconhecido_pela_marca(produto, qtd, un, emb, n):
+    assert qtd_embalagens(produto, qtd, un, conteudo_embalagem(emb))[0] == n
+
+
+def test_falha_de_conversao_nao_vira_conta_na_tela():
+    ext = ResultadoExtracao(ofertas=[of("Leroy Merlin", 2699.0, "unidade"), of("Mercado Livre", 1598.0, "unidade")])
+    c = calcular(ItemEntrada(id="1", descricao="Vidro temperado 8 mm", quantidade=24, unidade="m2"), ext)
+    assert c.tem_preco and c.qtd_embalagens is None and c.premissa is None
