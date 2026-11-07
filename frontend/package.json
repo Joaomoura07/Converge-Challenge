@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
     "next": "15.5.29",
     "papaparse": "5.4.1",
     "react": "19.1.10",

@@ -1,0 +1,56 @@
+/* Página de resultado (etapa 07): só o esqueleto; B e C trazem os próprios estilos. */
+.obra-bloco {
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px solid #d8d0bd;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.obra-bloco[data-encaixe] {
+  border-style: dashed;
+}
+.obra-bloco__titulo {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-size: 20px;
+}
+.obra-bloco__texto {
+  margin: 0 0 12px;
+  max-width: 64ch;
+}
+.obra-bloco__aviso {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid #b24a1e;
+  background: #fbebe8;
+  color: #7a2c10;
+  max-width: 64ch;
+}
+.obra-mono {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 13px;
+  word-break: break-all;
+}
+.obra-conexao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.obra-conexao__ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9a9aa0;
+}
+.obra-conexao--ao-vivo .obra-conexao__ponto {
+  background: #2f7d4f;
+}
+.obra-conexao--reconectando .obra-conexao__ponto,
+.obra-conexao--conectando .obra-conexao__ponto {
+  background: #c28a00;
+}
+.obra-conexao--erro-leitura .obra-conexao__ponto,
+.obra-conexao--sem-configuracao .obra-conexao__ponto {
+  background: #a3261f;
+}
