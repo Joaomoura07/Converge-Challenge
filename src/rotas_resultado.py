@@ -91,6 +91,21 @@ def _segundos(inicio: Any, fim: Any) -> float | None:
         return None
 
 
+def _reaproveitados(itens: list[dict[str, Any]], inicio: Any) -> int:
+    """Itens cujo preço é anterior ao início desta pesquisa: vieram do cache (a B grava em `preco_data`
+    a data do preço, que no cache é a da pesquisa original). Folga de 1 s para relógios diferentes."""
+    if not inicio:
+        return 0
+    n = 0
+    for i in itens:
+        if not i.get("preco_data"):
+            continue
+        antes = _segundos(i["preco_data"], inicio)
+        if antes is not None and antes > 1.0:
+            n += 1
+    return n
+
+
 def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
                        fornecedores: list[Fornecedor]) -> dict[str, Any]:
     """Roda logística (E7), viabilidade (E8) e ganho (E10). Cada parte vem ``None`` se faltar dado."""
@@ -109,7 +124,9 @@ def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
     inicio = orc.get("pesquisa_iniciada_em") or orc.get("iniciado_em")
     fim = orc.get("pesquisa_concluida_em") or orc.get("concluido_em") or agora
     seg = _segundos(inicio, fim)
-    ganho = calcular_ganho(len(itens), seg, float(orc.get("custo_usd") or 0)) if seg is not None else None
+    ganho = (calcular_ganho(len(itens), seg, float(orc.get("custo_usd") or 0),
+                            reaproveitados=_reaproveitados(itens, inicio))
+             if seg is not None else None)
 
     return {
         "logistica": lg.model_dump(mode="json") if lg else None,

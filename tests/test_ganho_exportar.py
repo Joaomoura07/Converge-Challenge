@@ -100,3 +100,21 @@ def test_url_que_nao_e_http_nao_vira_hiperlink():
     wb = load_workbook(BytesIO(gerar_xlsx({"nome": "X"}, [it], [C], lg)))
     cel = [c for c in wb["Plano de compra"]["G"] if c.value == "file:///etc/passwd"][0]
     assert cel.hyperlink is None
+
+
+def test_custo_abaixo_de_um_centavo_nao_vira_zero():
+    # US$ 0,000113 × 5,5 = R$ 0,0006: antes aparecia "R$ 0,00", como se tivesse sido de graça
+    g = calcular_ganho(33, 5, custo_usd=0.000113)
+    assert g.texto_custo == "menos de R$ 0,01" and g.resumo.endswith("Custo de IA: menos de R$ 0,01")
+    assert calcular_ganho(33, 5, custo_usd=0).texto_custo == "R$ 0,00"          # zero de verdade: sem chamada à IA
+    assert calcular_ganho(48, 117, custo_usd=0.016792).texto_custo == "R$ 0,09"  # caso real do ensaio
+
+
+def test_precos_reaproveitados_aparecem_no_resumo():
+    g = calcular_ganho(33, 2, custo_usd=0, reaproveitados=29)
+    assert g.resumo == ("À mão: ~9 h 54 min. Aqui: 2 s, com 29 de 33 preços reaproveitados de pesquisa recente. "
+                        "Custo de IA: R$ 0,00")
+    assert g.texto_real == "2 s"                                                  # campos do contrato não mudam
+    assert "1 de 3 preços reaproveitados" in calcular_ganho(3, 10, reaproveitados=1).resumo
+    assert calcular_ganho(3, 10, reaproveitados=9).resumo.count("3 de 3") == 1    # nunca mais que o total
+    assert "reaproveitad" not in calcular_ganho(3, 10).resumo
