@@ -62,11 +62,10 @@
 .in-hero h1 {
   margin: 0;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: clamp(38px, 6.2vw, var(--text-display));
   line-height: var(--leading-display);
-  letter-spacing: 0;
+  letter-spacing: -0.025em;
   color: #fff;
   text-wrap: balance;
 }
@@ -110,11 +109,10 @@
 .in h2 {
   margin: 0;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: clamp(30px, 3.6vw, var(--text-heading-lg));
   line-height: var(--leading-heading-lg);
-  letter-spacing: 0.01em;
+  letter-spacing: -0.02em;
 }
 .in-cabeca p, .in-texto {
   margin: 14px 0 0;
@@ -145,7 +143,6 @@
 .in-previa__titulo {
   margin: 6px 0 0;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: 24px;
 }
@@ -153,7 +150,6 @@
 .in-previa__total .rotulo { display: block; font-size: var(--text-body-sm); color: var(--tinta-fraca); }
 .in-previa__total strong {
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: 32px;
 }
@@ -260,11 +256,10 @@
 .in-passos h3 {
   margin: 28px 0 10px;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: var(--text-subheading);
   line-height: 1.2;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 .in-passos p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--tinta-suave); }
 
@@ -294,7 +289,6 @@
 .in-fontes__item {
   margin: 0 0 16px;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: 20px;
 }
@@ -328,7 +322,6 @@
 }
 .in-numeros strong {
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: clamp(32px, 3.4vw, 42px);
   line-height: 1.1;

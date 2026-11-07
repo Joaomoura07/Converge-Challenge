@@ -3,11 +3,11 @@
    Carregado por último em app/layout.tsx: sobrescreve os tokens de globals.css, papeis-de-cor.css
    e shell.css sem reescrever os arquivos do time. Para desligar o protótipo: remover o import.
    Regras: fundo ônix, cartões grafite um tom acima (sem sombra), texto marfim, UM azul só para
-   a ação principal, controles em pílula, títulos largos (Archivo Expanded) em peso 480.
+   a ação principal, controles em pílula, títulos em Bricolage Grotesque peso 480.
    ===================================================================================== */
 
 /* --- Tokens da referência (Downloads/variables.css, tokens.json, Css.css), com os nomes originais.
-       Fontes "arcadia" são pagas: apontam para Inter (texto) e Archivo Expanded (títulos). --- */
+       Fontes "arcadia" são pagas: apontam para Inter (texto) e Bricolage Grotesque (títulos). --- */
 :root {
   --color-onyx-canvas: #171721;
   --color-graphite-card: #1e1e2a;
@@ -20,7 +20,7 @@
   --color-pure-white: #ffffff;
 
   --font-arcadia: var(--fonte-texto), "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-arcadiadisplay: var(--fonte-titulo), "Archivo", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-arcadiadisplay: var(--fonte-titulo), "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --text-caption: 12px;     --leading-caption: 1;      --tracking-caption: 0.12px;
   --text-body-sm: 14px;     --leading-body-sm: 1;      --tracking-body-sm: 0.07px;
@@ -117,21 +117,20 @@ html ::selection { background: rgba(82, 102, 235, 0.45); color: #fff; }
 html a { color: var(--tinta); }
 html :focus-visible { outline: 2px solid var(--foco); outline-offset: 3px; }
 
-/* ---------- Títulos: largos, peso 480, sem itálico nem palavra em outra cor ---------- */
+/* ---------- Títulos: Bricolage Grotesque, peso 480, sem itálico nem palavra em outra cor ---------- */
 html .marca, html .titulo-secao, html .titulo-menor, html .titulo-obra, html .vazio-titulo, html .sugestao-tipo, html .sh-titulo, html .sh-lateral h2, html .sh-projeto .nome, html .sh-vazio-chamada h2, html .sh-nota .n, html .sh-subtotal .valor, html .sh-ref h3, html .sh-modal h2, html .sh-modal .total strong, html .rs-valor, html .rs-ganho, html .rs-veredito, html .obra-bloco__titulo, html .orc-resultado__titulo {
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
 }
 html .sh-titulo em, html .sh-vazio-chamada h2 em { font-style: normal; }
 /* Escala da referência: heading-lg 42, heading 32, heading-sm 28, 2xl 24, xl-2 21 */
-html .sh-titulo { font-size: clamp(32px, 4.4vw, var(--text-heading-lg)); line-height: var(--leading-heading-lg); letter-spacing: 0.01em; margin: 10px 0 12px; }
-html .titulo-secao, html .sh-vazio-chamada h2 { font-size: var(--text-heading); line-height: var(--leading-heading); letter-spacing: 0.015em; }
+html .sh-titulo { font-size: clamp(32px, 4.4vw, var(--text-heading-lg)); line-height: var(--leading-heading-lg); letter-spacing: -0.02em; margin: 10px 0 12px; }
+html .titulo-secao, html .sh-vazio-chamada h2 { font-size: var(--text-heading); line-height: var(--leading-heading); letter-spacing: -0.015em; }
 html .titulo-obra, html .sh-subtotal .valor, html .rs-valor { font-size: var(--text-heading); line-height: var(--leading-heading); }
-html .sh-lateral h2, html .sh-modal h2 { font-size: var(--text-heading-sm); line-height: var(--leading-heading-sm); letter-spacing: 0.015em; }
+html .sh-lateral h2, html .sh-modal h2 { font-size: var(--text-heading-sm); line-height: var(--leading-heading-sm); letter-spacing: -0.01em; }
 html .titulo-menor, html .vazio-titulo, html .sh-projeto .nome, html .sh-ref h3, html .rs-veredito, html .obra-bloco__titulo, html .orc-resultado__titulo {
-  font-size: var(--text-subheading); line-height: 1.2; letter-spacing: 0.02em;
+  font-size: var(--text-subheading); line-height: 1.2; letter-spacing: -0.005em;
 }
 html body { font-size: var(--text-body); line-height: var(--leading-body); }
 
@@ -179,10 +178,9 @@ html .oa-marca {
   color: var(--tinta);
   text-decoration: none;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 530;
   font-size: 19px;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 html .oa-marca svg { width: 26px; height: 26px; flex: none; }
@@ -442,7 +440,6 @@ html .obra-resumo dt { font-size: var(--text-body-sm); color: var(--tinta-fraca)
 html .obra-resumo__valor {
   margin: 6px 0 0;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
@@ -450,7 +447,6 @@ html .obra-resumo__valor {
 html .obra-resumo__veredito {
   margin: 10px 0 0;
   font-family: var(--serif);
-  font-stretch: 118%;
   font-weight: 480;
   font-size: var(--text-subheading);
   line-height: 1.25;
