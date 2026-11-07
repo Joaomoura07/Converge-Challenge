@@ -1,81 +1,11 @@
 import Link from "next/link";
 import "./inicio.css";
 import { Contador, Revelar } from "./Animacoes";
+import { PlantaViva } from "./PlantaViva";
 
-// Página inicial (protótipo OrçaAI, referência Mercury): hero em tela cheia com planta baixa em SVG,
+// Página inicial (protótipo OrçaAI, referência Mercury): hero em tela cheia com planta baixa 3D viva (PlantaViva),
 // prévia do produto, como funciona, regras do agente, números do ensaio e chamada final.
 // Dados da prévia são fictícios e rotulados. Números do ensaio: orçamento real de 07/11 (16 itens, cozinha 03).
-
-function PlantaBaixa() {
-  return (
-    <svg className="in-planta" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <pattern id="piso" width="24" height="24" patternUnits="userSpaceOnUse">
-          <path d="M24 0H0V24" fill="none" stroke="currentColor" strokeWidth="0.6" />
-        </pattern>
-        <radialGradient id="esmaecer" cx="50%" cy="50%" r="60%">
-          <stop offset="55%" stopColor="#fff" stopOpacity="1" />
-          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-        </radialGradient>
-        <mask id="borda-suave">
-          <rect width="1440" height="900" fill="url(#esmaecer)" />
-        </mask>
-      </defs>
-      <g mask="url(#borda-suave)">
-        {/* piso de porcelanato num ambiente */}
-        <rect className="in-piso" x="912" y="572" width="316" height="176" fill="url(#piso)" />
-        {/* paredes externas (duas linhas) */}
-        <g className="in-parede">
-          <rect pathLength={1} x="200" y="160" width="1040" height="600" />
-          <rect pathLength={1} x="212" y="172" width="1016" height="576" />
-          {/* paredes internas */}
-          <path pathLength={1} d="M560 172V420M560 500V748M560 460H900M900 172V380M900 440V748M900 560H1228M212 380H480" />
-        </g>
-        {/* portas */}
-        <g className="in-fino">
-          <path pathLength={1} d="M560 500H640M560 420A80 80 0 0 1 640 500" />
-          <path pathLength={1} d="M900 440H960M900 380A60 60 0 0 1 960 440" />
-          <path pathLength={1} d="M480 380V320M540 380A60 60 0 0 0 480 320" />
-        </g>
-        {/* janelas */}
-        <g className="in-fino">
-          <path pathLength={1} d="M300 160V172M420 160V172M300 164H420M300 168H420" />
-          <path pathLength={1} d="M680 160V172M820 160V172M680 164H820M680 168H820" />
-          <path pathLength={1} d="M1040 748V760M1160 748V760M1040 752H1160M1040 756H1160" />
-          <path pathLength={1} d="M200 560H212M200 680H212M204 560V680M208 560V680" />
-        </g>
-        {/* mobiliário */}
-        <g className="in-fino">
-          <rect pathLength={1} x="920" y="196" width="292" height="44" />
-          <rect pathLength={1} x="1150" y="250" width="62" height="120" />
-          <circle pathLength={1} cx="380" cy="600" r="54" />
-          <rect pathLength={1} x="250" y="210" width="190" height="120" rx="6" />
-          <rect pathLength={1} x="640" y="560" width="200" height="90" rx="8" />
-          <circle pathLength={1} cx="1060" cy="300" r="20" />
-        </g>
-        {/* cotas */}
-        <g className="in-cota">
-          <path pathLength={1} d="M200 112H560M560 112H900M900 112H1240M200 104V120M560 104V120M900 104V120M1240 104V120" />
-          <path pathLength={1} d="M196 116l8-8M556 116l8-8M896 116l8-8M1236 116l8-8" />
-          <path pathLength={1} d="M152 160V460M152 460V760M144 160H160M144 460H160M144 760H160" />
-          <text x="380" y="100">5,40</text>
-          <text x="730" y="100">4,80</text>
-          <text x="1070" y="100">5,10</text>
-          <text x="128" y="316" transform="rotate(-90 128 316)">4,20</text>
-          <text x="128" y="616" transform="rotate(-90 128 616)">4,00</text>
-        </g>
-        {/* nomes dos ambientes */}
-        <g className="in-ambiente">
-          <text x="300" y="440">Estar</text>
-          <text x="700" y="320">Jantar</text>
-          <text x="1010" y="480">Cozinha</text>
-          <text x="1010" y="660">Área de serviço</text>
-          <text x="680" y="700">Suíte</text>
-        </g>
-      </g>
-    </svg>
-  );
-}
 
 const ITENS_PREVIA = [
   { nome: "Porcelanato Portobello Cimento 90×90", qtd: "24 m², 11 caixas", min: 89.9, med: 104.5, max: 129.0, loja: "Leroy Merlin", status: "definido" },
@@ -155,8 +85,7 @@ export default function Inicio() {
     <main className="in">
       <section className="in-hero" aria-labelledby="in-titulo">
         <div className="in-brilho" aria-hidden="true" />
-        <PlantaBaixa />
-        <div className="in-varredura" aria-hidden="true" />
+        <PlantaViva />
         <div className="in-hero__conteudo">
           <p className="in-selo">Agente de orçamento para escritórios de arquitetura</p>
           <h1 id="in-titulo">Do projeto ao orçamento, com fonte em cada preço.</h1>
@@ -165,7 +94,7 @@ export default function Inicio() {
             se cabe no orçamento do cliente.
           </p>
           <div className="in-acoes">
-            <Link href="/nova" className="oa-botao oa-botao--principal">
+            <Link href="/nova" className="oa-botao oa-botao--principal" data-planta-foco>
               Criar estimativa
             </Link>
             <Link href="/previa-c?cenario=cabe" className="oa-botao oa-botao--fantasma">

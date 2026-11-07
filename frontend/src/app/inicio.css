@@ -23,36 +23,17 @@
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(48% 42% at 50% 47%, rgba(23, 23, 33, 0.92) 0%, rgba(23, 23, 33, 0.55) 60%, rgba(23, 23, 33, 0) 100%),
+    radial-gradient(40% 34% at 50% 47%, rgba(23, 23, 33, 0.78) 0%, rgba(23, 23, 33, 0.35) 60%, rgba(23, 23, 33, 0) 100%),
     linear-gradient(to bottom, rgba(23, 23, 33, 0) 70%, var(--papel) 100%);
 }
-.in-planta {
+.in-planta-viva {
   position: absolute;
   inset: 0;
   z-index: -2;
   width: 100%;
   height: 100%;
-  color: var(--tinta);
+  pointer-events: none;
 }
-.in-parede { fill: none; stroke: currentColor; stroke-width: 1.4; opacity: 0.22; }
-.in-fino { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.14; }
-.in-cota { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.32; }
-.in-cota text {
-  fill: currentColor;
-  stroke: none;
-  font-family: var(--sans);
-  font-size: var(--text-body-sm);
-  text-anchor: middle;
-  letter-spacing: 0.04em;
-}
-.in-ambiente text {
-  fill: currentColor;
-  opacity: 0.2;
-  font-family: var(--sans);
-  font-size: var(--text-body-sm);
-  letter-spacing: 0.02em;
-}
-
 .in-hero__conteudo {
   max-width: 760px;
   text-align: center;
@@ -398,55 +379,6 @@
   100% { transform: translate3d(4%, -3%, 0) scale(1.12); opacity: 0.85; }
 }
 
-/* 2. A planta se desenha: paredes, depois portas e móveis, depois cotas e nomes */
-.in-planta [pathLength] {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: in-desenha 2.6s cubic-bezier(0.6, 0, 0.2, 1) forwards;
-}
-.in-parede [pathLength] { animation-delay: 0.2s; }
-.in-fino [pathLength] { animation-duration: 1.6s; animation-delay: 1.6s; }
-.in-cota [pathLength] { animation-duration: 1.2s; animation-delay: 2.4s; }
-@keyframes in-desenha { to { stroke-dashoffset: 0; } }
-.in-cota text, .in-ambiente text, .in-piso {
-  opacity: 0;
-  animation: in-aparece-svg 1s ease-out forwards;
-}
-.in-cota text { animation-delay: 3.1s; }
-.in-ambiente text { animation-delay: 3.4s; }
-.in-piso { animation-delay: 2.8s; }
-@keyframes in-aparece-svg { to { opacity: 1; } }
-.in-ambiente text { opacity: 0; }
-@keyframes in-aparece-ambiente { to { opacity: 0.2; } }
-.in-ambiente text { animation-name: in-aparece-ambiente; }
-.in-piso { animation-name: in-aparece-piso; }
-@keyframes in-aparece-piso { to { opacity: 0.35; } }
-
-/* 3. Faixa de leitura: a IA "lendo" o projeto */
-.in-varredura {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 180px;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-    rgba(82, 102, 235, 0) 0%,
-    rgba(82, 102, 235, 0.10) 70%,
-    rgba(143, 156, 255, 0.35) 99%,
-    rgba(143, 156, 255, 0) 100%);
-  mix-blend-mode: screen;
-  opacity: 0;
-  animation: in-varre 7s cubic-bezier(0.45, 0, 0.55, 1) 3.2s infinite;
-}
-@keyframes in-varre {
-  0% { transform: translateY(-180px); opacity: 0; }
-  12% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateY(100svh); opacity: 0; }
-}
-
 /* 4. Texto do hero entra em sequência */
 .in-hero__conteudo > * {
   opacity: 0;
@@ -608,12 +540,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .in-brilho, .in-varredura, .in-final::before { animation: none; }
-  .in-varredura { display: none; }
-  .in-planta [pathLength] { animation: none; stroke-dashoffset: 0; }
-  .in-cota text, .in-ambiente text, .in-piso { animation: none; opacity: 1; }
-  .in-ambiente text { opacity: 0.2; }
-  .in-piso { opacity: 0.35; }
+  .in-brilho, .in-final::before { animation: none; }
   .in-hero__conteudo > *, [data-revelar], .in-passos > li, .in-numeros > div, .in-fontes li, .in-regras li,
   .in-previa__itens li, .in-cota-preco .ponto, .in-previa .selo { opacity: 1; transform: none; transition: none; animation: none; }
   .in-cota-preco .trilho::before { transform: none; transition: none; }
