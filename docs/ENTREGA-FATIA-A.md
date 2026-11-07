@@ -5,6 +5,14 @@
 > no **link final**, porque o site ainda não está publicado (só o backend está) e o envio real à produção não foi autorizado
 > na sessão. Os comandos para fechar isso em 10 minutos estão na seção 2.
 
+> **Atualização (07/11, depois de Samuel publicar o site em `https://converge-challenge-3k6i.vercel.app`):** o bloqueio 1 caiu.
+> Verificado de fora, SEM gravar nada: `ensaio_link_final.mjs --site` deu **12 ok, 0 falhas** (`/`, `/nova` e o exemplo `/exemplos/apto-boa-viagem.csv` respondem 200).
+> No navegador, no site publicado: o exemplo "Apartamento Boa Viagem" leu **47 itens em Windows-1252**; o revisor chamou a API publicada e mostrou
+> **5 botões "Aceitar" (2 erros E1 + 3 complementos E2, exatamente o medido)**, sem erro de rede nem "indisponível" (logo, CORS e `NEXT_PUBLIC_API_URL` estão certos);
+> `/obra/<código inexistente>` mostrou "Aguardando o envio" com a conexão **"Ao vivo"** e sem erros no console: o **Realtime real do Supabase conectou
+> com a chave anon e a leitura anon não foi recusada** (evidência real de que as variáveis `NEXT_PUBLIC_SUPABASE_*` estão certas e de que a anon consegue ler as duas tabelas).
+> **Continua sem ser provado:** um orçamento real de ponta a ponta pelo site (`--enviar`, grava no Supabase real), a duração da função (≥ 60 s), a recusa de escrita pela anon e o Excel baixado no navegador.
+
 ## 1. O que está provado (e como)
 
 | Camada | Evidência real | Onde |
