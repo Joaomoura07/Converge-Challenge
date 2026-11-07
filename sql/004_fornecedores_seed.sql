@@ -1,3 +1,10 @@
+-- ############################################################################################
+-- # NÃO RODAR: frete em PAUSA (decisão 07/11) e este seed é INCOMPATÍVEL com o SQL real
+-- # (sql/002_orcamentos.sql): lá `id` é uuid, `cep` é NOT NULL, `lat/lon` são numeric(9,6)
+-- # e há a coluna `ativo`. Antes de reativar o frete, reescreva o seed para esse schema
+-- # (insert sem id, com cep de cada loja) e ligue FRETE_ATIVO=true.
+-- ############################################################################################
+
 -- Fatia C: lojas para o frete (E7). Gerado a partir de src/busca.py (LOJAS): `dominio` precisa ser IDÊNTICO
 -- ao domínio que a busca da Fatia B grava em orcamento_itens.fontes[].dominio.
 --

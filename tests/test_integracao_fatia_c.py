@@ -58,6 +58,7 @@ def api(monkeypatch):
     orc = {"id": "o1", "nome": OBRA["obra"]["nome"], "cep": OBRA["obra"]["cep"], "orcamento_cliente": 80000,
            "pesquisa_iniciada_em": "2026-11-07T14:00:00+00:00", "pesquisa_concluida_em": "2026-11-07T14:00:31+00:00", "custo_usd": 0.06}
     gravado = {}
+    monkeypatch.setenv("FRETE_ATIVO", "true")   # estes testes cobrem o cálculo de frete (pausado por padrão)
     monkeypatch.setattr(rr, "_carregar_orcamento", lambda i: orc if i == "o1" else None)
     monkeypatch.setattr(rr, "_carregar_itens", lambda i: itens_banco)
     monkeypatch.setattr(rr, "_carregar_fornecedores", lambda: LOJAS)

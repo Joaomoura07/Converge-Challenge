@@ -17,6 +17,7 @@ logistica, viabilidade, ganho, custo_usd; e as colunas da Fatia B pesquisa_inici
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any
 
@@ -35,6 +36,23 @@ router = APIRouter(tags=["resultado"])
 
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+# FRETE EM PAUSA (decisão do João, 07/11): enquanto FRETE_ATIVO não for "true", o frete é sempre R$ 0, não se
+# consulta CEP/API e não se usa a tabela `fornecedores`. O plano de compra agrupa por loja pelo menor preço de
+# cada item, usando as próprias `fontes`. Para voltar ao frete: FRETE_ATIVO=true (e cadastrar fornecedores).
+def _frete_ativo() -> bool:
+    return os.getenv("FRETE_ATIVO", "false").strip().lower() in ("1", "true", "sim")
+
+
+def _lojas_pelas_fontes(itens: list[dict[str, Any]]) -> list[Fornecedor]:
+    """Lojas a partir de `fontes[]` (sem frete): id = dominio, frete 0, sem distância, sem pedido mínimo."""
+    vistas: dict[str, Fornecedor] = {}
+    for it in itens:
+        for f in it.get("fontes") or []:
+            dom = str(f.get("dominio") or "").strip().lower()
+            if dom and dom not in vistas:
+                vistas[dom] = Fornecedor(id=dom, nome=f.get("loja") or dom, dominio=dom)
+    return list(vistas.values())
+
 
 # --- Acesso ao banco (isolado aqui para os testes trocarem por dados falsos) ---------------------------
 
@@ -46,12 +64,14 @@ def _carregar_orcamento(orcamento_id: str) -> dict[str, Any] | None:
 
 def _carregar_itens(orcamento_id: str) -> list[dict[str, Any]]:
     r = get_supabase().table("orcamento_itens").select("*").eq("orcamento_id", orcamento_id).execute()
+    # Complemento sugerido (E2) só entra na conta depois que o arquiteto aceita (`aceito` = true).
+    linhas = [i for i in (r.data or []) if not (i.get("sugerido") and i.get("aceito") is not True)]
     # ordem estável: os índices de logistica.lojas[].itens apontam para ESTA lista
-    return sorted(r.data or [], key=lambda i: (i.get("linha") is None, i.get("linha") or 0, str(i.get("id"))))
+    return sorted(linhas, key=lambda i: (i.get("linha") is None, i.get("linha") or 0, str(i.get("id"))))
 
 
 def _carregar_fornecedores() -> list[Fornecedor]:
-    r = get_supabase().table("fornecedores").select("*").execute()
+    r = get_supabase().table("fornecedores").select("*").eq("ativo", True).execute()
     return [Fornecedor.model_validate(row) for row in (r.data or [])]
 
 
@@ -75,10 +95,11 @@ def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
                        fornecedores: list[Fornecedor]) -> dict[str, Any]:
     """Roda logística (E7), viabilidade (E8) e ganho (E10). Cada parte vem ``None`` se faltar dado."""
     lg: Logistica | None = None
-    if itens and fornecedores:
+    if itens and _frete_ativo() and fornecedores:
         km = distancias_km(orc.get("cep") or "", fornecedores)
         lg = calcular_logistica(itens, fornecedores, km)
-
+    elif itens:
+        lg = calcular_logistica(itens, _lojas_pelas_fontes(itens), {})   # frete 0: só agrupa pelo menor preço
     vi: Viabilidade | None = None
     if orc.get("orcamento_cliente") is not None:
         vi = calcular_viabilidade(itens, float(orc["orcamento_cliente"]), lg.frete_total if lg else 0.0)
@@ -121,7 +142,8 @@ def _ou_404(orcamento_id: str) -> dict[str, Any]:
 def resultado(orcamento_id: str) -> dict[str, Any]:
     """Calcula frete, viabilidade e ganho e grava em `orcamentos` (a tela atualiza via Realtime)."""
     orc = _ou_404(orcamento_id)
-    dados = calcular_resultado(orc, _carregar_itens(orcamento_id), _carregar_fornecedores())
+    dados = calcular_resultado(orc, _carregar_itens(orcamento_id),
+                               _carregar_fornecedores() if _frete_ativo() else [])
     try:
         _gravar_resultado(orcamento_id, dados)
     except Exception:  # noqa: BLE001
@@ -134,7 +156,8 @@ def resultado(orcamento_id: str) -> dict[str, Any]:
 def exportar(orcamento_id: str) -> Response:
     """E11: plano de compra em Excel, agrupado por loja."""
     orc = _ou_404(orcamento_id)
-    itens, forn = _carregar_itens(orcamento_id), _carregar_fornecedores()
+    itens = _carregar_itens(orcamento_id)
+    forn = _carregar_fornecedores() if _frete_ativo() else _lojas_pelas_fontes(itens)
     r = calcular_resultado(orc, itens, forn)
     lg = Logistica.model_validate(r["logistica"]) if r["logistica"] else None
     vi = Viabilidade.model_validate(r["viabilidade"]) if r["viabilidade"] else None
