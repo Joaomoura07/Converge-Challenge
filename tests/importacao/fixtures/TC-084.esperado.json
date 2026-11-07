@@ -1,0 +1,25 @@
+{
+  "resumo": {
+    "total_itens": 50000,
+    "soma_quantidade": 2547500.0,
+    "primeiro": {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 1.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    "ultimo": {
+      "linha": 50001,
+      "categoria": "Paredes",
+      "descricao": "Parede básica: Cobogó",
+      "quantidade": 97.3,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    "formato": "csv"
+  }
+}

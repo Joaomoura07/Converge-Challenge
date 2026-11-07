@@ -1,0 +1,15 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Ambiente: Banheiros
+Banheiros	PISO - Biancogres calacata 60x120	12,00 m²
+		12,00 m²
+
+Ambiente: Copa
+Copa	PISO - Eliane Munari 60x60	18,00 m²
+		18,00 m²
+
+Ambiente: Open space
+Open space	PISO - Tarkett Ambienta carvalho	160,00 m²
+		160,00 m²
+Total geral: 190,00 m²

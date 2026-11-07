@@ -1,0 +1,15 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Ambiente: Borda da piscina
+Borda da piscina	PISO - São Tomé amarela 40x40	40,00 m²
+		40,00 m²
+
+Ambiente: Interno
+Interno	PISO - Eliane Munari 60x60	90,00 m²
+		90,00 m²
+
+Ambiente: Varanda e área externa
+Varanda e área externa	PISO - Portinari cotto 60x60	80,00 m²
+		80,00 m²
+Total geral: 210,00 m²

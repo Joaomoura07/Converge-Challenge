@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<listaMateriais obra="Pintura de Fachada ? Edifício Residencial na Madalena (6 pavimentos)" cep="50610-000" data="2026-09-25">
+  <item categoria="Pintura">
+    <descricao>Fundo preparador de paredes</descricao>
+    <unidade>m²</unidade>
+    <quantidade>1.450</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Massa acrílica Coral</descricao>
+    <unidade>m²</unidade>
+    <quantidade>220</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Tinta acrílica fosca verde oliva para área externa</descricao>
+    <unidade>m²</unidade>
+    <quantidade>900</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Decor Colors vermelho cardinal</descricao>
+    <unidade>m²</unidade>
+    <quantidade>180</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Esmalte Suvinil preto</descricao>
+    <unidade>m²</unidade>
+    <quantidade>120</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Fita 3M azul 2090</descricao>
+    <unidade>un</unidade>
+    <quantidade>40</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Rolo de lã anti-respingo Atlas 23 cm</descricao>
+    <unidade>un</unidade>
+    <quantidade>30</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Lixa Norton 150</descricao>
+    <unidade>un</unidade>
+    <quantidade>200</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Placa cimentícia cinza 40x80</descricao>
+    <unidade>m²</unidade>
+    <quantidade>38</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Quartzolit AC-III</descricao>
+    <unidade>m²</unidade>
+    <quantidade>38</quantidade>
+  </item>
+  <item categoria="Estrutura e alvenaria">
+    <descricao>Impermeabilizante cimentício bicomponente</descricao>
+    <unidade>m²</unidade>
+    <quantidade>85</quantidade>
+  </item>
+  <item categoria="Estrutura e alvenaria">
+    <descricao>Vedacit</descricao>
+    <unidade>un</unidade>
+    <quantidade>4</quantidade>
+  </item>
+</listaMateriais>

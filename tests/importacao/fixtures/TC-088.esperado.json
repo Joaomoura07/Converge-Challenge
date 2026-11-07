@@ -1,0 +1,51 @@
+{
+  "origem": {
+    "arquivo": "TC-088.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 4,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "=HYPERLINK(\"http://exemplo.invalid\";\"clique\")",
+      "quantidade": 12.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "+cmd|' /C calc'!A0",
+      "quantidade": 34.75,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Pisos",
+      "descricao": "@SUM(A1:A2)",
+      "quantidade": 48.2,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": "Portas",
+      "descricao": "-2+3",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

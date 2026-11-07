@@ -1,0 +1,37 @@
+{
+  "origem": {
+    "arquivo": "TC-046.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Portas",
+      "descricao": "Porta giro 90x210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {
+        "Dimensões": "0,90 x 2,10"
+      }
+    },
+    {
+      "linha": 3,
+      "categoria": "Janelas",
+      "descricao": "Janela de correr 120x120cm",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": "Superior",
+      "extras": {
+        "Dimensões": "1,20 x 1,20"
+      }
+    }
+  ],
+  "avisos": []
+}

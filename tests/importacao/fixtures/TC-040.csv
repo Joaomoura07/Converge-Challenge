@@ -1,0 +1,10 @@
+Categoria;Descrição;Quantidade;Unidade;Nível
+Estrutura;Viga baldrame;42;m;Térreo
+Revestimentos;Reboco;120,5;m²;Térreo
+Concreto;Concreto fck 25;8,4;m³;Térreo
+Esquadrias;Porta;6;un;Térreo
+Metais;Registro de gaveta;12;pç;Térreo
+Estrutura;Aço CA-50;350;kg;Térreo
+Impermeabilização;Manta líquida;18;L;Térreo
+Rodapés;Rodapé;850;cm;Térreo
+Juntas;Junta de dilatação;1200;mm;Térreo

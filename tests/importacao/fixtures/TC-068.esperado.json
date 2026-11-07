@@ -1,0 +1,51 @@
+{
+  "origem": {
+    "arquivo": "TC-068.csv",
+    "formato": "csv",
+    "software": "sketchup",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 4,
+    "linhas_descartadas": 1
+  },
+  "itens": [
+    {
+      "linha": 3,
+      "categoria": "Marcenaria",
+      "descricao": "Armário aéreo",
+      "quantidade": 2.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Casa/Cozinha/Armário",
+        "Entity Type": "ComponentInstance"
+      }
+    },
+    {
+      "linha": 4,
+      "categoria": "Ferragens",
+      "descricao": "Puxador inox",
+      "quantidade": 8.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Casa/Cozinha/Armário/Puxador",
+        "Entity Type": "ComponentInstance"
+      }
+    },
+    {
+      "linha": 5,
+      "categoria": "Mobiliário",
+      "descricao": "Sofá 3 lugares",
+      "quantidade": 1.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Casa/Sala/Sofá",
+        "Entity Type": "ComponentInstance"
+      }
+    }
+  ],
+  "avisos": []
+}

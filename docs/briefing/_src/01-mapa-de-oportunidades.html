@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>01 · Mapa de Oportunidades</title>
+<link rel="stylesheet" href="style.css"></head><body>
+
+<section class="cover">
+  <div>
+    <div class="kicker">Converge Challenge · Briefing do time · Documento 1 de 3</div>
+    <h1>Mapa de Oportunidades</h1>
+    <p class="sub">Onde um agente autônomo gera valor de verdade, como a banca vai julgar, e quais problemas valem as nossas 27 horas de construção.</p>
+  </div>
+  <div class="doc-n">01</div>
+  <div class="toc"><strong>Neste documento</strong>
+    <ol>
+      <li>Como a banca vai olhar o projeto (o filtro antes das ideias)</li>
+      <li>Quem é a Tako e o que isso muda</li>
+      <li>Cinco ideias no Desafio Tako (RH / Departamento Pessoal)</li>
+      <li>Ideias fora do RH: análise honesta</li>
+      <li>Matriz de decisão e recomendação</li>
+      <li>"Por que agora?", tamanho de mercado e perguntas para mentores</li>
+    </ol>
+  </div>
+  <div class="meta">Time <strong>Avisa que é Agente</strong> · Porto Digital, Recife · 7–8/11/2026 · Versão de 06/11/2026<br>
+  Pesquisa e ideação, sem código do projeto, conforme o regulamento (o desenvolvimento começa sábado às 10h).</div>
+</section>
+
+<h2><span class="num">1</span>Como a banca vai olhar o projeto</h2>
+<p>Quatro critérios com <strong>peso igual</strong>. Metade da nota é negócio, não código:</p>
+<table>
+  <thead><tr><th>Critério (25% cada)</th><th>O que eles vão procurar</th><th>Como a gente ganha ponto</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Protótipo e aderência</strong></td><td>O agente faz trabalho real, funciona na demo e se sustenta fora dela. <em>Os jurados vão testar.</em></td><td>Link estável (não depender do notebook), caminho feliz + 1 exceção ao vivo, trace aberto no Langfuse.</td></tr>
+    <tr><td><strong>Viabilidade como startup</strong></td><td>Mercado, alguém que pagaria, caminho de crescimento.</td><td>Um comprador com nome e cargo, um preço, uma conta de mercado simples.</td></tr>
+    <tr><td><strong>Pitch</strong></td><td>Clareza de problema, solução e potencial. São 3 minutos cronometrados.</td><td>Uma dor concreta com número, demo ao vivo em menos de 90 s, ganho em R$/horas.</td></tr>
+    <tr><td><strong>Criatividade</strong></td><td>Originalidade.</td><td>Ângulo que ninguém mais vai trazer (ver matriz na seção 5).</td></tr>
+  </tbody>
+</table>
+
+<div class="box accent"><span class="title">O teste do "isso é uma feature?"</span>
+O guia avisa: <em>"Se a resposta for 'seria legal ter isso', provavelmente não é um problema. É uma feature."</em> A Canastra (fundo de VC na banca) usa a lente <strong>Problema → Mercado → Why now</strong>. Antes de escolher a ideia, cada uma precisa passar no filtro abaixo.</div>
+
+<h3>Filtro de 6 perguntas (use em cada ideia)</h3>
+<ol>
+  <li><strong>Quem paga e quanto custa a dor hoje?</strong> Precisa ter cargo, empresa-tipo e uma estimativa de horas ou multas.</li>
+  <li><strong>O agente <u>fecha</u> um processo ou só ajuda num passo?</strong> Copiloto perde pontos. O desafio pede "trabalho feito de verdade".</li>
+  <li><strong>Existe uma exceção "estrela" para mostrar?</strong> Documento ilegível, prazo vencendo, valor fora do padrão. É nela que o agente prova que não é RPA.</li>
+  <li><strong>Dá para simular os sistemas com dados sintéticos em 1 dia?</strong> Mocks de ATS/HRIS/folha são permitidos, desde que o agente opere sobre eles.</li>
+  <li><strong>A demo cabe em 60–90 segundos?</strong> Sobra o resto do pitch para problema e mercado.</li>
+  <li><strong>Por que agora?</strong> O que mudou nos últimos 2 anos (tecnologia, regulação, comportamento).</li>
+</ol>
+
+<h3>O que o Desafio Tako diz que separa uma boa solução</h3>
+<div class="grid2">
+  <div class="box ok"><span class="title">Fecha o processo</span>No caminho feliz, vai do pedido ao resultado sem ninguém empurrar.</div>
+  <div class="box ok"><span class="title">Trata a exceção</span>Resolve dentro da regra ou escala com o contexto pronto para decidir.</div>
+  <div class="box ok"><span class="title">Deixa rastro</span>Dá para auditar rápido o que o agente fez e por quê (Langfuse).</div>
+  <div class="box ok"><span class="title">Mostra o ganho</span>Horas, retrabalho e prazos perdidos, e o custo por execução contra o trabalho manual.</div>
+</div>
+<p class="small muted">Nossa infraestrutura já cobre "deixa rastro" (trace por execução) e "custo por execução" (medimos US$ 0,0022 numa execução simples com 1 ferramenta). Esse é um diferencial que podemos mostrar.</p>
+
+<h2><span class="num">2</span>Quem é a Tako e o que isso muda</h2>
+<p>A Tako é a patrocinadora master, com <strong>Pedro Stanzani na banca</strong>. O que se sabe publicamente:</p>
+<ul>
+  <li>Startup brasileira de RH, cofundada por Fernando Gadotti e Sebastian Mejia, com um portfólio de produtos construído com agentes de IA <strong>"do onboarding à demissão"</strong>.</li>
+  <li>Produto mais conhecido: a <strong>Nara</strong>, recrutadora por voz com IA generativa. Ela se integra a ATS como Gupy e Vagas.</li>
+  <li>Clientes citados: Inter, Natura, Boticário, ArcelorMittal. Está em expansão para os EUA, com base em San Francisco.</li>
+</ul>
+
+<div class="box warn"><span class="title">Implicação estratégica</span>
+<strong>Não reconstruir a Nara.</strong> Um agente de triagem ou entrevista de candidatos compete com o produto principal de quem está julgando, e dificilmente vai ser melhor em 27 horas. O espaço mais forte está nos processos em que, segundo o próprio desafio, <em>"o humano virou a cola entre as ferramentas"</em>: Departamento Pessoal, prazos legais e exceções da CLT. Isso complementa a Tako em vez de competir com ela.</div>
+
+<h3>O tamanho da dor, em números</h3>
+<table>
+  <thead><tr><th>Dado</th><th>Valor</th><th>Fonte</th></tr></thead>
+  <tbody>
+    <tr><td>Vínculos com carteira assinada no Brasil</td><td class="score">≈ 48,1 milhões</td><td>Novo Caged/MTE, julho de 2026</td></tr>
+    <tr><td>Profissionais de RH que passam ≥ metade da semana em trabalho rotineiro</td><td class="score">51%</td><td>Eagle Hill, set/2026 (citada pela Tako)</td></tr>
+    <tr><td>Usam 2+ sistemas para uma única tarefa</td><td class="score">91%</td><td>Eagle Hill</td></tr>
+    <tr><td>Redigitam a mesma informação em sistemas diferentes</td><td class="score">78%</td><td>Eagle Hill</td></tr>
+    <tr><td>Líderes dizem que pedidos ao RH exigem follow-up/retrabalho</td><td class="score">84%</td><td>Eagle Hill</td></tr>
+  </tbody>
+</table>
+<p>Cada um desses ~48 milhões de vínculos gera, todo mês, folha, ponto e benefícios, e ao longo do ano férias, eventos de eSocial e eventualmente uma rescisão. Tudo isso tem <strong>prazo legal e multa</strong>.</p>
+
+<h3>Regras da CLT que viram "exceção estrela" numa demo</h3>
+<p class="small muted">Referência rápida para ideação. Confirme detalhes com um mentor ou contador antes de citar no pitch.</p>
+<table>
+  <thead><tr><th>Regra</th><th>O que diz (resumo)</th><th>Por que serve para um agente</th></tr></thead>
+  <tbody>
+    <tr><td>Férias: concessão (CLT art. 134)</td><td>Devem ser concedidas nos 12 meses seguintes ao período aquisitivo. Podem ser fracionadas em até 3 períodos, sendo um de pelo menos 14 dias e os demais de pelo menos 5.</td><td>Monitorar prazos e propor calendário respeitando a regra.</td></tr>
+    <tr><td>Férias fora do prazo (art. 137)</td><td>Concedidas fora do prazo, são pagas <strong>em dobro</strong>.</td><td>Ganho mensurável: multa evitada.</td></tr>
+    <tr><td>Aviso de férias (art. 135)</td><td>Comunicar por escrito com pelo menos 30 dias de antecedência.</td><td>O agente gera o aviso no prazo.</td></tr>
+    <tr><td>Rescisão (art. 477, §6º)</td><td>Pagamento e entrega de documentos em até 10 dias do término do contrato.</td><td>Checklist com prazo, prévia de cálculo.</td></tr>
+    <tr><td>Admissão (eSocial)</td><td>O vínculo precisa ser informado ao eSocial antes do início das atividades.</td><td>Coletar e validar documentos com prazo curto.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">3</span>Cinco ideias no Desafio Tako</h2>
+<p>Cada cartão diz o que o agente <strong>fecha</strong>, a exceção para a demo, as ferramentas prováveis e como mostrar o ganho.</p>
+
+<div class="card">
+  <span class="tag hot">Recomendada</span><span class="tag">DP</span>
+  <h3>A · Guardião de Férias e Prazos CLT</h3>
+  <p>Um digital worker que vigia todo dia os períodos aquisitivos e concessivos da empresa e age antes de o prazo virar multa.</p>
+  <dl class="kv">
+    <dt>Dor</dt><dd>Férias vencidas são pagas em dobro. Em empresas com centenas de pessoas, o controle vive em planilha e na memória de alguém do DP.</dd>
+    <dt>O que fecha</dt><dd>Detecta quem vai vencer → propõe datas respeitando fracionamento e cobertura do time → pede aceite ao gestor e ao colaborador → registra no HRIS (mock) → gera o aviso com 30 dias de antecedência.</dd>
+    <dt>Exceção estrela</dt><dd>Dois colaboradores da mesma função pedem o mesmo período, um deles a 20 dias de vencer: o agente propõe a solução e escala o conflito para o gestor com as opções prontas.</dd>
+    <dt>Tools</dt><dd><code>listar_colaboradores</code>, <code>calcular_periodos</code>, <code>propor_calendario</code>, <code>solicitar_aceite</code>, <code>registrar_ferias</code>, <code>escalate_to_human</code></dd>
+    <dt>Ganho</dt><dd>R$ em multas evitadas + horas de DP por mês. É fácil de mostrar com 50 colaboradores sintéticos.</dd>
+    <dt>Risco</dt><dd>Parecer "só um alerta". A demo precisa mostrar o agente <em>conduzindo</em> a negociação até o registro.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <span class="tag hot">Recomendada</span><span class="tag">Admissão</span>
+  <h3>B · Admissão ponta a ponta</h3>
+  <p>Do "aceite da proposta" ao "primeiro dia pronto": documentos, cadastro, exames e acessos.</p>
+  <dl class="kv">
+    <dt>Dor</dt><dd>Idas e vindas por WhatsApp/e-mail pedindo documento, redigitação em 3 sistemas, prazo do eSocial e do exame admissional.</dd>
+    <dt>O que fecha</dt><dd>Pede os documentos pelo canal (n8n) → valida (legível? CPF com dígito válido? nome bate?) → pede reenvio do que falhou → cadastra no HRIS mock → agenda o exame admissional → abre os acessos → entrega checklist com status.</dd>
+    <dt>Exceção estrela</dt><dd>Foto do RG ilegível, ou nome divergente entre documentos: o agente explica o problema ao candidato e pede reenvio. Se persistir, escala para o DP com tudo anexado.</dd>
+    <dt>Tools</dt><dd><code>solicitar_documento</code>, <code>validar_documento</code>, <code>validar_cpf</code>, <code>cadastrar_colaborador</code>, <code>agendar_aso</code>, <code>criar_acessos</code></dd>
+    <dt>Ganho</dt><dd>Dias de admissão → horas. Menos retrabalho (os 78% que redigitam dados).</dd>
+    <dt>Risco</dt><dd>Leitura de documento (OCR/visão) consome tempo. Na demo, use poucos documentos sintéticos bem controlados.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <span class="tag">DP · Folha</span>
+  <h3>C · Conferente de Folha</h3>
+  <p>Antes do fechamento, compara os lançamentos do mês com o mês anterior e com as regras, e explica cada variação.</p>
+  <dl class="kv">
+    <dt>O que fecha</dt><dd>Lê a prévia da folha → aponta variações fora do padrão (hora extra atípica, adicional sumido, desconto duplicado) → justifica cada uma ou abre pendência → entrega o relatório para assinatura. O humano fecha e assina.</dd>
+    <dt>Exceção estrela</dt><dd>Hora extra de 80 h num mês para quem costuma fazer 5 h: o agente cruza com o ponto e pede justificativa ao gestor.</dd>
+    <dt>Ponto forte</dt><dd>Erro de folha é caro e visível. Comprador claro: escritórios de contabilidade e DP.</dd>
+    <dt>Risco</dt><dd>Exige dados sintéticos de folha críveis, o que dá mais trabalho de preparação.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <span class="tag">Atendimento</span>
+  <h3>D · Atendimento ao colaborador que resolve</h3>
+  <p>Responde dúvidas de holerite, férias e benefícios consultando os dados <em>daquele</em> colaborador e executa a ação (pedir férias, segunda via, alterar conta).</p>
+  <dl class="kv">
+    <dt>Ponto forte</dt><dd>A demo é fácil de entender ("por que meu salário veio menor?" → o agente explica o desconto).</dd>
+    <dt>Risco</dt><dd>Parece chatbot se não <strong>executar</strong> ações. Mercado mais concorrido.</dd>
+    <dt>Escala</dt><dd>Casos sensíveis (saúde, assédio, fora da política) vão ao RH com o contexto pronto.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <span class="tag">Desligamento</span>
+  <h3>E · Desligamento organizado</h3>
+  <p>Depois que <strong>o humano decide</strong> desligar, o agente conduz: checklist, prévia de rescisão, prazo de 10 dias, devolução de equipamentos e revogação de acessos.</p>
+  <dl class="kv">
+    <dt>Ponto forte</dt><dd>Prazo legal claro, muitos sistemas envolvidos (TI, financeiro, DP).</dd>
+    <dt>Risco</dt><dd>Tema sensível na demo. O cálculo de verbas rescisórias tem muitas variáveis.</dd>
+  </dl>
+</div>
+
+<h2><span class="num">4</span>Ideias fora do RH: análise honesta</h2>
+<p>O tema aberto continua valendo e concorre pelos mesmos critérios. Avaliamos as ideias que levantamos com o filtro da seção 1:</p>
+
+<table>
+  <thead><tr><th style="width:24%">Ideia</th><th>A favor</th><th>Contra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Saúde/nutrição:</strong> leitura de exames antes da consulta + acompanhamento do paciente</td>
+      <td>Dor real, tempo do profissional é caro, demo visual.</td>
+      <td>Dado de saúde é <strong>dado sensível</strong> (LGPD). A decisão clínica é do profissional, e o agente não pode "sugerir ajustes" sozinho. Ciclo de venda para clínicas é lento.</td></tr>
+    <tr><td><strong>Salões/barbearias:</strong> preencher horários cancelados, prever estoque</td>
+      <td>Demo simpática ("vaga às 14h, quer?"), problema fácil de entender.</td>
+      <td>Ticket baixo, muitos apps de agendamento consolidados. "Mandar oferta" é mais automação do que agente.</td></tr>
+    <tr><td><strong>Helpdesk técnico:</strong> triagem investigativa</td>
+      <td>Mercado grande, ROI fácil de medir.</td>
+      <td>Muito concorrido (grandes plataformas de suporte já têm IA), pouco original.</td></tr>
+    <tr><td><strong>Conciliação financeira de PME</strong></td>
+      <td>Dor cara, exceções ricas (valor divergente, nota faltando), comprador claro (escritórios contábeis).</td>
+      <td>ERPs já fazem parte. Precisa de dados sintéticos de extrato e nota fiscal críveis.</td></tr>
+    <tr><td><strong>Tutor socrático</strong></td>
+      <td>Fácil de construir.</td>
+      <td>Fraco no critério "trabalho real em mercado grande", monetização B2C difícil, já há grandes players.</td></tr>
+  </tbody>
+</table>
+
+<div class="card">
+  <span class="tag green">Coringa original</span>
+  <h3>F · Analista de Licitações para PMEs</h3>
+  <p>Um agente que monitora editais no PNCP (Portal Nacional de Contratações Públicas, centralizado pela Lei 14.133/2021), lê o edital, monta o checklist de habilitação (certidões, atestados, prazos), confere quais documentos da empresa estão vencidos e prepara o pacote de proposta. Quem decide participar é o humano.</p>
+  <dl class="kv">
+    <dt>Por que é forte</dt><dd>Mercado grande, edital é documento longo e chato (bom para LLM), muitas exceções (certidão vencida, exigência incomum) e alta originalidade num evento cheio de ideias de RH.</dd>
+    <dt>Risco</dt><dd>Fora do tema da Tako (perde o "fit" com um dos jurados). Precisa validar acesso aos dados do PNCP.</dd>
+  </dl>
+</div>
+
+<h2 class="page-break"><span class="num">5</span>Matriz de decisão</h2>
+<p class="small muted">Notas de 1 a 5, na opinião do documento. Discutam e ajustem juntos: o objetivo é forçar a conversa, não decidir por vocês.</p>
+<table>
+  <thead><tr><th>Ideia</th><th class="c">Dor e mercado</th><th class="c">Fecha processo</th><th class="c">Viável em 27h</th><th class="c">Exceção para demo</th><th class="c">Fit com a banca</th><th class="c">Originalidade</th><th class="c">Total</th></tr></thead>
+  <tbody>
+    <tr><td>A · Férias e prazos CLT</td><td class="c">4</td><td class="c">5</td><td class="c">5</td><td class="c">5</td><td class="c">5</td><td class="c">4</td><td class="c total">28</td></tr>
+    <tr><td>B · Admissão ponta a ponta</td><td class="c">5</td><td class="c">5</td><td class="c">3</td><td class="c">5</td><td class="c">5</td><td class="c">3</td><td class="c total">26</td></tr>
+    <tr><td>C · Conferente de folha</td><td class="c">5</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c total">25</td></tr>
+    <tr><td>F · Licitações PME</td><td class="c">5</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">3</td><td class="c">5</td><td class="c total">24</td></tr>
+    <tr><td>Conciliação financeira</td><td class="c">4</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">3</td><td class="c">3</td><td class="c total">21</td></tr>
+    <tr><td>D · Atendimento ao colaborador</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">2</td><td class="c total">20</td></tr>
+    <tr><td>Saúde/nutrição</td><td class="c">4</td><td class="c">3</td><td class="c">3</td><td class="c">3</td><td class="c">2</td><td class="c">3</td><td class="c total">18</td></tr>
+    <tr><td>Salões</td><td class="c">3</td><td class="c">3</td><td class="c">4</td><td class="c">3</td><td class="c">2</td><td class="c">2</td><td class="c total">17</td></tr>
+    <tr><td>Tutor socrático</td><td class="c">2</td><td class="c">2</td><td class="c">5</td><td class="c">2</td><td class="c">2</td><td class="c">2</td><td class="c total">15</td></tr>
+  </tbody>
+</table>
+
+<div class="box accent"><span class="title">Recomendação</span>
+<strong>A · Guardião de Férias e Prazos CLT</strong> como projeto principal. Tem a melhor relação entre impacto e o que cabe em 27 horas, a exceção é clara e mostra autonomia, o ganho é mensurável em reais (multa em dobro) e casa com o desafio da patrocinadora. Se o time preferir algo mais ambicioso, a <strong>B · Admissão</strong> tem o mercado maior, mas um risco técnico maior (leitura de documentos). Regra do guia: <em>uma coisa muito bem feita vale mais do que seis pela metade</em>.</div>
+
+<h2 class="page-break"><span class="num">6</span>"Por que agora?", mercado e perguntas para mentores</h2>
+<h3>Argumentos de "why now"</h3>
+<ul>
+  <li><strong>Custo:</strong> uma execução do nosso agente com uma ferramenta custou <strong>US$ 0,0022</strong> (medido em 06/11/2026). O trabalho manual equivalente custa minutos de um analista.</li>
+  <li><strong>Tecnologia:</strong> modelos abertos com tool calling nativo e confiável (GLM-5.2, Qwen 3) são recentes. Em 2024, agentes que operam sistemas eram caros e instáveis.</li>
+  <li><strong>Dados estruturados:</strong> o eSocial digitalizou o DP, e as informações já existem em formato padronizado. Falta quem opere as exceções.</li>
+  <li><strong>Mercado validado:</strong> grandes empresas brasileiras já compram agentes de RH (clientes da Tako). O comprador existe e já tem orçamento para isso.</li>
+</ul>
+
+<h3>Conta de mercado (modelo para preencher)</h3>
+<div class="box info"><span class="title">Fórmula de baixo para cima (bottom-up)</span>
+Mercado = <strong>nº de colaboradores CLT alcançáveis × preço por colaborador por mês × 12</strong><br>
+Exemplo <em>ilustrativo</em>: se o preço fosse R$ 3 por colaborador por mês → 48,1 mi × R$ 3 × 12 ≈ <strong>R$ 1,7 bilhão/ano</strong> (mercado total teórico). Em empresas com mais de 100 funcionários, onde a dor é maior, o mercado endereçável é uma fração disso.<br>
+<span class="small"><strong>O preço de R$ 3 é hipótese, não dado.</strong> Validem no evento com mentores ou com quem trabalha com DP. Mostrar a fórmula com as hipóteses explícitas convence mais do que um número grande sem origem.</span></div>
+
+<h3>Perguntas concretas para levar aos mentores</h3>
+<ol>
+  <li>"Num DP de 300 pessoas, quantas horas por mês vão para controle de férias e prazos? Quanto já pagaram de férias em dobro?"</li>
+  <li>"Quem assinaria a compra: o head de RH, o DP ou o financeiro? Pagariam por colaborador ou por processo?"</li>
+  <li>"Qual exceção de DP mais irrita no dia a dia, aquela que nenhum sistema resolve?"</li>
+  <li>(Para a Tako) "Qual processo do DP vocês veem os clientes fazendo na mão mesmo depois de contratar ferramentas?"</li>
+  <li>(Para a Canastra) "Faz sentido começar vendendo para escritórios de contabilidade, que atendem várias empresas?"</li>
+</ol>
+
+<div class="footer-src"><strong>Fontes</strong>
+<ul>
+  <li>Guia do Participante: Converge Challenge powered by Tako (critérios, Desafio Tako, dados Eagle Hill de set/2026).</li>
+  <li>Novo Caged / MTE: estoque de 48.082.866 vínculos em julho/2026, via acritica.net e tvtnews.com.br (confirmar no painel PDET/MTE).</li>
+  <li>Bloomberg Línea: "Startup de RH Tako inicia expansão global com IA para recrutamento e mira os EUA". bloomberglinea.com.br/startups</li>
+  <li>CLT: arts. 134, 135, 137 e 477 (Decreto-Lei 5.452/1943, com a redação da Lei 13.467/2017). Lei 14.133/2021 (licitações, PNCP).</li>
+  <li>Custo por execução: medido no repositório do time (Featherless, zai-org/GLM-5.2), em 06/11/2026.</li>
+</ul></div>
+</body></html>

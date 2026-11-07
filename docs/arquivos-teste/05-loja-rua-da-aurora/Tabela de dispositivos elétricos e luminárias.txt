@@ -1,0 +1,7 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Tomada Tramontina Liz 2P+T 10 A branca com placa 4x2 : Padrão	Salão	10
+Spot LED de embutir Stella quadrado 7 W 3000 K branco : Padrão	Salão	28
+Fonte chaveada 12 V 5 A para fita LED : Padrão	Vitrine	4
+Total geral: 42

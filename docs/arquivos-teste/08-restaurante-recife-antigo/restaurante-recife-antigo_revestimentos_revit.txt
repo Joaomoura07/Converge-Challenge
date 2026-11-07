@@ -1,0 +1,12 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Ambiente: Cozinha
+Cozinha	PAREDE - Portinari metrô branco	46,00 m²
+Cozinha	PISO - Portinari cotto 60x60	40,00 m²
+		86,00 m²
+
+Ambiente: Salão
+Salão	PISO - Portinari cotto 60x60	110,00 m²
+		110,00 m²
+Total geral: 196,00 m²

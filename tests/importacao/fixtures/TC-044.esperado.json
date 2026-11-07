@@ -1,0 +1,72 @@
+{
+  "origem": {
+    "arquivo": "TC-044.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 4,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "Parede alvenaria 14cm",
+      "quantidade": null,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "Parede drywall 9,5cm",
+      "quantidade": null,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Pisos",
+      "descricao": "Piso cerâmico 60x60",
+      "quantidade": null,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": "Portas",
+      "descricao": "Porta giro 90x210cm",
+      "quantidade": null,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 2,
+      "codigo": "VALOR_NAO_NUMERICO",
+      "mensagem": "aprox. 10"
+    },
+    {
+      "linha": 3,
+      "codigo": "VALOR_NAO_NUMERICO",
+      "mensagem": "N/A"
+    },
+    {
+      "linha": 4,
+      "codigo": "VALOR_NAO_NUMERICO",
+      "mensagem": "-"
+    },
+    {
+      "linha": 5,
+      "codigo": "VALOR_NAO_NUMERICO",
+      "mensagem": "?"
+    }
+  ]
+}

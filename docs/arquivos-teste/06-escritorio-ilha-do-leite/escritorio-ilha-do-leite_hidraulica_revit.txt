@@ -1,0 +1,13 @@
+Tabela de louças e metais
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Banheiro PNE
+Barra PNE Deca 80 : Padrão	Banheiro PNE	2
+		2
+
+Ambiente: Banheiros
+Celite Azalea : Padrão	Banheiros	4
+Cuba de apoio Deca : Padrão	Banheiros	4
+Torneira Docol bica alta : Padrão	Banheiros	4
+		12
+Total geral: 14

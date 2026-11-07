@@ -1,0 +1,3 @@
+Path,Entity Type,Definition Name,Tag,Quantity,LenX,LenY,LenZ
+Modelo/Sala/Mesa,ComponentInstance,Mesa jantar,Mobiliário,1,"63""","35.43""","29.53"""
+Modelo/Quarto/Cama,ComponentInstance,Cama casal,Mobiliário,1,"55.12""","74.8""","17.72"""

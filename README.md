@@ -35,6 +35,8 @@ Base de infraestrutura para um agente autônomo (ou sistema multiagente) em Pyth
 | `scripts/check_setup.py` | Testa Featherless (chat + tool calling), Langfuse e Supabase |
 | `skills/` | Skills do time para Claude Code, Codex e ChatGPT ([como usar](skills/README.md)) |
 | `AGENTS.md` / `CLAUDE.md` | Regras do repo para assistentes de código |
+| `n8n/agent-bridge.json` | Fluxo n8n: Webhook → `/agent/run` → resposta (perfil `n8n` do compose) |
+| `docs/briefing/` | PDFs do time: oportunidades, dossiê técnico, plano de ação |
 
 ### Comportamento do agente
 

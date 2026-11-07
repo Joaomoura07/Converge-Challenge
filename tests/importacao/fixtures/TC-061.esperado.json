@@ -1,0 +1,33 @@
+{
+  "origem": {
+    "arquivo": "TC-061.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 1
+  },
+  "itens": [
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Porta giro 1F: 90 x 210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Janela: Maxim-ar: 60 x 60cm",
+      "quantidade": 3.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

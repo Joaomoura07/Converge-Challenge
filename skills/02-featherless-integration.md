@@ -23,7 +23,7 @@ python -m scripts.check_setup --model Qwen/Qwen3-32B  # testar outro modelo
 
 | Uso | Variável | Modelo sugerido | Observação |
 |---|---|---|---|
-| Raciocínio, planejamento, JSON complexo, código | `FEATHERLESS_MODEL` | `zai-org/GLM-5.2` | Recomendado pelo evento. **Confirme o tool calling** com `check_setup` |
+| Raciocínio, planejamento, JSON complexo, código | `FEATHERLESS_MODEL` | `zai-org/GLM-5.2` | Recomendado pelo evento. Tool calling nativo **confirmado** via `check_setup` em 05/11/2026. Modelo de raciocínio: não use `max_tokens` baixo (a resposta pode vir vazia) |
 | Reserva automática (400/503) **e** tool calling garantido | `FEATHERLESS_MODEL_FALLBACK` | `Qwen/Qwen3-32B` | Família com tool calling nativo documentado |
 | Classificar, resumir, formatar texto | `FEATHERLESS_MODEL_FAST` | `google/gemma-4-31B-it` | Mais barato. Não confie em tool calling sem testar |
 

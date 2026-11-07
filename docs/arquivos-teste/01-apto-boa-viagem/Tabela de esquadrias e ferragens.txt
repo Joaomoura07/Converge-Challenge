@@ -1,0 +1,11 @@
+"Tabela de esquadrias e ferragens"
+"Família e tipo"	"Ambiente"	"Contagem"
+
+"Box de vidro temperado 8 mm incolor de correr 1,20x1,90 m com kit alumínio branco : Padrão"	"Banho social"	"1"
+"Box de vidro temperado 8 mm incolor de correr 1,20x1,90 m com kit alumínio branco : Padrão"	"Banho suíte"	"1"
+"Dobradiça Blum Clip Top Blumotion 110° com amortecedor : Padrão"	"Cozinha"	"24"
+"Corrediça Blum Tandembox antaro 500 mm (par) : Padrão"	"Cozinha"	"6"
+"Porta pronta Pormade 80x210 cm laca branca com batente : Padrão"	"Geral"	"3"
+"Porta pronta Pormade 70x210 cm laca branca com batente : Padrão"	"Geral"	"2"
+"Fechadura para banheiro Papaiz roseta cromada : Padrão"	"Geral"	"2"
+"Total geral: 39"

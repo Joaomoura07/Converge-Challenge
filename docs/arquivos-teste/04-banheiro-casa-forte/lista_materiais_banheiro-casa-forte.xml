@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<listaMateriais obra="Reforma do Banheiro Social ? Casa Forte" cep="52061-540" data="2026-10-03">
+  <item categoria="Pintura">
+    <descricao>Coral Rende Muito branco</descricao>
+    <unidade>m²</unidade>
+    <quantidade>4,20</quantidade>
+  </item>
+  <item categoria="Pintura">
+    <descricao>Fundo preparador Suvinil</descricao>
+    <unidade>m²</unidade>
+    <quantidade>4,20</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Revestimento cerâmico Ceusa Branco Brilhante 30x60 retificado</descricao>
+    <unidade>m²</unidade>
+    <quantidade>22</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Biancogres calacata 60x120</descricao>
+    <unidade>m²</unidade>
+    <quantidade>4,20</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Pastilha Atlas azul piscina</descricao>
+    <unidade>m²</unidade>
+    <quantidade>0,80</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Votomassa AC-II</descricao>
+    <unidade>m²</unidade>
+    <quantidade>22,80</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Argamassa colante Quartzolit AC-III cinza</descricao>
+    <unidade>m²</unidade>
+    <quantidade>4,20</quantidade>
+  </item>
+  <item categoria="Revestimentos e argamassas">
+    <descricao>Rejunte Quartzolit cinza platina</descricao>
+    <unidade>m²</unidade>
+    <quantidade>27</quantidade>
+  </item>
+  <item categoria="Estrutura e alvenaria">
+    <descricao>Impermeabilizante Sika Top 107</descricao>
+    <unidade>m²</unidade>
+    <quantidade>9</quantidade>
+  </item>
+  <item categoria="Drywall e forros">
+    <descricao>Placa RU Placo</descricao>
+    <unidade>m²</unidade>
+    <quantidade>4,20</quantidade>
+  </item>
+  <item categoria="Drywall e forros">
+    <descricao>Montante 48 Knauf</descricao>
+    <unidade>m</unidade>
+    <quantidade>12</quantidade>
+  </item>
+  <item categoria="Drywall e forros">
+    <descricao>Perfil guia Knauf 48 mm x 3 m</descricao>
+    <unidade>m</unidade>
+    <quantidade>9</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Roca Debba suspensa</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Cuba de apoio Deca</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Torneira de mesa bica alta Docol cromada</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Ducha Docol 20 cm</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Registro de gaveta 3/4"</descricao>
+    <unidade>un</unidade>
+    <quantidade>2</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Acabamento registro Deca</descricao>
+    <unidade>un</unidade>
+    <quantidade>2</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Caixa sifonada Tigre 150</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Ralo linear Tigre inox 50 cm</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Hidráulica, louças e metais">
+    <descricao>Assento Astra soft close</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Elétrica e iluminação">
+    <descricao>Spot Stella 7W</descricao>
+    <unidade>un</unidade>
+    <quantidade>3</quantidade>
+  </item>
+  <item categoria="Elétrica e iluminação">
+    <descricao>Interruptor simples Pial Plus+ branco com placa 4x2</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Elétrica e iluminação">
+    <descricao>Tomada Tramontina Liz 2P+T 10 A branca com placa 4x2</descricao>
+    <unidade>un</unidade>
+    <quantidade>2</quantidade>
+  </item>
+  <item categoria="Esquadrias, vidros e ferragens">
+    <descricao>Box de vidro temperado 8 mm incolor de correr 1,20x1,90 m com kit alumínio branco</descricao>
+    <unidade>un</unidade>
+    <quantidade>1</quantidade>
+  </item>
+  <item categoria="Esquadrias, vidros e ferragens">
+    <descricao>Espelho 4 mm</descricao>
+    <unidade>m²</unidade>
+    <quantidade>0,90</quantidade>
+  </item>
+</listaMateriais>

@@ -1,0 +1,7 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Deck e borda	PISO - Pedra São Tomé amarela serrada 40x40	60,00 m²
+Piscina	PISO - Pedra Hijau verde 10x10 cm para revestimento de piscina	36,00 m²
+Área gourmet	BANCADA/OUTROS - Bancada em mármore Travertino Romano 2 cm	2,80 m²
+Total geral: 98,80 m²

@@ -1,0 +1,141 @@
+/* Componentes do resultado ao vivo (fatia B). Só usa os PAPÉIS de cor da skill (skills/04-ui-design.md, seção 2):
+   os valores ficam num único :root do site. No Next.js: importe este arquivo em app/layout.tsx. */
+
+.orc-lista { display: grid; gap: 0; border-top: 1px solid var(--cor-linha); }
+
+.orc-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(260px, 380px);
+  grid-template-areas: "imagem corpo preco" "imagem lojas preco";
+  column-gap: 24px;
+  row-gap: 8px;
+  padding: 20px 8px;
+  border-bottom: 1px solid var(--cor-linha);
+  color: var(--cor-texto);
+}
+.orc-item--chegou { animation: orc-destaque 1.2s ease-out; }
+@keyframes orc-destaque {
+  from { background: color-mix(in srgb, var(--cor-acao) 8%, transparent); }
+  to { background: transparent; }
+}
+
+/* imagem: hachura de 45° (material em corte) enquanto não há foto */
+.orc-item__imagem {
+  grid-area: imagem;
+  width: 56px; height: 56px;
+  border: 1px solid var(--cor-linha);
+  border-radius: 2px;
+  background: var(--cor-superficie);
+  overflow: hidden;
+}
+.orc-item__imagem img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
+.orc-item__imagem--hachura {
+  background: repeating-linear-gradient(45deg, var(--cor-linha) 0 1px, transparent 1px 7px), var(--cor-superficie);
+}
+
+.orc-item__corpo { grid-area: corpo; min-width: 0; }
+.orc-item__titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.orc-item__titulo h3 { margin: 0; font-size: 1rem; font-weight: 500; line-height: 1.35; }
+.orc-item__compra { margin: 4px 0 0; color: var(--cor-texto-2); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.orc-item__compra strong { color: var(--cor-texto); font-weight: 600; }
+.orc-item__premissa { margin: 2px 0 0; font-size: 0.8125rem; color: var(--cor-texto-2); }
+
+.orc-item__pergunta, .orc-item__falha {
+  margin-top: 12px;
+  padding: 12px;
+  border-left: 2px solid var(--cor-pendente);
+  background: var(--cor-superficie);
+  display: grid; gap: 8px; justify-items: start;
+}
+.orc-item__falha { border-left-color: var(--cor-erro); }
+.orc-item__pergunta p, .orc-item__falha p { margin: 0; font-size: 0.875rem; }
+.orc-item__resposta { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.orc-item__resposta input {
+  flex: 1 1 260px; min-width: 0;
+  font: inherit; font-size: 0.875rem; padding: 6px 8px;
+  border: 1px solid var(--cor-linha); border-radius: 2px; background: var(--cor-fundo); color: var(--cor-texto);
+}
+
+.orc-item__preco { grid-area: preco; display: grid; align-content: start; gap: 6px; }
+.orc-item__confianca { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--cor-texto-2); }
+.orc-item__estimativa { color: var(--cor-texto); border: 1px dashed var(--cor-linha); padding: 0 6px; border-radius: 2px; }
+.orc-item__aviso, .orc-item__agente { margin: 0; font-size: 0.8125rem; color: var(--cor-texto-2); }
+.orc-item__agente::before { content: "↻ "; color: var(--cor-acao); }
+
+.orc-item__lojas { grid-area: lojas; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.8125rem; }
+.orc-item__lojas li { display: flex; gap: 6px; }
+.orc-item__lojas a { color: var(--cor-acao); text-underline-offset: 2px; }
+.orc-item__lojas span { color: var(--cor-texto-2); font-variant-numeric: tabular-nums; }
+
+/* status: cor + ícone + texto */
+.orc-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.8125rem; line-height: 1; padding: 3px 8px;
+  border: 1px solid currentColor; border-radius: 2px; white-space: nowrap;
+}
+.orc-status--definido { color: var(--cor-definido); }
+.orc-status--pendente_especificacao { color: var(--cor-texto); border-color: var(--cor-pendente); }
+.orc-status--pendente_especificacao svg { color: var(--cor-pendente); }
+.orc-status--nao_encontrado, .orc-status--erro { color: var(--cor-erro); }
+
+/* ---------------------------------------------------------------- a cota de preço */
+.orc-cota { margin: 0; }
+.orc-cota__linha { display: grid; grid-template-columns: auto minmax(80px, 1fr) auto; align-items: end; gap: 8px; }
+.orc-cota__ponta { font-size: 0.8125rem; color: var(--cor-texto-2); font-variant-numeric: tabular-nums; line-height: 20px; white-space: nowrap; }
+.orc-cota__trilho { position: relative; height: 44px; }
+.orc-cota__medio {
+  position: absolute; top: 0; transform: translateX(-50%);
+  white-space: nowrap; font-size: 0.8125rem; color: var(--cor-texto-2); font-variant-numeric: tabular-nums;
+}
+.orc-cota__medio strong { color: var(--cor-texto); font-size: 1rem; font-weight: 600; }
+.orc-cota__vazio { font-style: italic; }
+.orc-cota__svg { position: absolute; left: 0; bottom: 0; width: 100%; height: 20px; overflow: visible; }
+.orc-cota__chamada { stroke: var(--cor-texto-2); stroke-width: 1; }
+.orc-cota__traco { stroke: var(--cor-texto); stroke-width: var(--orc-cota-espessura, 1.25px); }
+.orc-cota__oculta { stroke: var(--cor-linha); stroke-width: var(--orc-cota-espessura, 1.25px); stroke-dasharray: 5 4; }
+.orc-cota--carregando .orc-cota__chamada { stroke: var(--cor-linha); }
+.orc-cota__marca {
+  position: absolute; bottom: 10px; width: 1.5px; height: 12px;
+  background: var(--cor-texto); transform: translate(-50%, 50%) rotate(45deg);
+}
+.orc-cota__marca--ini { left: 0; }
+.orc-cota__marca--fim { left: 100%; }
+.orc-cota--carregando .orc-cota__marca { background: var(--cor-linha); }
+.orc-cota__ponto {
+  position: absolute; bottom: 10px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--cor-acao); box-shadow: 0 0 0 2px var(--cor-fundo); transform: translate(-50%, 50%);
+}
+.orc-cota__rotulo { margin-top: 2px; font-size: 0.75rem; color: var(--cor-texto-2); text-align: center; }
+
+/* o único momento de animação: a linha se fecha da esquerda para a direita quando o preço chega */
+.orc-cota--chegou .orc-cota__svg { animation: orc-fecha 300ms ease-out both; }
+.orc-cota--chegou .orc-cota__ponto, .orc-cota--chegou .orc-cota__medio strong { animation: orc-aparece 300ms ease-out 200ms both; }
+@keyframes orc-fecha { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes orc-aparece { from { opacity: 0; } to { opacity: 1; } }
+
+/* botões */
+.orc-botao {
+  font: inherit; font-size: 0.875rem; padding: 6px 12px; cursor: pointer;
+  border: 1px solid var(--cor-linha); border-radius: 2px; background: var(--cor-fundo); color: var(--cor-texto);
+}
+.orc-botao--principal { background: var(--cor-acao); border-color: var(--cor-acao); color: var(--cor-fundo); }
+.orc-botao:focus-visible, .orc-item a:focus-visible, .orc-item input:focus-visible {
+  outline: 2px solid var(--cor-acao); outline-offset: 2px;
+}
+.orc-visivel-so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* celular */
+@media (max-width: 720px) {
+  .orc-item { grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: "imagem corpo" "preco preco" "lojas lojas"; column-gap: 16px; }
+}
+
+/* modo demo (?demo=1): projetor apaga detalhes finos */
+:root:has(.orc-demo) { font-size: 18px; }   /* a fonte base inteira cresce (os componentes usam rem) */
+.orc-demo { --orc-cota-espessura: 2.5px; }
+.orc-demo .orc-cota__marca { width: 2.5px; height: 16px; }
+.orc-demo .orc-cota__ponto { width: 12px; height: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orc-item--chegou, .orc-cota--chegou .orc-cota__svg, .orc-cota--chegou .orc-cota__ponto,
+  .orc-cota--chegou .orc-cota__medio strong { animation: none; }
+}

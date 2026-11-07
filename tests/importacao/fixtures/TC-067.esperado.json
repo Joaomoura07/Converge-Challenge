@@ -1,0 +1,51 @@
+{
+  "origem": {
+    "arquivo": "TC-067.csv",
+    "formato": "csv",
+    "software": "sketchup",
+    "aba": null,
+    "delimitador": ",",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Mobiliário",
+      "descricao": "Sofá 3 lugares",
+      "quantidade": 1.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Modelo/Sala/Sofá 3 lugares",
+        "Entity Type": "ComponentInstance"
+      }
+    },
+    {
+      "linha": 3,
+      "categoria": "Mobiliário",
+      "descricao": "Cadeira madeira",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Modelo/Cozinha/Cadeira",
+        "Entity Type": "ComponentInstance"
+      }
+    },
+    {
+      "linha": 4,
+      "categoria": "Louças",
+      "descricao": "Bacia sanitária",
+      "quantidade": 2.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {
+        "Path": "Modelo/Banheiro/Bacia",
+        "Entity Type": "ComponentInstance"
+      }
+    }
+  ],
+  "avisos": []
+}

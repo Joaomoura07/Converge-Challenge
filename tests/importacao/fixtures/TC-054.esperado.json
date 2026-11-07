@@ -1,0 +1,11 @@
+{
+  "erro": {
+    "codigo": "CABECALHO_NAO_ENCONTRADO",
+    "mensagem": "Não encontrei colunas de quantitativo.",
+    "colunas_encontradas": [
+      "Foo",
+      "Bar",
+      "Baz"
+    ]
+  }
+}

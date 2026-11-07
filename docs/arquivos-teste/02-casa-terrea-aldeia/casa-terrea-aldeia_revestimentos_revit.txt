@@ -1,0 +1,11 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Ambiente: Banheiros
+Banheiros	PAREDE - Ceusa branco 30x60	42,00 m²
+		42,00 m²
+
+Ambiente: Áreas internas
+Áreas internas	PISO - Eliane Munari 60x60	120,00 m²
+		120,00 m²
+Total geral: 162,00 m²

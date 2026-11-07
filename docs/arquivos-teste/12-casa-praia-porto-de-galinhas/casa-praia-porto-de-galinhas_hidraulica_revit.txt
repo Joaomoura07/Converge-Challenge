@@ -1,0 +1,12 @@
+Tabela de louças e metais
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Banheiros
+Deca Vogue Plus : Padrão	Banheiros	3
+Lorenzetti Acqua Duo : Padrão	Banheiros	3
+		6
+
+Ambiente: Cobertura
+Caixa d'água Fortlev 1000 : Padrão	Cobertura	2
+		2
+Total geral: 8

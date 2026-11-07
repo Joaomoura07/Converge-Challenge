@@ -1,0 +1,11 @@
+Tabela de paredes
+Família e tipo	Área
+
+Nível: Térreo
+Parede básica: Alvenaria 14cm	12,50 m²
+Parede básica: Drywall 9,5cm	34,75 m²
+Subtotal	47,25 m²
+
+Nível: Superior
+Parede básica: Alvenaria 14cm	20,00 m²
+Subtotal	20,00 m²

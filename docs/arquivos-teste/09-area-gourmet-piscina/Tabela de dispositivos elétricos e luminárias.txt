@@ -1,0 +1,6 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Fonte chaveada 12 V 5 A para fita LED : Padrão	Piscina	3
+Arandela externa Taschibra em alumínio preto : Padrão	Área gourmet	8
+Total geral: 11

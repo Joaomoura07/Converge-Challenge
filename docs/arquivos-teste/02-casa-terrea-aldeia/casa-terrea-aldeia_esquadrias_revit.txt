@@ -1,0 +1,14 @@
+Tabela de esquadrias e ferragens
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Banheiros
+Fechadura Papaiz banheiro : Padrão	Banheiros	3
+Maxim-ar Sasazaki 60x60 : Padrão	Banheiros	3
+		6
+
+Ambiente: Geral
+Porta Sincol 80 : Padrão	Geral	7
+Fechadura Pado externa : Padrão	Geral	2
+Janela Sasazaki 120x120 : Padrão	Geral	6
+		15
+Total geral: 21

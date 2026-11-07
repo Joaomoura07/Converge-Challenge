@@ -1,0 +1,39 @@
+{
+  "origem": {
+    "arquivo": "TC-060-b-diverge.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 4,
+    "linhas_descartadas": 2
+  },
+  "itens": [
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Porta giro 1F: 90 x 210cm",
+      "quantidade": 6.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {}
+    },
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Janela de correr: 120 x 120cm",
+      "quantidade": 4.0,
+      "unidade": "un",
+      "nivel": null,
+      "extras": {}
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 6,
+      "codigo": "TOTAL_DIVERGENTE",
+      "mensagem": "TOTAL_DIVERGENTE"
+    }
+  ]
+}

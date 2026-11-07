@@ -1,0 +1,6 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Deck	PAREDE - Verniz Sparlack Duplo Filtro Solar acetinado	24,00 m²
+Área de serviço	PAREDE - Tinta para piso Coral Pisos Cinza Chumbo	40,00 m²
+Total geral: 64,00 m²

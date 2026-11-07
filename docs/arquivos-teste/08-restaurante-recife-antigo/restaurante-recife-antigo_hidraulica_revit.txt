@@ -1,0 +1,14 @@
+Tabela de louças e metais
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Banheiros
+Celite Azalea : Padrão	Banheiros	4
+		4
+
+Ambiente: Cozinha
+Caixa sifonada Tigre 150 : Padrão	Cozinha	6
+Ralo linear Tigre 50 : Padrão	Cozinha	4
+Cuba Tramontina Morgana : Padrão	Cozinha	3
+Aquecedor Rinnai 21 L : Padrão	Cozinha	1
+		14
+Total geral: 18

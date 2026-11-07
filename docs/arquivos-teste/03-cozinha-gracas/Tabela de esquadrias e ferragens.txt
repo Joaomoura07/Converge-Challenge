@@ -1,0 +1,6 @@
+Tabela de esquadrias e ferragens
+Família e tipo	Ambiente	Contagem
+
+Dobradiça Blum Clip Top Blumotion 110° com amortecedor : Padrão	Cozinha	32
+Corrediça Blum Tandembox antaro 500 mm (par) : Padrão	Cozinha	8
+Total geral: 40

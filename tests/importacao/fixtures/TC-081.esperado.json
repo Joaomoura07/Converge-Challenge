@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "ARQUIVO_PROTEGIDO",
+    "mensagem": "Remova a senha do arquivo e exporte de novo."
+  }
+}

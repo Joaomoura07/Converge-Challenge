@@ -1,0 +1,7 @@
+{
+  "erro": {
+    "codigo": "CSV_MALFORMADO",
+    "mensagem": "Aspas não fechadas na linha 4.",
+    "linha": 4
+  }
+}

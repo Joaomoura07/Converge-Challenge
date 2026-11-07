@@ -1,0 +1,15 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Ambiente: Esquadrias de madeira
+Esquadrias de madeira	PAREDE - Sparlack duplo filtro	40,00 m²
+		40,00 m²
+
+Ambiente: Fachada
+Fachada	PAREDE - Metalatex verde oliva	220,00 m²
+		220,00 m²
+
+Ambiente: Interno
+Interno	PAREDE - Coral Rende Muito branco	300,00 m²
+		300,00 m²
+Total geral: 560,00 m²

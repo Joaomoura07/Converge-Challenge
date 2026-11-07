@@ -1,0 +1,5 @@
+Categoria;Descrição;Quantidade;Unidade;Nível
+Paredes;"=HYPERLINK(""http://exemplo.invalid"";""clique"")";12,5;m²;Térreo
+Paredes;+cmd|' /C calc'!A0;34,75;m²;Térreo
+Pisos;@SUM(A1:A2);48,2;m²;Térreo
+Portas;-2+3;6;un;Térreo

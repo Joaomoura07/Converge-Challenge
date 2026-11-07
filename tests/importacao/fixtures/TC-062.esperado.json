@@ -1,0 +1,37 @@
+{
+  "origem": {
+    "arquivo": "TC-062.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 1
+  },
+  "itens": [
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Bloco cerâmico 14x19x29",
+      "quantidade": 47.25,
+      "unidade": "m2",
+      "nivel": null,
+      "extras": {
+        "Material: Volume": "6,62 m³"
+      }
+    },
+    {
+      "linha": 5,
+      "categoria": null,
+      "descricao": "Argamassa de assentamento",
+      "quantidade": 47.25,
+      "unidade": "m2",
+      "nivel": null,
+      "extras": {
+        "Material: Volume": "0,95 m³"
+      }
+    }
+  ],
+  "avisos": []
+}

@@ -1,0 +1,10 @@
+"Tabela de dispositivos elétricos e luminárias"
+"Família e tipo"	"Ambiente"	"Contagem"
+
+"Tomada Tramontina Liz 2P+T 20 A branca com placa 4x2 : Padrão"	"Consultórios"	"10"
+"Tomada Tramontina Liz 2P+T 10 A branca com placa 4x2 : Padrão"	"Geral"	"30"
+"Interruptor diferencial residual Steck 2P 40 A 30 mA : Padrão"	"Quadro"	"2"
+"Quadro de distribuição de embutir Steck 24 disjuntores : Padrão"	"Quadro"	"1"
+"Spot LED de embutir Stella quadrado 7 W 3000 K branco : Padrão"	"Recepção"	"10"
+"Painel LED de embutir Avant 60x60 40 W 4000 K : Padrão"	"Teto"	"14"
+"Total geral: 67"

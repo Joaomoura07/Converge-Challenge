@@ -2,6 +2,7 @@
 # consome muita banda/RAM, e a rede do evento é compartilhada.
 #
 #   docker compose up --build                 -> só a API
+#   docker compose --profile n8n up --build   -> API + n8n (http://localhost:5678)
 #   docker compose --profile local-db up      -> API + Postgres local (fallback offline)
 
 services:
@@ -21,6 +22,27 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # Orquestrador de canais (WhatsApp, e-mail, Slack...). Dentro do compose, a API é http://api:8000
+  # Fluxo-ponte (1x): importar, publicar e reiniciar. Depois: POST http://localhost:5678/webhook/agente {"task": "..."}
+  #   docker compose exec n8n n8n import:workflow --input=/workflows/agent-bridge.json
+  #   docker compose exec n8n n8n publish:workflow --id=AgentBridge00001
+  #   docker compose restart n8n
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ["n8n"]
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: America/Recife
+      TZ: America/Recife
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/workflows:ro
+    depends_on:
+      - api
+
   postgres:
     image: postgres:16-alpine
     profiles: ["local-db"]
@@ -36,3 +58,4 @@ services:
 
 volumes:
   pgdata:
+  n8n_data:

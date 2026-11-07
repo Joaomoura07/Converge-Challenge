@@ -1,0 +1,8 @@
+Tabela de esquadrias e ferragens
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Salas
+Porta pronta Pormade 80 : Padrão	Salas	12
+Fechadura Pado externa : Padrão	Salas	12
+		24
+Total geral: 24

@@ -1,0 +1,42 @@
+{
+  "origem": {
+    "arquivo": "TC-089.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Paredes",
+      "descricao": "<img src=x onerror=alert(1)>",
+      "quantidade": 12.5,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Paredes",
+      "descricao": "<script>alert('xss')</script>",
+      "quantidade": 34.75,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Pisos",
+      "descricao": "Piso <b>cerâmico</b>",
+      "quantidade": 48.2,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

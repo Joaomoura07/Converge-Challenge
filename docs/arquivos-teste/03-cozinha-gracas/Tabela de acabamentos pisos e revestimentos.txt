@@ -1,0 +1,7 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Cozinha	PISO - Porcelanato Portobello Cimento Queimado acetinado 90x90 retificado	11,00 m²
+Cozinha	PAREDE - Revestimento Portinari Metrô White brilhante 7,5x15	14,00 m²
+Cozinha	BANCADA/OUTROS - Bancada em granito Branco Itaúnas 2 cm	3,10 m²
+Total geral: 28,10 m²

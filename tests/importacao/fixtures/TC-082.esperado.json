@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "ARQUIVO_CORROMPIDO",
+    "mensagem": "Não foi possível ler a planilha."
+  }
+}

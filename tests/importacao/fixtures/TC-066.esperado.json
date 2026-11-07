@@ -1,0 +1,26 @@
+{
+  "resumo": {
+    "total_itens": 5000,
+    "soma_quantidade": 254750.0,
+    "primeiro": {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 14cm",
+      "quantidade": 1.0,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    "ultimo": {
+      "linha": 5003,
+      "categoria": null,
+      "descricao": "Parede básica: Alvenaria 19cm",
+      "quantidade": 97.3,
+      "unidade": "m2",
+      "nivel": "Cobertura",
+      "extras": {}
+    },
+    "formato": "txt",
+    "software": "revit"
+  }
+}

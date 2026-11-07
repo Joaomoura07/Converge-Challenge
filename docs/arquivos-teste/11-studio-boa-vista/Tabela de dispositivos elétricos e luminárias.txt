@@ -1,0 +1,8 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Tomada Tramontina Liz 2P+T 10 A branca com placa 4x2 : Padrão	Studio	10
+Tomada USB A+C Pial Plus+ 3 A branca : Padrão	Studio	2
+Spot LED de embutir Stella quadrado 7 W 3000 K branco : Padrão	Studio	8
+Lâmpada LED Philips bulbo 9 W 3000 K E27 : Padrão	Studio	6
+Total geral: 26

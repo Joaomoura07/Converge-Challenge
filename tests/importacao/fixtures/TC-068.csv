@@ -1,0 +1,5 @@
+Path,Entity Type,Definition Name,Tag,Quantity
+Casa/Cozinha,Group,Cozinha,Ambientes,1
+Casa/Cozinha/Armário,ComponentInstance,Armário aéreo,Marcenaria,2
+Casa/Cozinha/Armário/Puxador,ComponentInstance,Puxador inox,Ferragens,8
+Casa/Sala/Sofá,ComponentInstance,Sofá 3 lugares,Mobiliário,1

@@ -1,0 +1,8 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Tomada Tramontina Liz 2P+T 10 A branca com placa 4x2 : Padrão	Cozinha	8
+Tomada Tramontina Liz 2P+T 20 A branca com placa 4x2 : Padrão	Cozinha	4
+Spot LED de embutir Stella quadrado 7 W 3000 K branco : Padrão	Cozinha	6
+Fonte chaveada 12 V 5 A para fita LED : Padrão	Cozinha	2
+Total geral: 20

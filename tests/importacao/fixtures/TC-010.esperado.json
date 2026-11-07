@@ -1,0 +1,42 @@
+{
+  "origem": {
+    "arquivo": "TC-010.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": "utf-8",
+    "linhas_lidas": 3,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Revestimentos",
+      "descricao": "Revestimento cerâmico — área de serviço",
+      "quantidade": 18.4,
+      "unidade": "m2",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Forros",
+      "descricao": "Forro de gesso acartonado",
+      "quantidade": 52.0,
+      "unidade": "m2",
+      "nivel": "Pavimento superior",
+      "extras": {}
+    },
+    {
+      "linha": 4,
+      "categoria": "Louças",
+      "descricao": "Bacia sanitária com caixa acoplada",
+      "quantidade": 3.0,
+      "unidade": "un",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": []
+}

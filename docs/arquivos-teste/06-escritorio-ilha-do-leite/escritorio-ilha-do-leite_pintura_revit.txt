@@ -1,0 +1,11 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Ambiente: Paredes
+Paredes	PAREDE - Suvinil T. Seda branco neve	520,00 m²
+		520,00 m²
+
+Ambiente: Sala de reunião
+Sala de reunião	PAREDE - Coral Decora cinza urbano	40,00 m²
+		40,00 m²
+Total geral: 560,00 m²

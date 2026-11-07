@@ -1,0 +1,32 @@
+{
+  "origem": {
+    "arquivo": "TC-063.txt",
+    "formato": "txt",
+    "software": "revit",
+    "aba": null,
+    "delimitador": "\t",
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 1
+  },
+  "itens": [
+    {
+      "linha": 4,
+      "categoria": null,
+      "descricao": "Basic Wall: Generic - 8\"",
+      "quantidade": null,
+      "unidade": "ft-in",
+      "nivel": "Level 1",
+      "extras": {
+        "valor_original": "12' 6\""
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "linha": 4,
+      "codigo": "UNIDADE_IMPERIAL",
+      "mensagem": "UNIDADE_IMPERIAL"
+    }
+  ]
+}

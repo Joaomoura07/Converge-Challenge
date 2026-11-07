@@ -1,0 +1,39 @@
+{
+  "origem": {
+    "arquivo": "TC-041.csv",
+    "formato": "csv",
+    "software": "desconhecido",
+    "aba": null,
+    "delimitador": ";",
+    "codificacao": null,
+    "linhas_lidas": 2,
+    "linhas_descartadas": 0
+  },
+  "itens": [
+    {
+      "linha": 2,
+      "categoria": "Rodapés",
+      "descricao": "Rodapé sala",
+      "quantidade": 12.4,
+      "unidade": "m",
+      "nivel": "Térreo",
+      "extras": {}
+    },
+    {
+      "linha": 3,
+      "categoria": "Rodapés",
+      "descricao": "Rodapé quarto",
+      "quantidade": 960.0,
+      "unidade": "cm",
+      "nivel": "Térreo",
+      "extras": {}
+    }
+  ],
+  "avisos": [
+    {
+      "linha": null,
+      "codigo": "UNIDADES_MISTAS",
+      "mensagem": "UNIDADES_MISTAS"
+    }
+  ]
+}

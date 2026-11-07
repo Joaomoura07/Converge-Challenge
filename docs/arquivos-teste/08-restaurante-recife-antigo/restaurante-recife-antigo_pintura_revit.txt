@@ -1,0 +1,12 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Ambiente: Estrutura metálica
+Estrutura metálica	PAREDE - Esmalte Suvinil preto	25,00 m²
+		25,00 m²
+
+Ambiente: Salão
+Salão	PAREDE - Metalatex verde oliva	80,00 m²
+Salão	PAREDE - Textura Coral palha	60,00 m²
+		140,00 m²
+Total geral: 165,00 m²

@@ -1,0 +1,6 @@
+{
+  "erro": {
+    "codigo": "ARQUIVO_GRANDE_DEMAIS",
+    "mensagem": "Conteúdo descompactado acima do limite."
+  }
+}

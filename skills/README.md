@@ -10,6 +10,7 @@ Seis skills no padrão aberto [Agent Skills](https://agentskills.io) (frontmatte
 | 07 | [`building-orca-ui`](07-orca-ui-fatia-a.md) | Tela de entrada, revisão e resultado com Realtime |
 | 05 | [`managing-orcamento-data`](05-orcamento-data.md) | SQL, contratos, migrações e concorrência |
 | 06 | [`importing-materials`](06-material-import.md) | Leitores e normalização de arquivos de materiais |
+| 04 | [`designing-orcamentista-ui`](04-ui-design.md) | Linguagem de prancha técnica, papéis de cor (valores definidos pelo time), telas, "cota de preço", carregamento tracejado, textos, acessibilidade, modo demo |
 
 **Fonte única:** edite só os arquivos desta pasta. As "pontes" em `.claude/skills/` e `.agents/skills/` são geradas por `bash scripts/sync_skills.sh`.
 
