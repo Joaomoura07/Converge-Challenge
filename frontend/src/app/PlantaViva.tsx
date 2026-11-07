@@ -12,6 +12,8 @@ import { useEffect, useRef } from "react";
 
 const ALTURA_PAREDE = 260;
 const ALTURA_VOO = 470;
+const ALTURA_ROLADA = 300; // no fim da rolagem a câmera desce até aqui…
+const PITCH_TOPO = 0.74, PITCH_ROLADO = 0.3; // …e levanta o olhar (rad abaixo do horizonte)
 const ALTURA_INICIAL = 1700;
 const DURACAO_INTRO = 3.4; // s
 const VELOCIDADE = 0.0075; // voltas do caminho por segundo
@@ -259,7 +261,7 @@ export function PlantaViva() {
     medir();
 
     // estado
-    let tempo = reduzido ? DURACAO_INTRO : 0, u = 0.02, extra = 0, foco = 0, alvoFoco = 0;
+    let tempo = reduzido ? DURACAO_INTRO : 0, u = 0.02, extra = 0, foco = 0, alvoFoco = 0, rolagem = 0;
     let mx = -1e5, my = -1e5, tiltX = 0, tiltY = 0;
     const cresce = new Float32Array(MOVEIS.length); // 0 = só o contorno no chão, 1 = volume inteiro
     const centro = MOVEIS.map((m) => (m.tipo === "caixa" ? [(m.x1 + m.x2) / 2, (m.y1 + m.y2) / 2] : [m.cx, m.cy]));
@@ -274,19 +276,25 @@ export function PlantaViva() {
       u += VELOCIDADE * dt * (1 - foco * 0.92) * (0.35 + 0.65 * ei);
       const alvoExtra = (window.scrollY / Math.max(1, V)) * 0.12;
       extra += (alvoExtra - extra) * Math.min(1, dt * 3);
+      // quanto do palco já passou pela tela (px); a câmera acompanha a rolagem
+      const deslocado = Math.min(Math.max(0, -hero.getBoundingClientRect().top), Math.max(0, H - V));
+      const alvoRolagem = H > V ? deslocado / Math.max(1, H - V * 1.15) : 0;
+      rolagem += (Math.min(1, alvoRolagem) - rolagem) * Math.min(1, dt * 4);
+      const rl = rolagem * rolagem * (3 - 2 * rolagem);
 
       const temMouse = mx > -1e4 && !reduzido;
       tiltX += ((temMouse ? (mx / W - 0.5) : 0) - tiltX) * Math.min(1, dt * 2);
-      tiltY += ((temMouse ? (Math.min(my, V) / V - 0.5) : 0) - tiltY) * Math.min(1, dt * 2);
+      tiltY += ((temMouse ? (Math.min(Math.max(0, my - deslocado), V) / V - 0.5) : 0) - tiltY) * Math.min(1, dt * 2);
 
       const [cx, cy] = noCaminho(u + extra);
       const [fx, fy] = noCaminho(u + extra + 0.012);
-      const cz = ALTURA_INICIAL + (ALTURA_VOO - ALTURA_INICIAL) * ei;
+      const cz = ALTURA_INICIAL + (ALTURA_VOO + (ALTURA_ROLADA - ALTURA_VOO) * rl - ALTURA_INICIAL) * ei;
       const yaw = Math.atan2(fy - cy, fx - cx) + tiltX * 0.22;
-      const pitch = 1.35 + (0.74 - 1.35) * ei + tiltY * 0.1;
+      const pitch = 1.35 + (PITCH_TOPO + (PITCH_ROLADO - PITCH_TOPO) * rl - 1.35) * ei + tiltY * 0.1;
       const cosY = Math.cos(yaw), sinY = Math.sin(yaw), cosP = Math.cos(pitch), sinP = Math.sin(pitch);
       const f = Math.max(W, V) * 0.6 * dpr;
-      const meioX = (W * dpr) / 2, meioY = (V * dpr) * 0.46;
+      // o centro da imagem fica sempre na tela visível (o canvas rola com a página)
+      const meioX = (W * dpr) / 2, meioY = (deslocado + V * 0.46) * dpr;
       const raio = RAIO_MOUSE * dpr, empurrao = EMPURRAO * dpr;
       const mxd = mx * dpr, myd = my * dpr;
       const revelar = ei * 2300;
