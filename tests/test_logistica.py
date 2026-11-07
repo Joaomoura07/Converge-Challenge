@@ -70,3 +70,54 @@ def test_preco_invalido_e_ignorado_e_distancia_padrao():
 
 def test_haversine_recife_olinda():
     assert 4 < _haversine(-8.0476, -34.8770, -8.0089, -34.8553) < 6
+
+
+# --- cache de CEP: falha de rede não pode ficar guardada para sempre ---------------------------------
+import pytest
+
+from src import logistica as lg_mod
+
+
+class _Resp:
+    status_code = 200
+
+    def json(self):
+        return {"location": {"coordinates": {"latitude": "-8.05", "longitude": "-34.88"}}}
+
+
+@pytest.fixture(autouse=False)
+def cep_limpo():
+    lg_mod.limpar_cache_cep()
+    yield
+    lg_mod.limpar_cache_cep()
+
+
+def test_falha_de_rede_nao_fica_para_sempre(cep_limpo, monkeypatch):
+    chamadas = []
+
+    def get(url, timeout):
+        chamadas.append(url)
+        if len(chamadas) == 1:
+            raise TimeoutError("oscilou")
+        return _Resp()
+
+    monkeypatch.setattr(lg_mod.httpx, "get", get)
+    assert lg_mod.coordenadas_cep("50070-000") is None          # 1ª: falhou
+    assert lg_mod.coordenadas_cep("50070-000") is None          # dentro do TTL: nem tenta de novo
+    assert len(chamadas) == 1
+    t = lg_mod.time.monotonic()
+    monkeypatch.setattr(lg_mod.time, "monotonic", lambda: t + lg_mod.FALHA_TTL_S + 1)
+    assert lg_mod.coordenadas_cep("50070-000") == (-8.05, -34.88)  # API voltou: recupera
+    assert len(chamadas) == 2
+
+
+def test_acerto_fica_em_cache(cep_limpo, monkeypatch):
+    n = []
+    monkeypatch.setattr(lg_mod.httpx, "get", lambda url, timeout: (n.append(1), _Resp())[1])
+    assert lg_mod.coordenadas_cep("50070000") == lg_mod.coordenadas_cep("50070-000") == (-8.05, -34.88)
+    assert len(n) == 1
+
+
+def test_cep_invalido_nao_chama_a_api(cep_limpo, monkeypatch):
+    monkeypatch.setattr(lg_mod.httpx, "get", lambda *a, **k: pytest.fail("não deveria chamar"))
+    assert lg_mod.coordenadas_cep("123") is None and lg_mod.coordenadas_cep("") is None

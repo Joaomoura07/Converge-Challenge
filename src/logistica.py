@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import math
 import re
-from functools import lru_cache
+import time
 from typing import Any
 
 import httpx
@@ -207,22 +207,45 @@ def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * r * math.asin(math.sqrt(a))
 
 
-@lru_cache(maxsize=512)
+_CACHE_OK: dict[str, tuple[float, float]] = {}   # CEP -> coordenadas (respostas que deram certo: para sempre)
+_CACHE_FALHA: dict[str, float] = {}               # CEP -> instante da falha (só evita repetir timeout)
+FALHA_TTL_S = 60.0
+
+
 def coordenadas_cep(cep: str) -> tuple[float, float] | None:
-    """(lat, lon) do CEP via BrasilAPI v2. ``None`` se indisponível (o chamador usa ``KM_PADRAO``)."""
+    """(lat, lon) do CEP via BrasilAPI v2. ``None`` se indisponível (o chamador usa ``KM_PADRAO``).
+
+    Só acertos ficam em cache permanente. Falhas (timeout, erro HTTP) são lembradas por
+    ``FALHA_TTL_S`` segundos e depois tentadas de novo: uma oscilação de rede não pode fixar 15 km
+    para sempre.
+    """
     cep = re.sub(r"\D", "", cep or "")
     if len(cep) != 8:
         return None
+    if cep in _CACHE_OK:
+        return _CACHE_OK[cep]
+    falhou_em = _CACHE_FALHA.get(cep)
+    if falhou_em is not None and time.monotonic() - falhou_em < FALHA_TTL_S:
+        return None
     try:
         r = httpx.get(f"https://brasilapi.com.br/api/cep/v2/{cep}", timeout=5.0)
-        if r.status_code != 200:
-            return None
-        c = (r.json().get("location") or {}).get("coordinates") or {}
-        lat, lon = c.get("latitude"), c.get("longitude")
-        return (float(lat), float(lon)) if lat and lon else None
+        if r.status_code == 200:
+            c = (r.json().get("location") or {}).get("coordinates") or {}
+            lat, lon = c.get("latitude"), c.get("longitude")
+            if lat and lon:
+                _CACHE_FALHA.pop(cep, None)
+                _CACHE_OK[cep] = (float(lat), float(lon))
+                return _CACHE_OK[cep]
     except Exception:  # noqa: BLE001
         logger.warning("Falha ao geolocalizar CEP %s", cep)
-        return None
+    _CACHE_FALHA[cep] = time.monotonic()
+    return None
+
+
+def limpar_cache_cep() -> None:
+    """Esvazia os caches (usado nos testes)."""
+    _CACHE_OK.clear()
+    _CACHE_FALHA.clear()
 
 
 def distancias_km(cep_obra: str, fornecedores: list[Fornecedor]) -> dict[str, float]:
