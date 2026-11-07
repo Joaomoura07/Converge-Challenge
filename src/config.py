@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # LLM (Featherless)
-    featherless_api_key: str = ""
+    featherless_api_key: str = ""          # nome antigo (1 chave); continua aceito
+    featherless_api_keys: str = ""         # várias chaves do time separadas por vírgula (cada uma tem a própria cota)
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_model: str = "zai-org/GLM-5.2"
     featherless_model_fast: str = ""
@@ -66,8 +67,22 @@ class Settings(BaseSettings):
         return [k.strip().strip('"').strip("'") for k in self.tavily_api_keys.split(",") if k.strip().strip('"\'')]
 
     @property
+    def featherless_keys(self) -> list[str]:
+        """FEATHERLESS_API_KEYS (vírgula, como o Tavily) + FEATHERLESS_API_KEY (nome antigo), sem repetir e sem aspas.
+        Quem trocou a variável antiga pela nova no .env/Vercel não quebra nada: as duas valem."""
+        brutas = self.featherless_api_keys.split(",") + [self.featherless_api_key]
+        limpas = [k.strip().strip('"').strip("'") for k in brutas]
+        return list(dict.fromkeys(k for k in limpas if k))
+
+    @property
+    def featherless_key(self) -> str:
+        """A primeira chave (usada por quem ainda não reparte a carga entre as chaves)."""
+        chaves = self.featherless_keys
+        return chaves[0] if chaves else ""
+
+    @property
     def llm_configured(self) -> bool:
-        return bool(self.featherless_api_key)
+        return bool(self.featherless_keys)
 
     @property
     def supabase_configured(self) -> bool:

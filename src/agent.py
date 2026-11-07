@@ -51,11 +51,11 @@ class AgentResult(BaseModel):
     trace_url: str | None = None
 
 
-def build_llm_client() -> OpenAI:
+def build_llm_client(api_key: str | None = None) -> OpenAI:
     s = get_settings()
     # max_retries: o SDK faz backoff exponencial com jitter em 408/409/429/5xx
     return OpenAI(
-        api_key=s.featherless_api_key or "missing",
+        api_key=api_key or s.featherless_key or "missing",   # FEATHERLESS_API_KEYS (1ª) ou FEATHERLESS_API_KEY
         base_url=s.featherless_base_url,
         timeout=s.llm_timeout_seconds,
         max_retries=s.llm_max_retries,

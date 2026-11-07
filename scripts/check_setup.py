@@ -69,6 +69,25 @@ def check_langfuse() -> bool:
     return ok
 
 
+def check_chaves_featherless() -> bool:
+    """Cada chave de FEATHERLESS_API_KEYS com uma chamada curta ao modelo rápido (a 1ª já foi testada acima com o
+    modelo principal e tool calling). Mostra só o número da chave, nunca o valor."""
+    chaves = get_settings().featherless_keys
+    modelo = get_settings().pesquisa_modelo_extracao
+    todas_ok = True
+    for i, chave in enumerate(chaves, 1):
+        try:
+            r = build_llm_client(api_key=chave).chat.completions.create(
+                model=modelo, max_tokens=20, messages=[{"role": "user", "content": "Responda só: pong /no_think"}])
+            ok = bool(getattr(r, "choices", None))
+            print(f"{OK if ok else WARN} Featherless chave {i}/{len(chaves)} ({modelo}): "
+                  f"{'respondeu' if ok else 'resposta vazia (sobrecarga)'}")
+        except Exception as exc:  # noqa: BLE001
+            todas_ok = False
+            print(f"{FAIL} Featherless chave {i}/{len(chaves)}: {type(exc).__name__}: {str(exc)[:120]}")
+    return todas_ok
+
+
 def check_tavily() -> bool:
     chaves = get_settings().tavily_keys
     if not chaves:
@@ -117,10 +136,11 @@ def main() -> int:
     parser.add_argument("--model", default=get_settings().featherless_model)
     args = parser.parse_args()
     if not get_settings().llm_configured:
-        print(f"{FAIL} FEATHERLESS_API_KEY ausente no .env")
+        print(f"{FAIL} FEATHERLESS_API_KEYS (ou FEATHERLESS_API_KEY) ausente no .env")
         return 1
-    nomes = ["featherless", "langfuse", "supabase", "tavily", "duckduckgo"]
-    results = [check_featherless(args.model), check_langfuse(), check_supabase(), check_tavily(), check_duckduckgo()]
+    nomes = ["featherless", "featherless_chaves", "langfuse", "supabase", "tavily", "duckduckgo"]
+    results = [check_featherless(args.model), check_chaves_featherless(), check_langfuse(), check_supabase(),
+               check_tavily(), check_duckduckgo()]
     print(json.dumps(dict(zip(nomes, results))))
     return 0 if all(results) else 1
 

@@ -10,7 +10,7 @@ Implementação de referência: `build_llm_client()` e `Agent._complete()` em `s
 ## 1. Configuração
 
 - Cliente: SDK `openai` com `base_url=https://api.featherless.ai/v1`. Não use `requests` cru para chamar o LLM.
-- Chave: **só** via `.env` → `get_settings().featherless_api_key`. Nunca faça hardcode, nunca mande ao front-end, nunca faça commit. Não espalhe `os.getenv` pelo código: centralize em `src/config.py`.
+- Chaves: **só** via `.env` → `FEATHERLESS_API_KEYS` (várias, separadas por vírgula; `FEATHERLESS_API_KEY` antiga continua aceita) → `get_settings().featherless_keys` / `featherless_key` (a 1ª). Nunca faça hardcode, nunca mande ao front-end, nunca faça commit. Não espalhe `os.getenv` pelo código: centralize em `src/config.py`.
 - Cada integrante tem a **própria** chave e US$ 25. Saldo zerado = requisições param.
 - Antes de codar, confira tudo com:
 
