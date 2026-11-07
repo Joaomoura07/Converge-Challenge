@@ -7,11 +7,11 @@ Arquivo SEPARADO para não dar conflito no ``main.py``. Para ligar, basta:
 
 Rotas:
   POST /revisao/sugestoes              -> {complementos: [...]}                      (E2)
-  POST /orcamentos/{id}/resultado      -> roda E7 + E8 + E10 e grava em `orcamentos` (o Enzo chama no fim da pesquisa)
+  POST /orcamentos/{id}/resultado      -> roda E7 + E8 + E10 e grava logistica/viabilidade/ganho em `orcamentos` (o gancho da Fatia B chama no fim da pesquisa)
   GET  /orcamentos/{id}/exportar.xlsx  -> plano de compra em Excel                   (E11)
 
 Colunas esperadas no Supabase (combinadas em PARA-SAMUEL.md): ``orcamentos`` (cep, orcamento_cliente,
-logistica, viabilidade, ganho, iniciado_em, concluido_em, custo_usd), ``orcamento_itens`` e ``fornecedores``.
+logistica, viabilidade, ganho, custo_usd; e as colunas da Fatia B pesquisa_iniciada_em/pesquisa_concluida_em), ``orcamento_itens`` e ``fornecedores``.
 """
 
 from __future__ import annotations
@@ -84,14 +84,16 @@ def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
         vi = calcular_viabilidade(itens, float(orc["orcamento_cliente"]), lg.frete_total if lg else 0.0)
 
     agora = datetime.now(timezone.utc)
-    seg = _segundos(orc.get("iniciado_em"), orc.get("concluido_em") or agora)
+    # colunas da Fatia B (pesquisa_*); `iniciado_em`/`concluido_em` ficam como alternativa
+    inicio = orc.get("pesquisa_iniciada_em") or orc.get("iniciado_em")
+    fim = orc.get("pesquisa_concluida_em") or orc.get("concluido_em") or agora
+    seg = _segundos(inicio, fim)
     ganho = calcular_ganho(len(itens), seg, float(orc.get("custo_usd") or 0)) if seg is not None else None
 
     return {
         "logistica": lg.model_dump(mode="json") if lg else None,
         "viabilidade": vi.model_dump(mode="json") if vi else None,
         "ganho": ganho.model_dump(mode="json") if ganho else None,
-        "concluido_em": (orc.get("concluido_em") or agora.isoformat()),
     }
 
 

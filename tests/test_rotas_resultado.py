@@ -28,7 +28,7 @@ def api(monkeypatch):
     gravado = {}
     itens = [_item(2, "Porcelanato", 1500, 1000), _item(1, "Tinta", 1000, 1500)]   # fora de ordem de propósito
     orc = {"id": "o1", "nome": "Cozinha", "cep": "52011-050", "orcamento_cliente": 5000,
-           "iniciado_em": "2026-11-07T10:00:00+00:00", "concluido_em": "2026-11-07T10:00:28+00:00", "custo_usd": 0.0545}
+           "pesquisa_iniciada_em": "2026-11-07T10:00:00+00:00", "pesquisa_concluida_em": "2026-11-07T10:00:28+00:00", "custo_usd": 0.0545}
     monkeypatch.setattr(rr, "_carregar_orcamento", lambda i: orc if i == "o1" else None)
     monkeypatch.setattr(rr, "_carregar_itens", lambda i: sorted(itens, key=lambda x: x["linha"]))
     monkeypatch.setattr(rr, "_carregar_fornecedores", lambda: [L, C])
@@ -104,3 +104,9 @@ def test_exportar_devolve_xlsx_por_loja(api):
 def test_segundos_invalidos_nao_quebram():
     assert rr._segundos(None, None) is None
     assert rr._segundos("2026-11-07T10:00:00Z", "2026-11-07T10:01:00Z") == 60.0
+
+
+def test_resultado_nao_grava_colunas_que_nao_existem(api):
+    """Só grava logistica/viabilidade/ganho: uma coluna inexistente no SQL faria o update falhar (502)."""
+    api.post("/orcamentos/o1/resultado")
+    assert set(api.gravado["dados"]) == {"logistica", "viabilidade", "ganho"}

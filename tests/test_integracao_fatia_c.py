@@ -56,7 +56,7 @@ def api(monkeypatch):
     itens_orig = [{"linha": i + 1, **it} for i, it in enumerate(OBRA["itens"])]
     itens_banco = simula_enzo(OBRA["itens"])
     orc = {"id": "o1", "nome": OBRA["obra"]["nome"], "cep": OBRA["obra"]["cep"], "orcamento_cliente": 80000,
-           "iniciado_em": "2026-11-07T14:00:00+00:00", "concluido_em": "2026-11-07T14:00:31+00:00", "custo_usd": 0.06}
+           "pesquisa_iniciada_em": "2026-11-07T14:00:00+00:00", "pesquisa_concluida_em": "2026-11-07T14:00:31+00:00", "custo_usd": 0.06}
     gravado = {}
     monkeypatch.setattr(rr, "_carregar_orcamento", lambda i: orc if i == "o1" else None)
     monkeypatch.setattr(rr, "_carregar_itens", lambda i: itens_banco)
