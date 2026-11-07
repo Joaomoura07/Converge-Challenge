@@ -94,3 +94,26 @@ def test_obra_real_cozinha_graças():
     res = sugerir_complementos(itens)
     assert all(c.quantidade > 0 and c.motivo for c in res)
     print([(c.descricao, c.quantidade) for c in res])
+
+
+def test_categoria_com_argamassa_nao_desativa_a_regra_nem_conta_como_ja_tem():
+    # categoria real dos arquivos de teste: "Revestimentos e argamassas"
+    itens = [{"linha": 4, "categoria": "Revestimentos e argamassas", "descricao": "Portinari metrô branco",
+              "quantidade": 14, "unidade": "m2"}]
+    res = sugerir_complementos(itens)
+    assert _por_desc(res, "AC-III")[0].quantidade == 5      # 14 m² * 6 kg / 20 kg
+    assert _por_desc(res, "Rejunte")
+
+
+def test_item_de_argamassa_na_categoria_nao_aciona_a_regra_de_piso():
+    itens = [{"linha": 1, "categoria": "Revestimentos e argamassas", "descricao": "Argamassa AC-III 20 kg",
+              "quantidade": 10, "unidade": "un"},
+             {"linha": 2, "categoria": "Revestimentos e argamassas", "descricao": "Rejunte Quartzolit",
+              "quantidade": 4, "unidade": "un"}]
+    assert sugerir_complementos(itens) == []
+
+
+def test_categoria_pintura_aciona_mesmo_sem_a_palavra_tinta_na_descricao():
+    res = sugerir_complementos([{"linha": 1, "categoria": "Pintura", "descricao": "Coral Decora cinza urbano",
+                                 "quantidade": 22, "unidade": "m2"}])
+    assert {c.regra for c in res} == {"pintura"}

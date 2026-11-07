@@ -58,7 +58,14 @@ def _qtd(item: dict[str, Any]) -> float:
 
 
 def _texto(item: dict[str, Any]) -> str:
+    """categoria + descrição: serve só para ACIONAR uma regra (a categoria ajuda: 'Pintura')."""
     return _norm(f"{item.get('categoria') or ''} {item.get('descricao') or ''}")
+
+
+def _desc(item: dict[str, Any]) -> str:
+    """só a descrição: usada para exclusões e para saber o que JÁ está na lista.
+    A categoria não pode entrar aqui ('Revestimentos e argamassas' não significa que há argamassa)."""
+    return _norm(item.get("descricao"))
 
 
 def _ceil(x: float) -> int:
@@ -189,15 +196,16 @@ def sugerir_complementos(itens: list[dict[str, Any]]) -> list[Complemento]:
     Não repete o que já está na lista e soma a medida de todos os itens que acionam a mesma regra.
     """
     textos = [_texto(it) for it in itens]
-    todo_o_texto = " ".join(textos)
+    descricoes = [_desc(it) for it in itens]
+    todo_o_texto = " ".join(descricoes)
     saida: list[Complemento] = []
 
     for regra in REGRAS:
         total, linhas = 0.0, []
-        for idx, (it, txt) in enumerate(zip(itens, textos)):
+        for idx, (it, txt, desc) in enumerate(zip(itens, textos, descricoes)):
             if not any(g in txt for g in regra.gatilhos):
                 continue
-            if any(e in txt for e in regra.exclui):
+            if any(e in desc for e in regra.exclui):
                 continue
             medida = _area_m2(it) if regra.medida == "area" else (
                 _qtd(it) if _unidade(it.get("unidade")) in ("un", "") else 0.0)
