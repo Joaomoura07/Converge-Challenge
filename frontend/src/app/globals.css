@@ -640,3 +640,17 @@ button:disabled {
     order: 2;
   }
 }
+
+.importador-aba {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.importador-aba select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--linha);
+  border-radius: 4px;
+  background: var(--papel);
+  font: inherit;
+}

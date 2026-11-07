@@ -21,7 +21,7 @@ import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "manual", rotulo: "Cadastro manual", etapa: null },
   { id: "csv", rotulo: "CSV", etapa: null },
-  { id: "excel", rotulo: "Excel", etapa: "09" },
+  { id: "excel", rotulo: "Excel", etapa: null },
   { id: "revit", rotulo: "TXT do Revit", etapa: "10" },
   { id: "pdf", rotulo: "PDF com texto", etapa: "11" },
 ];
@@ -148,7 +148,7 @@ export function Caderno() {
                 <p className="apoio">Digite os materiais um a um. Quantidade aceita vírgula decimal (12,5) e a unidade aceita m².</p>
               )}
               <Importador
-                mostrarArquivo={lista.modo === "csv"}
+                modo={lista.modo}
                 linhasExistentes={itensPreenchidos}
                 novoId={gerarUuid}
                 onAplicar={aplicarImportacao}
