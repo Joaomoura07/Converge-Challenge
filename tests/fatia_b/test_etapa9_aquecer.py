@@ -87,3 +87,8 @@ def test_aquecer_pesquisa_sem_cache_e_apaga_a_parte_ao_vivo(monkeypatch):
     medidas, fora, _ = asyncio.run(aq.aquecer(itens, 0.5))
     assert chamadas["usar_cache"] is False and chamadas["usar_agente"] is True
     assert len(fora) == 3 and len(apagados) == 3 and len(medidas) == 6
+
+
+def test_cep_da_obra_vem_do_json_de_orcamento():
+    assert aq.cep_do_arquivo(COZINHA / "orcamento_cozinha-gracas.json") == "52011-050"
+    assert aq.cep_do_arquivo(COZINHA / "lista_materiais_cozinha-gracas.csv") is None

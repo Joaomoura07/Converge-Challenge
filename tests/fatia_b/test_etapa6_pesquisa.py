@@ -240,19 +240,17 @@ def test_fase2_sem_prazo_fica_com_resultado_da_fase1(mundo, monkeypatch):
 def test_agente_usa_cota_propria_e_nao_a_das_extracoes(mundo, monkeypatch):
     """Com o porteiro das extrações todo ocupado, o agente ainda consegue chamar o LLM."""
     _mundo_duas_fases(mundo)
-    from src import precos
+    from contextlib import AsyncExitStack
+
+    from src import chaves_llm
 
     async def cenario():
-        porteiro = precos._porteiro()
-        vagas = precos.get_settings().pesquisa_concorrencia_llm
-        for _ in range(vagas):
-            await porteiro.acquire()   # extrações ocupando todas as vagas
-        try:
+        pool = chaves_llm.pool_extracao()
+        async with AsyncExitStack() as ocupadas:
+            for _ in range(len(pool.chaves) * pool.vagas):
+                await ocupadas.enter_async_context(pool.vaga())   # extrações ocupando todas as vagas de todas as chaves
             llm = LLMFalso([("buscar", "misturador Deca Link 1875 cozinha")])
             return await asyncio.wait_for(p.pesquisar_item(MISTURADOR, cliente_llm=llm), timeout=5)
-        finally:
-            for _ in range(vagas):
-                porteiro.release()
 
     r = asyncio.run(cenario())
     assert r.iteracoes == 1 and len(r.fontes) == 3

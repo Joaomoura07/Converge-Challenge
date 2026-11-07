@@ -422,3 +422,88 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 - **Métricas para o pitch** (`python -m scripts.metricas_pitch <arquivo>`), Cozinha Graças, 24 itens, cache da demo:
   96% com preço e fonte · 83% definidos · 12% pedem especificação · 4% não encontrados · 8% com busca refeita pelo agente ·
   1,4 loja por item (ponto fraco: muita confiança baixa) · 1º item em 1,3 s · completo em 69 s · US$ 0,0057 por orçamento.
+
+## Etapa revisao-geral — análise do que falta para o Enzo (07/11, 15h50) · 07/11 15:49 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 458 passed, 12 skipped, 16 deselected, 2 warnings in 12.39s |
+| coerência com o programa | ✅ | 7 passed in 0.43s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+
+## Etapa 3 — rodízio de chaves da Featherless: vagas por chave, chave do agente separada, chave que falha esfria · 07/11 16:40 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 581 passed, 12 skipped, 16 deselected, 2 warnings in 15.04s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 201 deselected in 14.44s |
+
+## Etapa 6 — agente com a chave própria (a última de FEATHERLESS_API_KEYS) · 07/11 16:41 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 581 passed, 12 skipped, 16 deselected, 2 warnings in 12.46s |
+| coerência com o programa | ✅ | 7 passed in 0.42s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 6) | ❌ | 1 failed, 1 passed, 201 deselected, 2 warnings in 66.89s (0:01:06) |
+
+### Rodízio de chaves da Featherless (FEATHERLESS_API_KEYS) · 07/11 ~16h30
+- `check_setup`: as 3 chaves respondem. Backend publicado lendo `FEATHERLESS_API_KEYS` (`/health` com `llm: true`).
+- Extração: vagas por chave (3 × 2 chaves de extração = 6 simultâneas); a 3ª chave fica só para o GLM-5.2 do agente;
+  resposta vazia, 429 e 5xx esfriam a chave por 30 s e a nova tentativa vai para outra. Revisão real da etapa 3 aprovada.
+- **Etapa 6 real reprovada (não é o rodízio):** o agente usou a chave própria e reformulou para "misturador monocomando
+  Deca Link cozinha", mas Amazon e Loja Dexco vieram com o produto certo **sem preço no anúncio**; o tempo de 40 s
+  acabou antes da 2ª busca. Ataque previsto: priorizar anúncios com preço e busca aberta (passo 5 do plano).
+
+## Etapa 3 — reserva em paralelo após 8 s e reserva trocada para Mistral Small 3.2 (medida) · 07/11 16:49 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 582 passed, 12 skipped, 16 deselected, 2 warnings in 16.59s |
+| coerência com o programa | ✅ | 7 passed in 0.42s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 202 deselected in 21.68s |
+
+### Reserva em paralelo + reserva mais rápida · 07/11 ~16h50
+- Extração: se o principal (Qwen3-32B) não responder em 8 s (`pesquisa_hedge_s`), a reserva sai **em paralelo** em
+  outra chave; vale a 1ª resposta com linhas válidas e a outra é cancelada (devolve a vaga). Falha rápida continua
+  indo direto para a reserva.
+- Reserva medida no caso de controle (resposta conhecida; kit do mesmo produto = SIM pela regra atual):
+  | Modelo | Acertos | Tempo |
+  |---|---|---|
+  | **Mistral Small 3.2 24B (nova reserva)** | 5/5 | 2,7–3,4 s (uma de 12 s) |
+  | Gemma 4 31B (reserva anterior) | 5/5 | 4,6–19,8 s |
+  | Qwen3-14B | 3/3 | 3,0–8,7 s |
+  | Qwen3-8B | 0/2 | resposta vazia (43–61 s) |
+
+## Etapa 2 — busca aberta com cidade/UF da obra + anúncios com preço antes dos sem preço · 07/11 16:55 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 601 passed, 12 skipped, 16 deselected, 2 warnings in 13.25s |
+| coerência com o programa | ✅ | 7 passed in 0.51s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ❌ | 2 failed, 4 passed, 217 deselected in 31.34s |
+
+## Etapa 2 — teste real aceita loja aberta com preço; nome da loja confere com o domínio · 07/11 16:57 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 603 passed, 12 skipped, 16 deselected, 2 warnings in 15.27s |
+| coerência com o programa | ✅ | 7 passed in 0.43s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ✅ | 6 passed, 219 deselected in 16.65s |
+
+### Busca aberta medida (Cozinha Graças, 24 itens, sem cache, Recife/PE) · 07/11 ~17h20
+- **Lojas por item com preço: 2,1** (antes 1,4) · 79% com preço e fonte · 21% não encontrados · agente refez 17%.
+- **1º item na tela piorou para 20,6 s** (antes ~5,6 s sem cache): cada item esperava a busca aberta, que chega a 10 s.
+  Corrigido com prazo de 5 s para a aberta (`pesquisa_prazo_aberta_s`): passou disso, segue só com a lista fixa.
+  **Não remedido** (medição interrompida a pedido do Enzo).

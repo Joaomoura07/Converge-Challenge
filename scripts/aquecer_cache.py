@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src import cache
+from src.busca import local_do_cep, na_regiao
 from src.modelos import ItemEntrada, ResultadoItem
 from src.pesquisa import pesquisar_itens
 
@@ -87,7 +88,27 @@ def escolher_para_apagar(medidas: list[Medida], manter: float) -> list[Medida]:
     return sorted(em_cache, key=lambda m: m.segundos)[: len(em_cache) - n_manter]
 
 
-async def aquecer(itens: list[ItemEntrada], manter: float, usar_agente: bool = True) -> tuple[list[Medida], list[Medida], float]:
+def cep_do_arquivo(caminho: Path) -> str | None:
+    """O JSON de orçamento traz a obra (`obra.cep`); CSV não traz: use --cep."""
+    if caminho.suffix.lower() != ".json":
+        return None
+    try:
+        dados = json.loads(caminho.read_text(encoding="utf-8"))
+        return (dados.get("obra") or {}).get("cep") if isinstance(dados, dict) else None
+    except (ValueError, OSError):
+        return None
+
+
+async def aquecer(itens: list[ItemEntrada], manter: float, usar_agente: bool = True,
+                  cep: str | None = None) -> tuple[list[Medida], list[Medida], float]:
+    # mesma região que a pesquisa do orçamento usará na demo (busca aberta com cidade/UF da obra)
+    local = await local_do_cep(cep)
+    print(f"Região da busca aberta: {f'{local.cidade}/{local.uf}' if local else 'sem cidade (passe --cep)'}")
+    with na_regiao(local):
+        return await _aquecer(itens, manter, usar_agente)
+
+
+async def _aquecer(itens: list[ItemEntrada], manter: float, usar_agente: bool) -> tuple[list[Medida], list[Medida], float]:
     t0 = time.perf_counter()
     prontos: dict[str, float] = {}
     na_tela: dict[str, float] = {}
@@ -114,11 +135,13 @@ def main() -> int:
     ap.add_argument("arquivo", type=Path)
     ap.add_argument("--manter", type=float, default=0.5, help="fração dos itens que fica no cache (0 a 1)")
     ap.add_argument("--sem-agente", action="store_true", help="não deixa o agente refazer buscas (mais rápido)")
+    ap.add_argument("--cep", help="CEP da obra (o JSON de orçamento já traz em obra.cep)")
     a = ap.parse_args()
 
     itens = ler_itens(a.arquivo)
     print(f"{len(itens)} itens em {a.arquivo.name}. Pesquisando todos...")
-    medidas, apagados, total = asyncio.run(aquecer(itens, a.manter, usar_agente=not a.sem_agente))
+    medidas, apagados, total = asyncio.run(aquecer(itens, a.manter, usar_agente=not a.sem_agente,
+                                                   cep=a.cep or cep_do_arquivo(a.arquivo)))
     fora = {m.item.id for m in apagados}
 
     tela = sorted(m.na_tela for m in medidas if m.na_tela is not None)

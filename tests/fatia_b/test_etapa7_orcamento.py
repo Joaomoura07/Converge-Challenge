@@ -218,6 +218,18 @@ def test_reserva_e_um_update_condicional_atomico():
     assert not asyncio.run(o.BancoSupabase(SupabaseGravador([])).reservar("orc-1"))
 
 
+def test_pesquisa_viva_nao_e_reassumida_antes_do_fim_da_funcao():
+    """A janela que libera um orçamento 'pesquisando' precisa passar do tempo máximo da função na Vercel (300 s).
+    Antes era 3 min: uma pesquisa viva de 200 s podia ser reassumida por outro clique e as duas gravariam."""
+    from datetime import datetime, timezone
+    assert o.JANELA_TRAVADO > o.TEMPO_MAXIMO_FUNCAO
+    sb = SupabaseGravador([{"id": "orc-1"}])
+    antes = datetime.now(timezone.utc)
+    asyncio.run(o.BancoSupabase(sb).reservar("orc-1"))
+    corte = datetime.fromisoformat(sb.chamadas[3][1][0].rsplit("pesquisa_iniciada_em.lt.", 1)[1].rstrip(")"))
+    assert (antes - corte).total_seconds() >= 300, "pesquisa iniciada há 200 s ainda está viva e não pode ser liberada"
+
+
 @pytest.mark.parametrize("da_a,na_b", [("pendente", "pendente_especificacao"), ("definido", "definido"),
                                        ("pendente_especificacao", "pendente_especificacao"), ("outra", None), (None, None)])
 def test_classificacao_do_banco_da_fatia_a(da_a, na_b):

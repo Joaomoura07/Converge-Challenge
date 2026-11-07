@@ -45,10 +45,15 @@ class Settings(BaseSettings):
     tavily_api_keys: str = ""
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
-    pesquisa_max_lojas: int = 5
+    pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
+    pesquisa_busca_aberta: bool = True      # 2ª busca em qualquer loja do Brasil, com a cidade/UF da obra
+    pesquisa_max_abertas: int = 4           # anúncios da busca aberta (só os com preço escrito)
+    pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
+    pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
+    pesquisa_hedge_s: float = 8             # extração sem resposta nesse tempo → reserva em paralelo (outra chave)
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
     pesquisa_max_refazer: int = 2           # buscas extras que o agente pode fazer por item
     pesquisa_timeout_agente_s: float = 40   # o agente não segura o orçamento inteiro (medido: ~20 s por rodada com GLM-5.2)

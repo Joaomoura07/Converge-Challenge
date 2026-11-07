@@ -22,13 +22,16 @@ from openai import APIStatusError, AsyncOpenAI
 from pydantic import BaseModel
 
 from . import custo as _custo
+from . import chaves_llm
 from .busca import ResultadoWeb
 from .config import get_settings, load_prompt
 from .modelos import Fonte
 
 logger = logging.getLogger(__name__)
 
-MODELO_RESERVA_EXTRACAO = "google/gemma-4-31B-it"   # 5/5 na avaliação; usado se o principal falhar
+# Reserva: medido em 07/11 no caso de controle (3 rodadas + 2): Mistral Small 3.2 acertou todas em 2,7–3,4 s (uma de
+# 12 s); a Gemma 4 31B (reserva anterior) acertou em 4,6–19,8 s. Qwen3-8B devolveu resposta vazia.
+MODELO_RESERVA_EXTRACAO = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 LIMITE_TRECHO = 500
 # Palavras inteiras no prompt: com letras soltas (S/P/N) os modelos copiavam o NOME do campo ("M")
 # em vez do valor (medido na revisão da etapa 3). Valor desconhecido = linha rejeitada, nunca "nao" silencioso.
@@ -134,19 +137,14 @@ def semaforo_do_loop(registro: weakref.WeakKeyDictionary, vagas: int) -> asyncio
     return registro[loop]
 
 
-_semaforos: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
-
-
-def _porteiro() -> asyncio.Semaphore:
-    """No máximo N chamadas simultâneas à Featherless (evita erro 429). Um por event loop."""
-    return semaforo_do_loop(_semaforos, get_settings().pesquisa_concorrencia_llm)
-
-
-def _cliente() -> AsyncOpenAI:
+def _cliente(chave: str | None = None) -> AsyncOpenAI:
     s = get_settings()
     # Tempo curto + 1 nova tentativa: se o modelo principal travar, a reserva assume rápido (demo de ~30 s).
-    return AsyncOpenAI(api_key=s.featherless_key or "missing", base_url=s.featherless_base_url,
+    return AsyncOpenAI(api_key=chave or s.featherless_key or "missing", base_url=s.featherless_base_url,
                        timeout=TIMEOUT_EXTRACAO_S, max_retries=1)
+
+
+ERROS_DA_CHAVE = {429, 500, 502, 503, 504}   # problema da conta/servidor: vale tentar com outra chave
 
 
 class RespostaVazia(Exception):
@@ -170,17 +168,30 @@ async def _chamar(cliente, modelo: str, produto: str, anuncios: str):
                  {"role": "user", "content": f"Produto pedido: {produto}\n\n{anuncios}{sufixo}"}]
     lf = get_client()
     lf.update_current_generation(model=modelo, input=mensagens)
+    falhou = None
     for tentativa in range(TENTATIVAS_RESPOSTA_VAZIA):
-        async with _porteiro():
-            r = await cliente.chat.completions.create(model=modelo, messages=mensagens, temperature=0, max_tokens=400)
+        # vaga numa das chaves de extração (a menos ocupada; evita a que acabou de falhar)
+        async with chaves_llm.pool_extracao().vaga(evitar=falhou) as chave:
+            cli = cliente or _cliente(chave)
+            try:
+                r = await cli.chat.completions.create(model=modelo, messages=mensagens, temperature=0, max_tokens=400)
+            except APIStatusError as exc:
+                if exc.status_code in ERROS_DA_CHAVE:
+                    chaves_llm.esfriar(chave)
+                raise
+            finally:
+                if cliente is None:
+                    await cli.close()   # sem isso o httpx reclama "Event loop is closed" ao sair
         try:
             conferir_resposta(r)
             break
         except RespostaVazia:
+            chaves_llm.esfriar(chave)   # a próxima tentativa vai para outra chave
+            falhou = chave
             if tentativa == TENTATIVAS_RESPOSTA_VAZIA - 1:
                 raise
             logger.info("Featherless devolveu resposta vazia (%s); tentando de novo", modelo)
-            await asyncio.sleep(1.0 + random.random())   # espalha as novas tentativas
+            await asyncio.sleep(0.3 + random.random() / 2)   # espalha as novas tentativas
     custo = getattr(r.usage, "cost", None) if r.usage else None
     lf.update_current_generation(
         output=r.choices[0].message.content,
@@ -194,13 +205,8 @@ async def extrair_e_conferir(produto: str, resultados: list[ResultadoWeb], clien
     der erro ou não devolver nenhuma linha válida."""
     if not resultados:
         return ResultadoExtracao(erro="nenhum anúncio para ler")
-    proprio = cliente is None
-    cliente = cliente or _cliente()
-    try:
-        return await _extrair(produto, resultados, cliente)
-    finally:
-        if proprio:
-            await cliente.close()   # sem isso o httpx reclama "Event loop is closed" ao sair
+    # cliente=None (produção): cada chamada usa a chave que o rodízio escolher (src/chaves_llm.py)
+    return await _extrair(produto, resultados, cliente)
 
 
 # Disjuntor: modelo que a Featherless recusa com 400 ("not available for inference" / frio carregando)
@@ -225,37 +231,83 @@ def modelos_extracao() -> list[str]:
     return [m for m in todos if _disponivel(m)] or todos
 
 
+@dataclass
+class _Tentativa:
+    modelo: str
+    ofertas: list[Oferta] = field(default_factory=list)
+    alucinadas: int = 0
+    usage: object | None = None
+    erro: str | None = None
+    texto: str = ""
+
+
+async def _tentar(cliente, modelo: str, produto: str, anuncios: str, resultados: list[ResultadoWeb]) -> _Tentativa:
+    """Uma tentativa com um modelo. Nunca levanta exceção (só cancelamento): o erro vira dado."""
+    t = time.perf_counter()
+    try:
+        r = await _chamar(cliente, modelo, produto, anuncios)
+    except APIStatusError as exc:
+        logger.warning("Extração com %s falhou (HTTP %s); tentando reserva", modelo, exc.status_code)
+        if exc.status_code == 400:
+            _marcar_indisponivel(modelo)
+        erro = f"{modelo}: HTTP {exc.status_code}"
+        return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
+    except Exception as exc:  # noqa: BLE001 — timeout/rede/resposta vazia
+        logger.warning("Extração com %s falhou (%s: %s); tentando reserva", modelo, type(exc).__name__, str(exc)[:100])
+        erro = f"{modelo}: {type(exc).__name__}"
+        return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
+    ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
+    return _Tentativa(modelo, ofertas, alucinadas, r.usage, None if ofertas else f"{modelo}: resposta sem linhas válidas",
+                      f"{modelo}: {time.perf_counter() - t:.1f}s, {len(ofertas)} linhas válidas")
+
+
 async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> ResultadoExtracao:
+    """Principal primeiro. Se ele FALHAR, a reserva entra na hora; se só DEMORAR mais que `pesquisa_hedge_s`,
+    a reserva é disparada EM PARALELO (outra chave do rodízio) e vale a primeira resposta com linhas válidas;
+    a outra é cancelada. Medido em 07/11: a mesma extração levou 3,4 s numa rodada e 132 s na seguinte."""
     anuncios = montar_anuncios(resultados)
     t0 = time.perf_counter()
     res = ResultadoExtracao()
-    for modelo in modelos_extracao():
-        t_modelo = time.perf_counter()
-        try:
-            r = await _chamar(cliente, modelo, produto, anuncios)
-        except APIStatusError as exc:
-            res.erro = f"{modelo}: HTTP {exc.status_code}"
-            res.tentativas.append(f"{res.erro} ({time.perf_counter() - t_modelo:.1f}s)")
-            logger.warning("Extração com %s falhou (HTTP %s); tentando reserva", modelo, exc.status_code)
-            if exc.status_code == 400:
-                _marcar_indisponivel(modelo)
-            continue
-        except Exception as exc:  # noqa: BLE001 — timeout/rede/resposta vazia
-            res.erro = f"{modelo}: {type(exc).__name__}"
-            res.tentativas.append(f"{res.erro} ({time.perf_counter() - t_modelo:.1f}s)")
-            logger.warning("Extração com %s falhou (%s: %s); tentando reserva", modelo, type(exc).__name__, str(exc)[:100])
-            continue
-        if r.usage:
-            res.tokens_entrada += r.usage.prompt_tokens or 0
-            res.tokens_saida += r.usage.completion_tokens or 0
-            res.custo_usd += float(getattr(r.usage, "cost", 0) or 0)
-            _custo.registrar(getattr(r.usage, "cost", 0))
-        ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
-        res.descartadas_alucinacao += alucinadas
-        res.tentativas.append(f"{modelo}: {time.perf_counter() - t_modelo:.1f}s, {len(ofertas)} linhas válidas")
-        if ofertas:
-            res.ofertas, res.modelo, res.erro = ofertas, modelo, None
-            break
-        res.erro = f"{modelo}: resposta sem linhas válidas"
+    fila = modelos_extracao()
+    ativas: dict[asyncio.Task, str] = {}
+
+    def lancar() -> None:
+        if fila:
+            modelo = fila.pop(0)
+            ativas[asyncio.create_task(_tentar(cliente, modelo, produto, anuncios, resultados))] = modelo
+
+    lancar()
+    try:
+        while ativas:
+            prazo = get_settings().pesquisa_hedge_s if fila else None
+            feitas, _ = await asyncio.wait(ativas, timeout=prazo, return_when=asyncio.FIRST_COMPLETED)
+            if not feitas:   # principal demorando: reserva em paralelo
+                logger.info("Extração lenta (> %.0f s): reserva em paralelo", prazo)
+                res.tentativas.append(f"{next(iter(ativas.values()))}: lento, reserva em paralelo")
+                lancar()
+                continue
+            for tarefa in feitas:
+                ativas.pop(tarefa)
+                t = tarefa.result()
+                res.tentativas.append(t.texto)
+                res.descartadas_alucinacao += t.alucinadas
+                if t.usage:
+                    res.tokens_entrada += t.usage.prompt_tokens or 0
+                    res.tokens_saida += t.usage.completion_tokens or 0
+                    res.custo_usd += float(getattr(t.usage, "cost", 0) or 0)
+                    _custo.registrar(getattr(t.usage, "cost", 0))
+                if t.ofertas and not res.ofertas:
+                    res.ofertas, res.modelo, res.erro = t.ofertas, t.modelo, None
+                elif not res.ofertas:
+                    res.erro = t.erro
+            if res.ofertas:
+                break
+            if not ativas:   # falhou rápido: próxima da fila
+                lancar()
+    finally:
+        for tarefa in ativas:   # a outra (mais lenta) é cancelada e devolve a vaga da chave
+            tarefa.cancel()
+        if ativas:
+            await asyncio.gather(*ativas, return_exceptions=True)
     res.ms = int((time.perf_counter() - t0) * 1000)
     return res
