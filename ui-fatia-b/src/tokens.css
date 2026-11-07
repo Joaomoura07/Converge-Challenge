@@ -1,0 +1,23 @@
+/* PROVISÓRIO, só para a prévia. As cores finais são escolhidas pelo time e ficam num único :root do site
+   (skills/04-ui-design.md, seção 2). Azul de cópia heliográfica como ação; papel frio, não creme. */
+:root {
+  --cor-fundo: #f7f8f9;
+  --cor-superficie: #edf0f3;
+  --cor-texto: #17202b;
+  --cor-texto-2: #4c5866;
+  --cor-linha: #aab3be;
+  --cor-acao: #24509b;
+  --cor-definido: #1d7448;
+  --cor-pendente: #b5761a;
+  --cor-erro: #b42318;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: "Archivo", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}

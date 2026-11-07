@@ -1,0 +1,280 @@
+[
+ {
+  "id": "1",
+  "descricao": "Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve 18L",
+  "quantidade": 180.0,
+  "unidade": "m2",
+  "status": "definido",
+  "produto_normalizado": "Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve 18L",
+  "imagem_url": "https://telhanorte.vtexassets.com/arquivos/ids/341878/Tinta-Latex-Toque-de-Seda-acrilica-18-litros-branco-Suvinil-643165.jpg?v=637008969993970000",
+  "embalagem": "lata 18 L",
+  "qtd_embalagens": 2,
+  "preco_emb_min": 659.0,
+  "preco_emb_med": 739.9,
+  "preco_emb_max": 901.49,
+  "preco_un_min": null,
+  "preco_un_med": null,
+  "preco_un_max": null,
+  "unidade_preco": null,
+  "confianca": "media",
+  "estimativa": false,
+  "fontes": [
+   {
+    "loja": "Telhanorte",
+    "dominio": "telhanorte.com.br",
+    "url": "https://www.telhanorte.com.br/tinta-acrilica-premium-toque-seda-18l-branco-neve-suvinil-2533111/p",
+    "preco_embalagem": 739.9,
+    "embalagem": "lata 18 L"
+   },
+   {
+    "loja": "Magazine Luiza",
+    "dominio": "m.magazineluiza.com.br",
+    "url": "https://m.magazineluiza.com.br/busca/tinta+acrilica+suvinil+toque+de+seda+branco+neve+18+litros",
+    "preco_embalagem": 901.49,
+    "embalagem": "lata 18 L"
+   },
+   {
+    "loja": "Mercado Livre",
+    "dominio": "mercadolivre.com.br",
+    "url": "https://www.mercadolivre.com.br/tinta-acrilica-suvinil-toque-seda-branco-18l-acetinado-resistente/p/MLB37514630",
+    "preco_embalagem": 659.0,
+    "embalagem": "lata 18 L"
+   }
+  ],
+  "premissa": "rendimento ≈ 8 m²/L (tinta, 2 demãos)",
+  "pergunta": null,
+  "motivo": null,
+  "preco_data": "2026-11-07T16:27:47.365623Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "2",
+  "descricao": "Porcelanato Eliane Munari Cimento acetinado 60x60",
+  "quantidade": 48.0,
+  "unidade": "m2",
+  "status": "definido",
+  "produto_normalizado": "Porcelanato Eliane Munari Cimento acetinado 60x60",
+  "imagem_url": "https://telhanorte.vtexassets.com/arquivos/ids/337874/Porcelanato-Munari-Cimento-acetinado-retificado-60x60cm-cinza-Eliane.jpg?v=636857483787600000",
+  "embalagem": "caixa 1,8m²",
+  "qtd_embalagens": 30,
+  "preco_emb_min": 88.9,
+  "preco_emb_med": 122.22,
+  "preco_emb_max": 125.82,
+  "preco_un_min": 49.3889,
+  "preco_un_med": 67.9,
+  "preco_un_max": 69.9,
+  "unidade_preco": "m2",
+  "confianca": "media",
+  "estimativa": false,
+  "fontes": [
+   {
+    "loja": "Telhanorte",
+    "dominio": "telhanorte.com.br",
+    "url": "https://www.telhanorte.com.br/porcelanato-munari-cimento-acetinado-59x59cm-retificado-caixa-1-8m2-eliane-2569493/p",
+    "preco_embalagem": 122.22,
+    "embalagem": "caixa 1,8m²"
+   },
+   {
+    "loja": "Tumelero",
+    "dominio": "tumelero.com.br",
+    "url": "https://www.tumelero.com.br/porcelanato-acetinado-bold-munari-cimento-eliane/p",
+    "preco_embalagem": 125.82,
+    "embalagem": "caixa 1,8m²"
+   },
+   {
+    "loja": "Ferreira Costa",
+    "dominio": "ferreiracosta.com",
+    "url": "https://www.ferreiracosta.com/produto/379297/porcelanato-tipo-a-60x60cm-munari-cimento-uso-externo-com-junta-de-3mm-eliane",
+    "preco_embalagem": 88.9,
+    "embalagem": "caixa 1,8m²"
+   }
+  ],
+  "premissa": null,
+  "pergunta": null,
+  "motivo": null,
+  "preco_data": "2026-11-07T16:27:47.079619Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "3",
+  "descricao": "Tinta acrílica fosca vermelha",
+  "quantidade": 12.0,
+  "unidade": "m2",
+  "status": "pendente_especificacao",
+  "produto_normalizado": "Tinta acrílica fosca vermelha",
+  "imagem_url": "https://http2.mlstatic.com/D_NQ_NP_642419-MLB103146807227_122025-O-tinta-acrilica-fosca-60ml-vermelho--acrilex.webp",
+  "embalagem": "latão 18 L",
+  "qtd_embalagens": 1,
+  "preco_emb_min": 299.0,
+  "preco_emb_med": 299.0,
+  "preco_emb_max": 299.0,
+  "preco_un_min": null,
+  "preco_un_med": null,
+  "preco_un_max": null,
+  "unidade_preco": null,
+  "confianca": "baixa",
+  "estimativa": true,
+  "fontes": [
+   {
+    "loja": "Ferreira Costa",
+    "dominio": "ferreiracosta.com",
+    "url": "https://www.ferreiracosta.com/produto/147295/tinta-para-piso-acrilica-fosco-premium-18l-vermelho---suvinil",
+    "preco_embalagem": 299.0,
+    "embalagem": "latão 18 L"
+   }
+  ],
+  "premissa": "rendimento ≈ 8 m²/L (tinta, 2 demãos)",
+  "pergunta": "Qual marca, linha, cor e acabamento (fosco, acetinado, semibrilho)?",
+  "motivo": null,
+  "preco_data": "2026-11-07T16:27:47.369097Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "4",
+  "descricao": "Argamassa Quartzolit AC-III cinza 20kg",
+  "quantidade": 48.0,
+  "unidade": "m2",
+  "status": "definido",
+  "produto_normalizado": "Argamassa Quartzolit AC-III cinza 20kg",
+  "imagem_url": "https://telhanorte.vtexassets.com/arquivos/ids/1320983-400-auto",
+  "embalagem": "saco 20 kg",
+  "qtd_embalagens": 13,
+  "preco_emb_min": 42.89,
+  "preco_emb_med": 44.9,
+  "preco_emb_max": 63.81,
+  "preco_un_min": null,
+  "preco_un_med": null,
+  "preco_un_max": null,
+  "unidade_preco": null,
+  "confianca": "media",
+  "estimativa": false,
+  "fontes": [
+   {
+    "loja": "Telhanorte",
+    "dominio": "telhanorte.com.br",
+    "url": "https://www.telhanorte.com.br/argamassa-de-uso-externo-e-interno-ac3-flexivel-20kg-cinza-quartzolit-27073/p",
+    "preco_embalagem": 46.9,
+    "embalagem": "saco 20 kg"
+   },
+   {
+    "loja": "Tumelero",
+    "dominio": "tumelero.com.br",
+    "url": "https://www.tumelero.com.br/argamassa-cimentcola-flexivel-aciii-quartzolit-cinza/p",
+    "preco_embalagem": 42.9,
+    "embalagem": "saco 20 kg"
+   },
+   {
+    "loja": "Sertão",
+    "dominio": "sertao.com.br",
+    "url": "https://www.sertao.com.br/argamassa-ac3-interna-externa-20kg-branco-quartzolit-1270280/p",
+    "preco_embalagem": 63.81,
+    "embalagem": "saco 20 kg"
+   },
+   {
+    "loja": "MadeiraMadeira",
+    "dominio": "madeiramadeira.com.br",
+    "url": "https://www.madeiramadeira.com.br/busca/argamassa%20porcelanato%20interno%20ac%20iii/8",
+    "preco_embalagem": 42.89,
+    "embalagem": "saco 20 kg"
+   }
+  ],
+  "premissa": "consumo ≈ 5 kg/m² (argamassa)",
+  "pergunta": null,
+  "motivo": null,
+  "preco_data": "2026-11-07T16:27:50.893184Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "5",
+  "descricao": "Misturador monocomando Deca Link para cozinha",
+  "quantidade": 1.0,
+  "unidade": "un",
+  "status": "definido",
+  "produto_normalizado": "Misturador monocomando Deca Link para cozinha",
+  "imagem_url": "https://a-static.mlcdn.com.br/%7Bw%7Dx%7Bh%7D/misturador-monocomando-de-mesa-para-cozinha-link-2256-c-lnk-deca-cromado/poligressshop/20344-cr/6e24f10aab8308fb673de1e2e379f513.jpeg",
+  "embalagem": "unidade",
+  "qtd_embalagens": 1,
+  "preco_emb_min": 1123.54,
+  "preco_emb_med": 1713.15,
+  "preco_emb_max": 1829.9,
+  "preco_un_min": 1123.54,
+  "preco_un_med": 1713.15,
+  "preco_un_max": 1829.9,
+  "unidade_preco": "un",
+  "confianca": "media",
+  "estimativa": false,
+  "fontes": [
+   {
+    "loja": "Magazine Luiza",
+    "dominio": "magazineluiza.com.br",
+    "url": "https://www.magazineluiza.com.br/busca/misturador+monocomando+deca+link+para+cozinha+2256.c.lnk",
+    "preco_embalagem": 1713.15,
+    "embalagem": "unidade"
+   },
+   {
+    "loja": "Telhanorte",
+    "dominio": "telhanorte.com.br",
+    "url": "https://www.telhanorte.com.br/misturador-monocomando-para-cozinha-bica-movel-link-deca-710458/p",
+    "preco_embalagem": 1829.9,
+    "embalagem": "unidade"
+   },
+   {
+    "loja": "Amazon",
+    "dominio": "amazon.com.br",
+    "url": "https://www.amazon.com.br/Misturador-Monocomando-Cozinha-Deca-2256-C-LNK/dp/B076KL6HF9",
+    "preco_embalagem": 1123.54,
+    "embalagem": "unidade"
+   }
+  ],
+  "premissa": null,
+  "pergunta": null,
+  "motivo": null,
+  "preco_data": "2026-11-07T16:27:46.764577Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "6",
+  "descricao": "Cuba inox Tramontina Morgana 56x34",
+  "quantidade": 1.0,
+  "unidade": "un",
+  "status": "definido",
+  "produto_normalizado": "Cuba inox Tramontina Morgana 56x34",
+  "imagem_url": "https://joli.vtexassets.com/arquivos/ids/642572/Cuba_Retangular_Inox_Ao_56x34_Acetinado_Tramontina_103546101png.png?v=638157791093900000",
+  "embalagem": "unidade",
+  "qtd_embalagens": 1,
+  "preco_emb_min": 551.0,
+  "preco_emb_med": 551.0,
+  "preco_emb_max": 551.0,
+  "preco_un_min": 551.0,
+  "preco_un_med": 551.0,
+  "preco_un_max": 551.0,
+  "unidade_preco": "un",
+  "confianca": "baixa",
+  "estimativa": false,
+  "fontes": [
+   {
+    "loja": "Mercado Livre",
+    "dominio": "lista.mercadolivre.com.br",
+    "url": "https://lista.mercadolivre.com.br/cuba-inox-tramontina-morgana",
+    "preco_embalagem": 551.0,
+    "embalagem": "unidade"
+   }
+  ],
+  "premissa": null,
+  "pergunta": null,
+  "motivo": null,
+  "preco_data": "2026-11-07T16:28:50.091860Z",
+  "iteracoes": 0
+ },
+ {
+  "id": "7",
+  "descricao": "Fechadura Pado externa cromada",
+  "quantidade": 3,
+  "unidade": "un",
+  "status": "nao_encontrado",
+  "motivo": "nenhuma loja com preço para este produto",
+  "fontes": [],
+  "estimativa": false,
+  "iteracoes": 2
+ }
+]
