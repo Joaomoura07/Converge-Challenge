@@ -61,3 +61,42 @@ def test_xlsx_agrupa_por_loja_e_lista_pendentes():
 def test_xlsx_sem_logistica_nao_quebra():
     raw = gerar_xlsx({"nome": "X"}, [{"descricao": "Item", "status": "buscando"}], [])
     assert load_workbook(BytesIO(raw))["Pendentes"]["A2"].value == "Item"
+
+
+def test_xlsx_nao_grava_formulas_de_texto_do_usuario():
+    """Texto do arquivo do arquiteto começando com '=' não pode virar fórmula no Excel."""
+    import zipfile
+
+    malicioso = '=HYPERLINK("http://evil.example","clique")'
+    itens = [
+        {**_item(malicioso, 100, 120, embalagem="=1+1", confianca="=SUM(A1)"), "descricao": malicioso},
+        {"descricao": "=cmd|' /C calc'!A0", "status": "pendente_especificacao",
+         "pergunta": "=HYPERLINK(\"http://evil.example\")", "fontes": []},
+    ]
+    forn = [L, C]
+    lg = calcular_logistica(itens, forn, {"L": 10, "C": 5})
+    raw = gerar_xlsx({"nome": "=NOME()", "cep": "=1"}, itens, forn, lg,
+                     calcular_viabilidade(itens, 5000, lg.frete_total), calcular_ganho(2, 10))
+
+    # 1) nenhum <f> (fórmula) no XML de nenhuma aba
+    with zipfile.ZipFile(BytesIO(raw)) as z:
+        for nome in z.namelist():
+            if nome.startswith("xl/worksheets/sheet"):
+                assert b"<f>" not in z.read(nome) and b"<f " not in z.read(nome), nome
+
+    # 2) o texto original continua lá, intacto, como texto
+    wb = load_workbook(BytesIO(raw))
+    plano = wb["Plano de compra"]
+    assert plano["A1"].value == "Plano de compra — =NOME()"
+    assert malicioso in [c.value for c in plano["A"]]
+    assert wb["Pendentes"]["A2"].value == "=cmd|' /C calc'!A0"
+    assert wb["Pendentes"]["C2"].data_type == "s"
+
+
+def test_url_que_nao_e_http_nao_vira_hiperlink():
+    it = _item("Tinta", None, 50)
+    it["fontes"][0]["url"] = "file:///etc/passwd"
+    lg = calcular_logistica([it], [C], {"C": 5})
+    wb = load_workbook(BytesIO(gerar_xlsx({"nome": "X"}, [it], [C], lg)))
+    cel = [c for c in wb["Plano de compra"]["G"] if c.value == "file:///etc/passwd"][0]
+    assert cel.hyperlink is None

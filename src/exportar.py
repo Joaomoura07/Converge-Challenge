@@ -31,6 +31,18 @@ def _link_da_loja(item: dict[str, Any], f: Fornecedor) -> tuple[float | None, st
     return melhor if melhor else (None, "")
 
 
+def _neutralizar_formulas(wb: Workbook) -> None:
+    """Segurança: o openpyxl grava como FÓRMULA qualquer texto que comece com '='. Como o texto vem de
+    arquivos enviados pelo usuário (descrição, embalagem, pergunta...), '=HYPERLINK(...)' seria executado
+    quando o arquivo fosse aberto no Excel. Este sistema nunca escreve fórmulas (os cálculos são em
+    Python), então toda célula marcada como fórmula é rebaixada a texto puro antes de salvar."""
+    for ws in wb.worksheets:
+        for linha in ws.iter_rows():
+            for cel in linha:
+                if cel.data_type == "f":
+                    cel.data_type = "s"
+
+
 def _linha_cabecalho(ws, linha: int, titulos: list[str]) -> None:
     for c, t in enumerate(titulos, 1):
         cel = ws.cell(row=linha, column=c, value=t)
@@ -73,7 +85,8 @@ def gerar_xlsx(obra: dict[str, Any], itens: list[dict[str, Any]], fornecedores: 
             ws.cell(row=r, column=6, value=it.get("confianca"))
             if url:
                 cel = ws.cell(row=r, column=7, value=url)
-                cel.hyperlink = url
+                if url.lower().startswith(("http://", "https://")):   # só links web viram hiperlink
+                    cel.hyperlink = url
                 cel.font = Font(color="0563C1", underline="single")
             atribuidos.add(i)
             r += 1
@@ -130,6 +143,7 @@ def gerar_xlsx(obra: dict[str, Any], itens: list[dict[str, Any]], fornecedores: 
     wr.column_dimensions["A"].width = 24
     wr.column_dimensions["B"].width = 90
 
+    _neutralizar_formulas(wb)
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
