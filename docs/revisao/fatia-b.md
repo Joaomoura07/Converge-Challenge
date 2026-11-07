@@ -507,3 +507,16 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 - **1º item na tela piorou para 20,6 s** (antes ~5,6 s sem cache): cada item esperava a busca aberta, que chega a 10 s.
   Corrigido com prazo de 5 s para a aberta (`pesquisa_prazo_aberta_s`): passou disso, segue só com a lista fixa.
   **Não remedido** (medição interrompida a pedido do Enzo).
+
+### Cache da demo: os 3 exemplos do site · 07/11 ~18h20
+- Aquecidos com `--manter 1` e o CEP de cada obra (o jurado testa pelo botão "Usar arquivo de exemplo"):
+  | Exemplo | Itens | No cache | Sem preço (ao vivo) | Tempo sem cache | 1º item sem cache |
+  |---|---|---|---|---|---|
+  | Apto Boa Viagem (Recife/PE) | 47 | 40 | 7 | 179 s | 11,8 s |
+  | Casa térrea Aldeia (Camaragibe/PE) | 53 | 47 | 6 | 183 s | 21,5 s |
+  | Escritório Ilha do Leite (Recife/PE) | 33 | 32 | 1 | 150 s | 8,7 s |
+- Todos abaixo dos 300 s da função mesmo sem cache.
+- **Envio real pelo `POST /orcamentos` publicado** (escritório, orçamento `31c91a88-dfb9-41e8-a4b5-7484e09cd893`):
+  33 itens em 18,4 s de requisição (pesquisa completa em 14,7 s), 97% com preço e fonte, 28 definidos, 5 pedindo
+  especificação, 0 não encontrados, 1,7 loja por item, US$ 0,0006. Confirma que o site usa o cache.
+- O script de aquecimento passou a ler o cabeçalho em inglês do exemplo do escritório (Description, Qty, Unit).
