@@ -22,7 +22,7 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "manual", rotulo: "Cadastro manual", etapa: null },
   { id: "csv", rotulo: "CSV", etapa: null },
   { id: "excel", rotulo: "Excel", etapa: null },
-  { id: "revit", rotulo: "TXT do Revit", etapa: "10" },
+  { id: "revit", rotulo: "TXT do Revit", etapa: null },
   { id: "pdf", rotulo: "PDF com texto", etapa: "11" },
 ];
 
@@ -143,6 +143,14 @@ export function Caderno() {
               ) : lista.modo === "csv" ? (
                 <p className="apoio">
                   Envie um CSV exportado do Excel ou de outro programa. Cada linha vira um item editável na tabela abaixo, com a linha do arquivo de origem.
+                </p>
+              ) : lista.modo === "excel" ? (
+                <p className="apoio">
+                  Envie uma planilha .xlsx, .xls ou .xlsm. Se houver várias abas com dados, você escolhe qual importar. Cada linha vira um item editável, com a linha da planilha de origem.
+                </p>
+              ) : lista.modo === "revit" ? (
+                <p className="apoio">
+                  No Revit, exporte a tabela de quantitativos como texto (.txt, separado por tabulação). Títulos, grupos como &quot;Nível: Térreo&quot;, subtotais e o total geral são tratados: só as linhas de itens entram, com o nível do grupo.
                 </p>
               ) : (
                 <p className="apoio">Digite os materiais um a um. Quantidade aceita vírgula decimal (12,5) e a unidade aceita m².</p>

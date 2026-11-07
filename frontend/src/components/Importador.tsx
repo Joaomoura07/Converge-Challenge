@@ -27,8 +27,8 @@ type Situacao =
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
 export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props) {
-  const mostrarArquivo = modo === "csv" || modo === "excel";
-  const aceita = modo === "excel" ? ".xlsx,.xls,.xlsm" : ".csv,text/csv";
+  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit";
+  const aceita = modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
@@ -140,7 +140,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
               aria-describedby={idAviso}
             />
             <button type="button" className="botao-primario" onClick={() => entrada.current?.click()}>
-              {modo === "excel" ? "Escolher planilha Excel" : "Escolher arquivo CSV"}
+              {modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : "Escolher arquivo CSV"}
             </button>
           </>
         )}
@@ -171,7 +171,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       <p id={idAviso} className="nota" role="status" aria-live="polite">
         {situacao.tipo === "livre" &&
           (mostrarArquivo
-            ? modo === "excel"
+            ? modo === "revit"
+              ? "Aceita a tabela exportada do Revit em .txt (colunas separadas por tabulação), de até 20 MB. A lista só muda depois da leitura."
+              : modo === "excel"
               ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Macros nunca são executadas. A lista só muda depois da leitura."
               : "Aceita CSV de até 20 MB, em UTF-8 ou Windows-1252, com ponto e vírgula, vírgula ou tabulação. A lista só muda depois da leitura."
             : "Os exemplos usam o mesmo leitor dos arquivos enviados.")}
