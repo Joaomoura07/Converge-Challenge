@@ -218,6 +218,40 @@ def test_reserva_e_um_update_condicional_atomico():
     assert not asyncio.run(o.BancoSupabase(SupabaseGravador([])).reservar("orc-1"))
 
 
+@pytest.mark.parametrize("da_a,na_b", [("pendente", "pendente_especificacao"), ("definido", "definido"),
+                                       ("pendente_especificacao", "pendente_especificacao"), ("outra", None), (None, None)])
+def test_classificacao_do_banco_da_fatia_a(da_a, na_b):
+    """Achado real (07/11): o SQL da A grava 'pendente' (itens_classificacao_ck); antes virava None e o item
+    genérico era pesquisado como definido, sem a pergunta ao arquiteto."""
+    linha = {"id": 1, "descricao": "Tinta vermelha", "quantidade": 12, "unidade": "m2", "classificacao": da_a}
+    assert o.item_da_linha(linha).classificacao == na_b
+
+
+def test_gravar_item_tira_coluna_que_o_banco_nao_tem():
+    """Achado real (07/11): orcamento_itens veio sem `premissa`; sem a reserva, o item ficava 'buscando' para sempre."""
+    class Sb(SupabaseGravador):
+        def __getattr__(self, nome):
+            if nome == "update":
+                def update(linha):
+                    self.chamadas.append(("update", (dict(linha),)))
+                    self.recusar = "premissa" in linha
+                    return self
+                return update
+            if nome == "execute" and getattr(self, "recusar", False):
+                def falha():
+                    raise Exception({"message": "Could not find the 'premissa' column of 'orcamento_itens' in the schema cache",
+                                     "code": "PGRST204"})
+                return falha
+            return super().__getattr__(nome)
+    sb = Sb([])
+    banco = o.BancoSupabase(sb)
+    asyncio.run(banco.gravar_item(resultado("a")))
+    asyncio.run(banco.gravar_item(resultado("b")))
+    updates = [c[1][0] for c in sb.chamadas if c[0] == "update"]
+    assert "premissa" in updates[0] and "premissa" not in updates[1] and updates[1]["preco_emb_med"] == 794.45
+    assert len(updates) == 3, "o 2º item já sai sem a coluna (não tenta de novo)"
+
+
 def test_le_so_itens_buscando_do_orcamento():
     sb = SupabaseGravador([{"id": 7, "orcamento_id": "o", "descricao": "Cuba 56x34", "quantidade": "1", "unidade": "un",
                             "categoria": None, "classificacao": "qualquer", "status": "buscando"}])
@@ -231,22 +265,38 @@ def test_le_so_itens_buscando_do_orcamento():
 def test_etapa7_orcamento_real_no_supabase():
     from src.database import get_supabase
     sb = get_supabase()
+    # `premissa` é a coluna nova avisada à fatia A: sem ela o item é gravado sem a premissa (BancoSupabase.gravar_item)
+    exigidas = o.COLUNAS_LIDAS + [c for c in o.COLUNAS_GRAVADAS if c != "premissa"]
     try:
-        sb.table("orcamento_itens").select(",".join(o.COLUNAS_LIDAS + o.COLUNAS_GRAVADAS)).limit(1).execute()
+        sb.table("orcamento_itens").select(",".join(exigidas)).limit(1).execute()
         sb.table("orcamentos").select("id,status_pesquisa,pesquisa_iniciada_em,pesquisa_concluida_em,pesquisa_erro").limit(1).execute()
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"tabelas/colunas da fatia A ainda não existem: {str(exc)[:160]}")
-    orc = sb.table("orcamentos").insert({}).execute().data[0]
+    # Orçamento sintético com as colunas obrigatórias do SQL da fatia A (medido em 07/11)
+    orc_id = str(uuid.uuid4())
+    sb.table("orcamentos").insert({"id": orc_id, "nome": "TESTE etapa7 (sintético)", "cep": "50030230",   # orcamentos_cep_ck: só dígitos
+                                   "orcamento_cliente": 10000, "origem": {"teste": "etapa7"},
+                                   "hash_conteudo": f"teste-{orc_id}", "qtd_itens": 2}).execute()
+    orc = {"id": orc_id}
+    def item(n, descricao, qtd, classificacao):
+        return {"orcamento_id": orc_id, "id_linha": str(n), "linha": n, "descricao_original": descricao,
+                "descricao": descricao, "quantidade": qtd, "unidade": "m2", "extras": {}, "classificacao": classificacao,
+                "fontes": []}
     try:
         sb.table("orcamento_itens").insert([
-            {"orcamento_id": orc["id"], "descricao": "Argamassa Quartzolit AC-III cinza 20kg", "quantidade": 48, "unidade": "m2"},
-            {"orcamento_id": orc["id"], "descricao": "Tinta acrílica fosca vermelha", "quantidade": 12, "unidade": "m2",
-             "classificacao": "pendente_especificacao"}]).execute()
+            item(1, "Argamassa Quartzolit AC-III cinza 20kg", 48, "definido"),
+            item(2, "Tinta acrílica fosca vermelha", 12, "pendente")]).execute()   # itens_classificacao_ck
         r = asyncio.run(o.pesquisar_orcamento(orc["id"]))
         assert r["status"] == "concluida" and r["itens"] == 2, r
         linhas = sb.table("orcamento_itens").select("*").eq("orcamento_id", orc["id"]).execute().data
         assert {x["status"] for x in linhas} <= {"definido", "pendente_especificacao"}, linhas
         assert all(x["fontes"] for x in linhas if x["preco_emb_med"] is not None)
+        assert any(x["preco_emb_med"] is not None for x in linhas), "nenhum item gravou preço"
+        pendente = next(x for x in linhas if x["classificacao"] == "pendente")
+        assert pendente["status"] == "pendente_especificacao", pendente
+        assert pendente["pergunta"], "item genérico precisa da pergunta ao arquiteto"
+        cab = sb.table("orcamentos").select("status_pesquisa,pesquisa_concluida_em").eq("id", orc_id).execute().data[0]
+        assert cab["status_pesquisa"] == "concluida" and cab["pesquisa_concluida_em"]
         assert asyncio.run(o.pesquisar_orcamento(orc["id"]))["status"] == "ja_em_andamento_ou_concluido"
     finally:
         sb.table("orcamento_itens").delete().eq("orcamento_id", orc["id"]).execute()

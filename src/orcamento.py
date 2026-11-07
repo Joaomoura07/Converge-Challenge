@@ -16,6 +16,7 @@ import asyncio
 import importlib
 import inspect
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Protocol
 
@@ -47,13 +48,25 @@ def linha_do_resultado(r: ResultadoItem) -> dict:
     return linha
 
 
+def _coluna_ausente(exc: Exception) -> str | None:
+    """PostgREST PGRST204: "Could not find the 'premissa' column of 'orcamento_itens' in the schema cache"."""
+    m = re.search(r"Could not find the '([^']+)' column", str(exc))
+    return m.group(1) if m and "PGRST204" in str(exc) else None
+
+
+# Classificação como o SQL da fatia A grava (itens_classificacao_ck aceita 'definido' e 'pendente', medido em 07/11)
+# -> como a fatia B usa. Sem isso, item genérico vindo do site era pesquisado como definido e sem pergunta.
+CLASSIFICACAO_DA_A = {"definido": "definido", "pendente": "pendente_especificacao",
+                      "pendente_especificacao": "pendente_especificacao"}
+
+
 def item_da_linha(linha: dict) -> ItemEntrada:
-    classificacao = linha.get("classificacao")
+    classificacao = CLASSIFICACAO_DA_A.get((linha.get("classificacao") or "").strip().lower())
     return ItemEntrada(
         id=str(linha["id"]), descricao=linha["descricao"],
         quantidade=float(linha["quantidade"]) if linha.get("quantidade") is not None else None,
         unidade=linha.get("unidade"), categoria=linha.get("categoria"),
-        classificacao=classificacao if classificacao in ("definido", "pendente_especificacao") else None)
+        classificacao=classificacao)
 
 
 # ------------------------------------------------------------------ acesso ao banco
@@ -76,6 +89,7 @@ class BancoSupabase:
             from .database import get_supabase
             cliente = get_supabase()
         self.sb = cliente
+        self.colunas_ausentes: set[str] = set()
 
     async def _rodar(self, fn):
         return await asyncio.to_thread(fn)
@@ -127,8 +141,20 @@ class BancoSupabase:
         return item_da_linha(r.data[0]) if r.data else None
 
     async def gravar_item(self, resultado: ResultadoItem) -> None:
-        linha = linha_do_resultado(resultado)
-        await self._rodar(lambda: self.sb.table(ITENS).update(linha).eq("id", resultado.item_id).execute())
+        """Coluna que o SQL da fatia A ainda não tem (medido em 07/11: `premissa`) sai da linha, com aviso,
+        em vez de derrubar a gravação inteira: senão o item ficaria "buscando" para sempre na tela."""
+        linha = {k: v for k, v in linha_do_resultado(resultado).items() if k not in self.colunas_ausentes}
+        for _ in range(len(linha)):
+            try:
+                await self._rodar(lambda: self.sb.table(ITENS).update(linha).eq("id", resultado.item_id).execute())
+                return
+            except Exception as exc:  # noqa: BLE001
+                coluna = _coluna_ausente(exc)
+                if coluna is None or coluna not in linha:
+                    raise
+                logger.warning("orcamento_itens não tem a coluna '%s' (avise a fatia A): gravando sem ela", coluna)
+                self.colunas_ausentes.add(coluna)
+                linha = {k: v for k, v in linha.items() if k != coluna}
 
     async def marcar_item(self, item_id: str, campos: dict) -> None:
         await self._rodar(lambda: self.sb.table(ITENS).update({**campos, "atualizado_em": _agora().isoformat()})
