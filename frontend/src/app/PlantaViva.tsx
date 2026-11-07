@@ -11,9 +11,9 @@
 import { useEffect, useRef } from "react";
 
 const ALTURA_PAREDE = 260;
-const ALTURA_VOO = 470;
-const ALTURA_ROLADA = 300; // no fim da rolagem a câmera desce até aqui…
-const PITCH_TOPO = 0.74, PITCH_ROLADO = 0.3; // …e levanta o olhar (rad abaixo do horizonte)
+const ALTURA_VOO = 230; // no topo da página: logo abaixo do teto (pé-direito 260)
+const ALTURA_ROLADA = 150; // no fim da rolagem: altura dos olhos…
+const PITCH_TOPO = 0.42, PITCH_ROLADO = 0.12; // …e levanta o olhar (rad abaixo do horizonte)
 const ALTURA_INICIAL = 1700;
 const DURACAO_INTRO = 3.4; // s
 const VELOCIDADE = 0.0075; // voltas do caminho por segundo
@@ -201,9 +201,22 @@ function gerarPlanta() {
   };
 }
 
-// caminho da câmera: laço fechado passando pelos ambientes (Catmull-Rom)
+// caminho da câmera: passeio pela casa passando pelas portas, sem atravessar móveis (laço fechado, Catmull-Rom)
 const CAMINHO: [number, number][] = [
-  [-820, -420], [-60, -520], [600, -560], [1050, -150], [900, 480], [300, 600], [-300, 480], [-950, 420], [-1050, -40],
+  [-950, -100], // estar
+  [-300, -110], // porta estar → escritório
+  [50, -350], // escritório
+  [400, -170], // porta escritório → banho
+  [600, -300], // banho
+  [800, -310], // porta banho → cozinha
+  [990, -200], // cozinha
+  [1000, 400], // suíte (atravessa a parede da cozinha, sem móveis)
+  [950, 600],
+  [400, 350], // porta suíte → circulação
+  [50, 450], // circulação
+  [-300, 450], // parede para o jantar
+  [-1000, 330], // jantar
+  [-660, 200], // porta jantar → estar
 ];
 function noCaminho(u: number): [number, number] {
   const n = CAMINHO.length;
@@ -348,7 +361,7 @@ export function PlantaViva() {
         sx += OX[i]; sy += OY[i];
 
         const neblina = 1 - suave(1200, 3800, prof);
-        const perto = suave(40, 220, prof);
+        const perto = suave(70, 340, prof);
         SX[i] = sx; SY[i] = sy; BR[i] = brilho;
         AL[i] = Math.min(1, ALFA[k] * neblina * perto * (0.75 + 0.25 * s) + brilho * 0.8);
       }
