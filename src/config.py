@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     pesquisa_busca_aberta: bool = True      # 2ª busca em qualquer loja do Brasil, com a cidade/UF da obra
     pesquisa_max_abertas: int = 4           # anúncios da busca aberta (só os com preço escrito)
     pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
+    pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)

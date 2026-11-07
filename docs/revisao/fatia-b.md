@@ -501,3 +501,9 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 | coerência com o programa | ✅ | 7 passed in 0.43s |
 | api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
 | execução real (etapa 2) | ✅ | 6 passed, 219 deselected in 16.65s |
+
+### Busca aberta medida (Cozinha Graças, 24 itens, sem cache, Recife/PE) · 07/11 ~17h20
+- **Lojas por item com preço: 2,1** (antes 1,4) · 79% com preço e fonte · 21% não encontrados · agente refez 17%.
+- **1º item na tela piorou para 20,6 s** (antes ~5,6 s sem cache): cada item esperava a busca aberta, que chega a 10 s.
+  Corrigido com prazo de 5 s para a aberta (`pesquisa_prazo_aberta_s`): passou disso, segue só com a lista fixa.
+  **Não remedido** (medição interrompida a pedido do Enzo).

@@ -204,3 +204,19 @@ def test_pesquisar_orcamento_pesquisa_na_regiao_do_cep(viacep, monkeypatch):
     monkeypatch.setattr(o, "GANCHOS_FIM", [])
     asyncio.run(o.pesquisar_orcamento("orc-1", banco=Banco()))
     assert locais == [RECIFE]
+
+
+def test_busca_aberta_lenta_nao_segura_o_item(monkeypatch, sem_imagem):
+    """Medido em 07/11: a aberta chegou a 10 s e o 1º item foi de ~6 s para 20 s. Passou do prazo, segue com a fixa."""
+    async def fixa(consulta, limite, rodizio):
+        return _resp("tavily", ["Telhanorte"])
+
+    async def aberta_lenta(*a):
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(b, "_buscar_fixa", fixa)
+    monkeypatch.setattr(b, "_buscar_aberta", aberta_lenta)
+    monkeypatch.setattr(b, "get_settings", lambda: NS(pesquisa_busca_aberta=True, pesquisa_max_lojas=5, pesquisa_max_abertas=4,
+                                                      pesquisa_max_anuncios=8, pesquisa_prazo_aberta_s=0.05))
+    r = asyncio.run(asyncio.wait_for(b.buscar("q", rodizio=b._RodizioChaves(["k"])), timeout=2))
+    assert [x.loja for x in r.resultados] == ["Telhanorte"]

@@ -474,6 +474,16 @@ async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, lo
         return RespostaBusca(consulta, "nenhum", erro=f"busca aberta: {type(exc).__name__}")
 
 
+async def _com_prazo(busca, prazo_s: float, consulta: str) -> RespostaBusca:
+    """A busca aberta às vezes leva 10 s (medido em 07/11) e o item esperava por ela: 1º item na tela foi de ~6 s
+    para 20 s. Passou do prazo, o item segue só com a lista fixa."""
+    try:
+        return await asyncio.wait_for(busca, timeout=prazo_s)
+    except asyncio.TimeoutError:
+        logger.info("Busca aberta passou de %.0f s: item segue com a lista fixa", prazo_s)
+        return RespostaBusca(consulta, "nenhum", erro="busca aberta: tempo esgotado")
+
+
 @observe(as_type="retriever", name="busca.web")
 async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChaves | None = None) -> RespostaBusca:
     """Busca FIXA (lista de lojas) e ABERTA (região da obra) em paralelo; junta as duas.
@@ -485,8 +495,10 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
     if not s.pesquisa_busca_aberta:
         resp = await _buscar_fixa(consulta, limite, rodizio)
     else:
-        resp, aberta = await asyncio.gather(_buscar_fixa(consulta, limite, rodizio),
-                                            _buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, LOCAL_DA_OBRA.get()))
+        resp, aberta = await asyncio.gather(
+            _buscar_fixa(consulta, limite, rodizio),
+            _com_prazo(_buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, LOCAL_DA_OBRA.get()),
+                       s.pesquisa_prazo_aberta_s, consulta))
         resp.resultados = (resp.resultados + aberta.resultados)[: s.pesquisa_max_anuncios]
         if resp.resultados:
             resp.erro = None
