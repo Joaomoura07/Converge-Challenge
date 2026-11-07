@@ -2,18 +2,72 @@
 // Uma linha do resultado ao vivo (skills/04-ui-design.md, seção 3.3): imagem, produto, frase de compra,
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { CONFIANCA, embalagens, quantidade, reais } from "./formato";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { CONFIANCA, OBJETIVOS, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
-import type { ItemOrcamento } from "./tipos";
+import type { ItemOrcamento, Objetivo } from "./tipos";
 
 interface Props {
   item: ItemOrcamento;
   /** Resposta do arquiteto à pergunta → o backend chama repesquisar_item(item_id, nova_descricao). */
   onResponder?: (item: ItemOrcamento, especificacao: string) => void;
-  /** Botão "Pesquisar de novo" → repesquisar_item(item_id). */
+  /** "Pesquisar de novo" → "O mesmo produto" → repesquisar_item(item_id). */
   onPesquisarDeNovo?: (item: ItemOrcamento) => void;
+  /** "Pesquisar de novo" → maior qualidade / menor preço / semelhante → repesquisar_item(item_id, objetivo). */
+  onPesquisarAlternativa?: (item: ItemOrcamento, objetivo: Objetivo) => void;
+}
+
+/** Botão "Pesquisar de novo" que abre as opções. Nada muda sem o clique do arquiteto numa delas. */
+function PesquisarDeNovo({ item, onMesmo, onAlternativa }: {
+  item: ItemOrcamento;
+  onMesmo?: (item: ItemOrcamento) => void;
+  onAlternativa?: (item: ItemOrcamento, objetivo: Objetivo) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const botao = useRef<HTMLButtonElement>(null);
+  const idOpcoes = `repesquisa-${item.id}`;
+
+  function fechar() {
+    setAberto(false);
+    botao.current?.focus();
+  }
+
+  function escolher(acao: () => void) {
+    setAberto(false);
+    acao();
+  }
+
+  function teclado(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      fechar();
+    }
+  }
+
+  return (
+    <div className="orc-repesquisa" onKeyDown={teclado}>
+      <button ref={botao} type="button" className="orc-botao" aria-expanded={aberto} aria-controls={idOpcoes}
+              onClick={() => setAberto((a) => !a)}>
+        Pesquisar de novo
+      </button>
+      {aberto && (
+        <div id={idOpcoes} role="group" aria-label="Pesquisar de novo buscando" className="orc-repesquisa__opcoes">
+          <button type="button" className="orc-botao" autoFocus onClick={() => escolher(() => onMesmo?.(item))}
+                  title="Atualiza o preço do mesmo produto">
+            O mesmo produto
+          </button>
+          {onAlternativa && OBJETIVOS.map(({ objetivo, rotulo, dica }) => (
+            <button key={objetivo} type="button" className="orc-botao" title={dica}
+                    onClick={() => escolher(() => onAlternativa(item, objetivo))}>
+              {rotulo}
+            </button>
+          ))}
+          <button type="button" className="orc-botao orc-botao--discreto" onClick={fechar}>Cancelar</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** Fica true por 1,3 s quando o item sai de "buscando": é o único momento de animação da tela. */
@@ -33,7 +87,7 @@ function useChegou(status: ItemOrcamento["status"]) {
   return chegou;
 }
 
-export function ItemRow({ item, onResponder, onPesquisarDeNovo }: Props) {
+export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa }: Props) {
   const carregando = item.status === "buscando";
   const chegou = useChegou(item.status);
   const [respondendo, setRespondendo] = useState(false);
@@ -87,11 +141,13 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo }: Props) {
           </div>
         )}
 
-        {(item.status === "nao_encontrado" || item.status === "erro") && (
+        {(item.status === "nao_encontrado" || item.status === "erro") ? (
           <div className="orc-item__falha">
             <p>{item.motivo}</p>
-            <button type="button" className="orc-botao" onClick={() => onPesquisarDeNovo?.(item)}>Pesquisar de novo</button>
+            <PesquisarDeNovo item={item} onMesmo={onPesquisarDeNovo} onAlternativa={onPesquisarAlternativa} />
           </div>
+        ) : !carregando && (
+          <PesquisarDeNovo item={item} onMesmo={onPesquisarDeNovo} onAlternativa={onPesquisarAlternativa} />
         )}
       </div>
 

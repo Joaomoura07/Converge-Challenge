@@ -6,17 +6,23 @@
 
 import { useEffect, useState } from "react";
 import { ResultadoItens } from "@/components/orcamento/ResultadoItens";
-import type { ResultadoApi } from "@/components/orcamento/resultado";
+import { OBJETIVOS, type PedidoRepesquisa, type ResultadoApi } from "@/components/orcamento/resultado";
 import type { ItemOrcamento } from "@/components/orcamento/tipos";
 import dados from "./exemplo-real.json";
 
 const reais = dados as unknown as ItemOrcamento[];
 
-async function repesquisaSimulada(itemId: string, especificacao?: string): Promise<ResultadoApi> {
+async function repesquisaSimulada(itemId: string, pedido?: PedidoRepesquisa): Promise<ResultadoApi> {
   await new Promise((r) => setTimeout(r, 1800));
   const base = reais.find((i) => i.status === "definido")!;
   const { id: _id, descricao: _d, quantidade: _q, unidade: _u, ...campos } = base;
-  return { ...campos, item_id: itemId, produto_normalizado: especificacao ?? base.produto_normalizado, iteracoes: 1 };
+  if (typeof pedido === "object") {   // alternativa simulada: no real, a IA sugere e as lojas confirmam o preço
+    const rotulo = OBJETIVOS.find((o) => o.objetivo === pedido.objetivo)!.rotulo.toLowerCase();
+    return { ...campos, item_id: itemId, produto_normalizado: `${base.produto_normalizado} (simulação: ${rotulo})`,
+             motivo: `Alternativa simulada: ${rotulo}. No resultado real, a IA sugere o produto e as lojas confirmam o preço.`,
+             iteracoes: 1 };
+  }
+  return { ...campos, item_id: itemId, produto_normalizado: pedido ?? base.produto_normalizado, iteracoes: 1 };
 }
 
 export default function PreviaB() {

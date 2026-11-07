@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ErroRepesquisa, aplicarResultado, fraseProgresso, ordenarItens, progresso, repesquisarItem,
+  ErroRepesquisa, OBJETIVOS, aplicarResultado, fraseProgresso, ordenarItens, progresso, repesquisarItem,
 } from "./resultado";
 import type { ItemOrcamento, StatusItem } from "./tipos";
 
@@ -46,6 +46,25 @@ describe("repesquisarItem (rota POST /orcamento-itens/{id}/repesquisar)", () => 
     expect(chamadas[0][0]).toBe("http://api/orcamento-itens/a%20b/repesquisar");
     expect(chamadas[0][1]?.body).toBeUndefined();
     expect(JSON.parse(String(chamadas[1][1]?.body))).toEqual({ nova_descricao: "Suvinil Fosco Completo 3,6 L" });
+  });
+
+  it("alternativa leva só o objetivo (a descrição do arquiteto não vai)", async () => {
+    const corpos: unknown[] = [];
+    const buscar = (async (_url: string, init?: RequestInit) => {
+      corpos.push(JSON.parse(String(init?.body)));
+      expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
+      return new Response(JSON.stringify({ item_id: "a", status: "definido" }), { status: 200 });
+    }) as typeof fetch;
+    for (const { objetivo } of OBJETIVOS) await repesquisarItem("a", { objetivo }, "http://api", buscar);
+    expect(corpos).toEqual([{ objetivo: "qualidade" }, { objetivo: "preco" }, { objetivo: "semelhante" }]);
+  });
+
+  it("503 da alternativa mostra a frase do servidor; sem frase, o texto padrão", async () => {
+    const detalhe = "Não consegui sugerir uma alternativa para este item agora. O item ficou como estava.";
+    const com = (async () => new Response(JSON.stringify({ detail: detalhe }), { status: 503 })) as typeof fetch;
+    await expect(repesquisarItem("x", { objetivo: "preco" }, "http://api", com)).rejects.toThrow(detalhe);
+    const naoJson = (async () => new Response("Bad gateway", { status: 503 })) as typeof fetch;
+    await expect(repesquisarItem("x", { objetivo: "preco" }, "http://api", naoJson)).rejects.toThrow(/erro 503/);
   });
 
   it("explica cada falha em português", async () => {

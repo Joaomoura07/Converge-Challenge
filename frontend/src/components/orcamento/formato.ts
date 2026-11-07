@@ -1,5 +1,7 @@
 // Formatação para a tela: moeda, unidades e a frase de compra ("180 m² → 2 latas 18 L").
 
+import type { Objetivo } from "./tipos";
+
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
@@ -34,3 +36,10 @@ export function embalagens(n: number, emb: string): string {
 }
 
 export const CONFIANCA: Record<string, string> = { alta: "Confiança alta", media: "Confiança média", baixa: "Confiança baixa" };
+
+/** Opções de alternativa do "Pesquisar de novo", na ordem em que aparecem. */
+export const OBJETIVOS: { objetivo: Objetivo; rotulo: string; dica: string }[] = [
+  { objetivo: "qualidade", rotulo: "Maior qualidade", dica: "Linha superior, mais durável ou com melhor acabamento" },
+  { objetivo: "preco", rotulo: "Menor preço", dica: "Opção mais econômica para a mesma aplicação" },
+  { objetivo: "semelhante", rotulo: "Semelhante de outra marca", dica: "Produto equivalente de outra marca" },
+];

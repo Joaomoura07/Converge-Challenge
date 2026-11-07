@@ -14,7 +14,7 @@ import { useState } from "react";
 import { ItemRow } from "./ItemRow";
 import {
   ErroRepesquisa, aplicarResultado, fraseProgresso, ordenarItens, progresso, repesquisarItem,
-  type ResultadoApi,
+  type PedidoRepesquisa, type ResultadoApi,
 } from "./resultado";
 import type { ItemOrcamento } from "./tipos";
 
@@ -23,7 +23,7 @@ interface Props {
   /** Modo projetor (?demo=1): fonte maior e cota mais grossa. */
   demo?: boolean;
   /** Troca a chamada real (útil na prévia e em testes). */
-  repesquisar?: (itemId: string, especificacao?: string) => Promise<ResultadoApi>;
+  repesquisar?: (itemId: string, pedido?: PedidoRepesquisa) => Promise<ResultadoApi>;
 }
 
 export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: Props) {
@@ -34,13 +34,14 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
   const visiveis = itens.map((i) => locais[i.id] ?? i);
   const p = progresso(visiveis);
 
-  async function pesquisar(item: ItemOrcamento, especificacao?: string) {
+  async function pesquisar(item: ItemOrcamento, pedido?: PedidoRepesquisa) {
     setErros(({ [item.id]: _, ...resto }) => resto);
-    const descricao = especificacao ?? item.descricao;
+    // Alternativa: a descrição do arquiteto não muda (o produto sugerido vem em produto_normalizado).
+    const descricao = typeof pedido === "string" ? pedido : item.descricao;
     setLocais((l) => ({ ...l, [item.id]: { id: item.id, descricao, quantidade: item.quantidade, unidade: item.unidade,
                                            status: "buscando" } }));
     try {
-      const r = await repesquisar(item.id, especificacao);
+      const r = await repesquisar(item.id, pedido);
       setLocais((l) => ({ ...l, [item.id]: aplicarResultado({ ...item, descricao }, r) }));
     } catch (e) {
       setLocais(({ [item.id]: _, ...resto }) => resto);   // volta a mostrar o item como estava
@@ -64,7 +65,8 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
           <div key={item.id}>
             <ItemRow item={item}
                      onResponder={(i, texto) => pesquisar(i, texto)}
-                     onPesquisarDeNovo={(i) => pesquisar(i)} />
+                     onPesquisarDeNovo={(i) => pesquisar(i)}
+                     onPesquisarAlternativa={(i, objetivo) => pesquisar(i, { objetivo })} />
             {erros[item.id] && <p className="orc-resultado__erro" role="alert">{erros[item.id]}</p>}
           </div>
         ))}

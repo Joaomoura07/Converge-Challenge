@@ -22,6 +22,7 @@ from typing import Protocol
 
 from langfuse import observe, propagate_attributes
 
+from .alternativas import Objetivo, decidir, sugerir_alternativa
 from .busca import local_do_cep, na_regiao
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
@@ -149,6 +150,23 @@ class BancoSupabase:
                               .eq("id", item_id).limit(1).execute())
         return item_da_linha(r.data[0]) if r.data else None
 
+    async def resultado_atual(self, item_id: str) -> ResultadoItem | None:
+        """O que o item mostra hoje (para devolver se a alternativa não se sustentar). Linha que não forma um
+        ResultadoItem válido (ex.: ainda "buscando") = None."""
+        colunas = ["id"] + [c for c in COLUNAS_GRAVADAS if c != "atualizado_em" and c not in self.colunas_ausentes]
+        try:
+            r = await self._rodar(lambda: self.sb.table(ITENS).select(",".join(colunas)).eq("id", item_id)
+                                  .limit(1).execute())
+            if not r.data:
+                return None
+            linha = dict(r.data[0])
+            if linha.get("status") == "buscando":   # pesquisa em andamento ou morta: não há o que devolver
+                return None
+            return ResultadoItem(item_id=str(linha.pop("id")), **{k: v for k, v in linha.items() if v is not None})
+        except Exception:  # noqa: BLE001
+            logger.warning("Não li o resultado atual do item %s", item_id, exc_info=True)
+            return None
+
     async def gravar_item(self, resultado: ResultadoItem) -> None:
         """Coluna que o SQL da fatia A ainda não tem (medido em 07/11: `premissa`) sai da linha, com aviso,
         em vez de derrubar a gravação inteira: senão o item ficaria "buscando" para sempre na tela."""
@@ -241,23 +259,47 @@ async def _local_da_obra(banco: Banco, orcamento_id: str | None):
         return None
 
 
+async def _resultado_atual(banco: Banco, item_id: str) -> ResultadoItem | None:
+    if not hasattr(banco, "resultado_atual"):
+        return None
+    try:
+        return await banco.resultado_atual(item_id)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 @observe(name="repesquisar_item")
 async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banco: Banco | None = None,
-                           **opcoes) -> ResultadoItem | None:
+                           objetivo: Objetivo | None = None, **opcoes) -> ResultadoItem | None:
     """Botão "Pesquisar de novo" ou resposta do arquiteto à pergunta (nova_descricao = item especificado).
-    Ignora o cache: o objetivo é um preço novo."""
+    Com `objetivo` (qualidade | preco | semelhante), pesquisa uma ALTERNATIVA sugerida pelo LLM e só troca se ela
+    for achada à venda (e, no "preco", sair mais barata); senão o item volta ao que era, com o motivo.
+    A descrição do arquiteto nunca muda: a alternativa vai para `produto_normalizado`.
+    Ignora o cache: o objetivo é um preço novo. Levanta AlternativaIndisponivel se o LLM não sugerir nada
+    (o item fica intocado)."""
     banco = banco or BancoSupabase()
     item = await banco.item(item_id)
     if item is None:
         return None
-    campos = {"status": "buscando", "pergunta": None, "motivo": None}
-    if nova_descricao:
-        item = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
-        campos |= {"descricao": nova_descricao, "classificacao": "definido"}
-    await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
     orcamento_id = await banco.orcamento_do_item(item_id)
-    with acumular_custo() as custo, na_regiao(await _local_da_obra(banco, orcamento_id)):
-        resultado = await pesquisar_item(item, usar_cache=False, **opcoes)
+    with acumular_custo() as custo:
+        anterior = alt = None
+        busca = item
+        if objetivo:
+            anterior = await _resultado_atual(banco, item_id)
+            atual = (anterior.produto_normalizado if anterior and anterior.produto_normalizado else item.descricao)
+            # Antes de marcar "buscando": se o LLM falhar, nada muda na tela.
+            alt = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria)
+            busca = item.model_copy(update={"descricao": alt.produto, "classificacao": "definido"})
+        campos = {"status": "buscando", "pergunta": None, "motivo": None}
+        if nova_descricao:
+            item = busca = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
+            campos |= {"descricao": nova_descricao, "classificacao": "definido"}
+        await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
+        with na_regiao(await _local_da_obra(banco, orcamento_id)):
+            resultado = await pesquisar_item(busca, usar_cache=False, **opcoes)
+        if alt is not None:
+            resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
     await banco.gravar_item(resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
     if orcamento_id:

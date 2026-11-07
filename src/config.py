@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
+    # "Pesquisar de novo" com alternativa. Medido em 07/11 (3 casos): Gemma 4–10 s e US$ 0,00007, mantendo cor e
+    # acabamento; Qwen3-32B 12–24 s; GLM-5.2 48–125 s (com a busca depois, estourava os 120 s da tela).
+    pesquisa_modelo_alternativa: str = "google/gemma-4-31B-it"
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
     pesquisa_hedge_s: float = 8             # extração sem resposta nesse tempo → reserva em paralelo (outra chave)
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
