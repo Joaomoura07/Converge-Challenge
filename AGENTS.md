@@ -11,6 +11,9 @@ Hackathon Converge Challenge (7–8/11/2026): API FastAPI com um agente autônom
 | `building-react-agents` | `skills/01-react-agent-pattern.md` | Agente, loop, tools, prompt, escalonamento humano |
 | `integrating-featherless` | `skills/02-featherless-integration.md` | Chamadas ao LLM, modelos, erros, custo |
 | `tracing-with-langfuse` | `skills/03-langfuse-tracing.md` | Tracing, métricas, evals, Demo Day |
+| `building-orca-ui` | `skills/07-orca-ui-fatia-a.md` | Frontend, formulários, tabela de revisão, aceite e useOrcamento |
+| `managing-orcamento-data` | `skills/05-orcamento-data.md` | SQL, contratos A/B/C, Supabase, migrações e concorrência |
+| `importing-materials` | `skills/06-material-import.md` | CSV, Excel, TXT do Revit, PDF textual e normalização de importação |
 | `designing-orcamentista-ui` | `skills/04-ui-design.md` | Qualquer tela, componente, estilo ou texto do site |
 
 ## Regras do repositório
