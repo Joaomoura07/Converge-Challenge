@@ -12,8 +12,19 @@ import pytest
 
 from src.modelos import Fonte, ResultadoItem
 
-UI = Path(__file__).resolve().parents[2] / "ui-fatia-b"
+RAIZ = Path(__file__).resolve().parents[2]
+UI = RAIZ / "ui-fatia-b"
 COMP = UI / "src" / "components" / "orcamento"
+SITE = RAIZ / "frontend"                                   # site Next.js do time (fatia A)
+COMP_SITE = SITE / "src" / "components" / "orcamento"      # cópia oficial dos componentes da B no site
+COMPARTILHADOS = ["tipos.ts", "formato.ts", "StatusBadge.tsx", "PriceDimension.tsx", "ItemRow.tsx", "orcamento.css"]
+
+
+def test_site_e_previa_usam_os_mesmos_componentes():
+    """A prévia (ui-fatia-b) e o site (frontend) não podem divergir: mude no site e copie para a prévia."""
+    diferentes = [f for f in COMPARTILHADOS
+                  if (COMP / f).read_text(encoding="utf-8") != (COMP_SITE / f).read_text(encoding="utf-8")]
+    assert not diferentes, f"copie de frontend/src/components/orcamento para ui-fatia-b: {diferentes}"
 
 
 def _campos_ts(interface: str) -> set[str]:
@@ -38,7 +49,8 @@ def test_status_do_site_iguais_aos_do_backend():
 
 def test_componentes_usam_so_papeis_de_cor():
     """Skill de design, seção 2 e 7: nada de hex direto no componente; as cores vêm de var(--cor-...)."""
-    for arquivo in list(COMP.glob("*.tsx")) + list(COMP.glob("*.css")):
+    arquivos = [a for pasta in (COMP, COMP_SITE) for a in list(pasta.glob("*.tsx")) + list(pasta.glob("*.css"))]
+    for arquivo in arquivos:
         texto = arquivo.read_text(encoding="utf-8")
         hexes = [h for h in re.findall(r"#[0-9a-fA-F]{3,8}\b", texto) if h.lower() != "#fff"]
         assert not hexes, f"{arquivo.name} tem cor fixa: {hexes}"
@@ -57,3 +69,19 @@ def test_respeita_movimento_reduzido_e_tem_modo_demo():
 def test_typescript_compila():
     r = subprocess.run("npx tsc --noEmit", cwd=UI, shell=True, capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_papeis_de_cor_do_site_cobrem_todos_os_papeis():
+    """Os componentes só funcionam no site se todos os papéis tiverem valor (src/styles/papeis-de-cor.css)."""
+    css = (SITE / "src" / "styles" / "papeis-de-cor.css").read_text(encoding="utf-8")
+    definidos = set(re.findall(r"--(cor-[a-z0-9-]+)\s*:", css))
+    usados = {v for a in COMP_SITE.glob("*.css") for v in re.findall(r"var\(--(cor-[a-z0-9-]+)", a.read_text(encoding="utf-8"))}
+    assert usados <= definidos, f"papel sem valor no site: {usados - definidos}"
+
+
+@pytest.mark.skipif(not (SITE / "node_modules").exists() or not shutil.which("npx"),
+                    reason="rode `npm install` em frontend para checar tipos e testes do site")
+def test_site_compila_e_passa_nos_testes():
+    for comando in ("npx tsc --noEmit", "npx vitest run"):
+        r = subprocess.run(comando, cwd=SITE, shell=True, capture_output=True, text=True, timeout=180)
+        assert r.returncode == 0, f"{comando}\n{r.stdout[-2000:]}{r.stderr[-2000:]}"

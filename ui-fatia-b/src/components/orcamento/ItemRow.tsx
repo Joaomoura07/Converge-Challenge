@@ -46,7 +46,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo }: Props) {
 
   function enviar(e: FormEvent) {
     e.preventDefault();
-    if (resposta.trim()) {
+    if (resposta.trim().length >= 3) {
       onResponder?.(item, resposta.trim());
       setRespondendo(false);
     }
@@ -75,7 +75,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo }: Props) {
             {respondendo ? (
               <form onSubmit={enviar} className="orc-item__resposta">
                 <label className="orc-visivel-so-leitor" htmlFor={`resp-${item.id}`}>Especificação do item</label>
-                <input id={`resp-${item.id}`} autoFocus value={resposta} onChange={(e) => setResposta(e.target.value)}
+                <input id={`resp-${item.id}`} autoFocus required minLength={3} value={resposta}
+                       onChange={(e) => setResposta(e.target.value)}
                        placeholder="Ex.: Suvinil Fosco Completo, Vermelho Cardinal, 3,6 L" />
                 <button type="submit" className="orc-botao orc-botao--principal">Enviar resposta</button>
                 <button type="button" className="orc-botao" onClick={() => setRespondendo(false)}>Cancelar</button>

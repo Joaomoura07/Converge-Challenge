@@ -10,6 +10,7 @@ import {
   type ModoEntrada,
 } from "@/lib/lista";
 import { formatarCep, gerarUuid } from "@/lib/validacao";
+import { CabecalhoPagina } from "./shell/CabecalhoPagina";
 import { NovaObra, type Obra, type RascunhoObra } from "./NovaObra";
 import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 
@@ -53,10 +54,13 @@ export function Caderno() {
 
   return (
     <main className="pagina">
-      <header className="topo">
-        <p className="marca">Orça</p>
-        <p className="lema">Caderno de materiais</p>
-      </header>
+      <CabecalhoPagina
+        trilha={[{ rotulo: "Projetos", href: "/" }, { rotulo: "Nova estimativa" }, { rotulo: "01 de 03" }]}
+        etiqueta="Preparação / lista de materiais"
+        titulo={mostrandoFormulario ? "Do desenho ao" : undefined}
+        destaque={mostrandoFormulario ? "quantitativo." : undefined}
+        apoio={mostrandoFormulario ? "Um bom orçamento começa com uma lista bem especificada." : undefined}
+      />
 
       {mostrandoFormulario ? (
         <NovaObra

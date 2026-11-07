@@ -14,6 +14,23 @@ from src.modelos import ItemEntrada, ResultadoItem, Fonte
 COZINHA = Path(__file__).resolve().parents[2] / "docs" / "arquivos-teste" / "03-cozinha-gracas"
 
 
+def test_metricas_do_pitch_contam_certo():
+    from scripts.metricas_pitch import resumir, tabela
+    from src.modelos import Fonte, ResultadoItem
+    f = [Fonte(loja=l, dominio=f"{l}.com.br", url=f"https://{l}", preco_embalagem=10) for l in "abc"]
+    rs = [ResultadoItem(item_id="1", status="definido", preco_emb_min=10, preco_emb_med=10, preco_emb_max=10, fontes=f),
+          ResultadoItem(item_id="2", status="definido", preco_emb_min=10, preco_emb_med=10, preco_emb_max=10,
+                        fontes=f[:1], iteracoes=2),
+          ResultadoItem(item_id="3", status="pendente_especificacao", pergunta="Qual marca?"),
+          ResultadoItem(item_id="4", status="nao_encontrado", motivo="nada")]
+    m = resumir(rs, 1.6, 30.0, 0.02)
+    assert (m.itens, m.com_preco, m.definidos, m.pendentes, m.nao_encontrados, m.agente_refez) == (4, 2, 2, 1, 1, 1)
+    assert m.lojas_media == 2.0
+    t = tabela(m, "teste")
+    assert "| Com preço e fonte (resolvidos sozinhos) | 2 (50%) |" in t and "1.6 s" in t and "US$ 0.0050 por item" not in t
+    assert "US$ 0.00500 por item" in t
+
+
 def test_le_o_json_de_orcamento_da_cozinha():
     itens = aq.ler_itens(COZINHA / "orcamento_cozinha-gracas.json")
     assert len(itens) == 24 and itens[0].descricao == "Coral Decora cinza urbano"

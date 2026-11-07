@@ -1,0 +1,645 @@
+/* Estrutura base vinda do Figma "Orça — 07–08 · Cadastro e documento":
+   trilho lateral estreito, barra superior com o escritório, título editorial serifado com palavra em itálico,
+   linha fina sob o cabeçalho e conteúdo em duas colunas. Usa os tokens de globals.css. */
+
+.sh-app {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  min-height: 100vh;
+}
+
+/* Trilho lateral */
+.sh-trilho {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0;
+  border-right: 1px solid var(--linha);
+  background: var(--papel);
+}
+.sh-logo {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--tinta);
+  text-decoration: none;
+  margin-bottom: 18px;
+}
+.sh-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 44px;
+  padding: 7px 0 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--tinta-suave);
+  text-decoration: none;
+}
+.sh-nav-item svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.4;
+}
+.sh-nav-item[aria-current="page"] {
+  color: var(--cobalto);
+  background: rgba(0, 71, 171, 0.08);
+  box-shadow: inset 2px 0 0 var(--cobalto);
+}
+.sh-nav-item:focus-visible,
+.sh-logo:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 1px;
+}
+.sh-iniciais {
+  margin-top: auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--linha);
+  border-radius: 50%;
+  font-size: 9px;
+  color: var(--tinta-suave);
+}
+
+/* Barra superior */
+.sh-principal {
+  min-width: 0;
+}
+.sh-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--linha);
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+.sh-barra strong {
+  color: var(--tinta);
+  font-weight: 600;
+  margin-right: 10px;
+}
+.sh-prototipo::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--cobalto);
+}
+.sh-conteudo {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 28px 72px;
+}
+
+/* Cabeçalho editorial de página */
+.sh-trilha {
+  margin: 0 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.sh-trilha a {
+  color: var(--cobalto);
+  text-decoration: none;
+}
+.sh-trilha b {
+  color: var(--tinta);
+  font-weight: 600;
+}
+.sh-etiqueta {
+  margin: 14px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.sh-titulo {
+  margin: 6px 0 8px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(38px, 6vw, 62px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+.sh-titulo em {
+  font-style: italic;
+}
+.sh-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--tinta);
+  margin-bottom: 24px;
+}
+.sh-apoio {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* Botões */
+.sh-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid var(--cobalto);
+  border-radius: 2px;
+  background: var(--cobalto);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sh-botao:hover {
+  background: var(--cobalto-escuro);
+}
+.sh-botao[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.sh-botao.claro {
+  background: transparent;
+  color: var(--tinta);
+  border-color: var(--linha);
+}
+.sh-botao.claro:hover {
+  background: var(--papel-2);
+}
+.sh-botao:focus-visible,
+.sh-link:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+.sh-link {
+  color: var(--cobalto);
+  font-size: 12px;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Duas colunas: conteúdo + lateral */
+.sh-duas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 36px;
+}
+.sh-lateral {
+  border-left: 1px solid var(--linha);
+  padding-left: 24px;
+}
+.sh-lateral h2 {
+  margin: 6px 0 16px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+}
+.sh-rodape-acoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--linha);
+}
+
+/* 01 · Projetos */
+.sh-lista-projetos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--linha);
+}
+.sh-projeto {
+  display: grid;
+  grid-template-columns: 36px 1.4fr 1fr 1fr 130px;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--linha);
+  color: inherit;
+  text-decoration: none;
+}
+.sh-projeto:hover {
+  background: rgba(0, 71, 171, 0.03);
+}
+.sh-projeto .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tinta-suave);
+}
+.sh-projeto .nome {
+  font-family: var(--serif);
+  font-size: 20px;
+}
+.sh-projeto small {
+  display: block;
+  font-size: 11px;
+  color: var(--tinta-suave);
+}
+.sh-projeto .valor {
+  text-align: right;
+  font-size: 13px;
+}
+.sh-aviso {
+  color: #b24a1e;
+}
+.sh-vazio-chamada {
+  margin-top: 36px;
+}
+.sh-vazio-chamada h2 {
+  margin: 4px 0 8px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+}
+.sh-vazio-chamada h2 em {
+  font-style: italic;
+}
+
+/* 03 · Revisar (grade editável) */
+.sh-grade {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sh-grade th {
+  padding: 0 8px 8px 0;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.sh-grade td {
+  padding: 12px 8px 12px 0;
+  border-top: 1px solid var(--linha);
+  vertical-align: middle;
+}
+.sh-grade input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--linha);
+  background: transparent;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--tinta);
+}
+.sh-grade input:focus {
+  outline: none;
+  border-bottom-color: var(--cobalto);
+}
+.sh-grade input.pendente {
+  border-bottom-color: #c98a5c;
+}
+.sh-grade .qtd {
+  width: 56px;
+}
+.sh-grade .un {
+  width: 64px;
+}
+.sh-remover {
+  background: none;
+  border: 0;
+  color: var(--tinta-suave);
+  cursor: pointer;
+  font-size: 16px;
+}
+.sh-nota {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--linha);
+  font-size: 12px;
+}
+.sh-nota .n {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: #b24a1e;
+}
+.sh-nota p {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+.sh-nota strong {
+  display: block;
+  color: var(--tinta);
+}
+
+/* 04 · Pesquisa */
+.sh-passos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sh-passos li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  padding: 14px 0;
+  border-top: 1px solid var(--linha);
+  opacity: 0.5;
+}
+.sh-passos li.ativo,
+.sh-passos li.feito {
+  opacity: 1;
+}
+.sh-passos .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--cobalto);
+}
+.sh-passos strong {
+  display: block;
+  font-size: 13px;
+}
+.sh-passos span {
+  font-size: 11px;
+  color: var(--tinta-suave);
+}
+.sh-painel-escuro {
+  min-height: 260px;
+  padding: 16px;
+  background: #232820;
+  color: #d6d9cf;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.sh-painel-escuro h3 {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  padding-bottom: 8px;
+}
+
+/* 05/06 · Estimativa */
+.sh-subtotal {
+  text-align: right;
+}
+.sh-subtotal .valor {
+  display: block;
+  font-family: var(--serif);
+  font-size: 30px;
+}
+.sh-resumo {
+  display: flex;
+  gap: 18px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: 11px;
+  color: var(--tinta-suave);
+}
+.sh-resumo .ok {
+  color: var(--cor-definido, #1e6b43);
+}
+.sh-resumo .pend {
+  color: #b24a1e;
+}
+.sh-abas {
+  display: flex;
+  gap: 20px;
+  margin: 14px 0 0;
+  border-bottom: 1px solid var(--linha);
+}
+.sh-aba {
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--tinta-suave);
+  cursor: pointer;
+}
+.sh-aba[aria-selected="true"] {
+  color: var(--cobalto);
+  border-bottom-color: var(--cobalto);
+}
+.sh-item {
+  display: grid;
+  grid-template-columns: 44px 1fr 70px 110px;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 14px 8px 14px 0;
+  border: 0;
+  border-bottom: 1px solid var(--linha);
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.sh-item[aria-pressed="true"] {
+  box-shadow: inset 2px 0 0 var(--cobalto);
+  padding-left: 8px;
+}
+.sh-item .foto {
+  width: 44px;
+  height: 44px;
+  background: var(--papel-2);
+  display: grid;
+  place-items: center;
+  color: var(--tinta-suave);
+}
+.sh-item .nome {
+  font-size: 13px;
+}
+.sh-item .nome.sel {
+  color: var(--cobalto);
+}
+.sh-item small {
+  display: block;
+  font-size: 10px;
+  color: var(--tinta-suave);
+}
+.sh-item .preco {
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sh-item .preco small {
+  font-weight: 400;
+}
+.sh-ref .imagem {
+  height: 170px;
+  background: repeating-linear-gradient(45deg, var(--papel-2) 0 6px, var(--papel) 6px 12px);
+  border: 1px solid var(--linha);
+}
+.sh-ref h3 {
+  margin: 8px 0 2px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+}
+.sh-ref dl {
+  margin: 14px 0 0;
+  font-size: 11px;
+}
+.sh-ref dt {
+  margin-top: 10px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.sh-ref dd {
+  margin: 2px 0 0;
+}
+.sh-fonte {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: 13px;
+}
+.sh-fonte small {
+  color: var(--tinta-suave);
+  font-size: 11px;
+}
+
+/* 08 · Documento de orçamento (modal) */
+.sh-fundo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(29, 29, 34, 0.35);
+}
+.sh-modal {
+  width: min(440px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 22px;
+  background: #fdfcf8;
+  border: 1px solid var(--linha);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+.sh-modal h2 {
+  margin: 4px 0 2px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+}
+.sh-modal .linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: 12px;
+}
+.sh-modal .total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 14px 0 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--tinta);
+  font-size: 12px;
+}
+.sh-modal .total strong {
+  font-family: var(--serif);
+  font-size: 22px;
+}
+.sh-modal .legal {
+  font-size: 10px;
+  color: var(--tinta-suave);
+}
+
+@media (max-width: 860px) {
+  .sh-duas {
+    grid-template-columns: 1fr;
+  }
+  .sh-lateral {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--linha);
+    padding-top: 16px;
+  }
+  .sh-projeto {
+    grid-template-columns: 1fr auto;
+  }
+  .sh-projeto .num,
+  .sh-projeto .local {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .sh-app {
+    grid-template-columns: 1fr;
+  }
+  .sh-trilho {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--linha);
+  }
+  .sh-logo {
+    margin: 0 12px 0 0;
+  }
+  .sh-iniciais {
+    margin: 0 0 0 auto;
+  }
+  .sh-barra,
+  .sh-conteudo {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .sh-item {
+    grid-template-columns: 44px 1fr 90px;
+  }
+  .sh-item .qtd-col {
+    display: none;
+  }
+}
+@media print {
+  .sh-trilho,
+  .sh-barra {
+    display: none;
+  }
+  .sh-app {
+    display: block;
+  }
+}
+
+.sh-conteudo .pagina { max-width: none; padding: 0 0 8px; }
+.sh-conteudo .topo { display: none; }

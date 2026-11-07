@@ -163,7 +163,13 @@ def test_etapa3_extracao_real_acerta_o_caso_de_controle():
     dur = time.perf_counter() - t0
     got = {o.loja: (o.preco, o.mesmo_produto) for o in r.ofertas}
     assert got.get("Telhanorte") == (739.9, "sim") and got.get("Magazine Luiza") == (849.0, "sim"), got
-    assert got.get("Mercado Livre", (None, "?"))[1] != "sim" and got.get("Amazon", (None, "?"))[1] != "sim", got
+    assert got.get("Mercado Livre", (None, "?"))[1] != "sim", got   # 3,6 L: outro tamanho
+    # Kit do MESMO produto conta como SIM desde 07/11 (o cálculo divide pelo conteúdo do kit), mas a embalagem
+    # precisa dizer que são 2 latas: senão R$ 1.599 viraria o preço de uma lata.
+    amazon = next((o for o in r.ofertas if o.loja == "Amazon"), None)
+    if amazon and amazon.mesmo_produto == "sim":
+        from src.compra import conteudo_embalagem
+        assert conteudo_embalagem(amazon.embalagem).quantidade == 36, amazon.embalagem
     assert r.descartadas_alucinacao == 0
     assert dur < 15, f"extração lenta: {dur:.1f}s"
 

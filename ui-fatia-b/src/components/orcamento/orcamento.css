@@ -1,7 +1,20 @@
 /* Componentes do resultado ao vivo (fatia B). Só usa os PAPÉIS de cor da skill (skills/04-ui-design.md, seção 2):
-   os valores ficam num único :root do site. No Next.js: importe este arquivo em app/layout.tsx. */
+   os valores ficam em src/styles/papeis-de-cor.css. ResultadoItens.tsx importa os dois arquivos. */
 
 .orc-lista { display: grid; gap: 0; border-top: 1px solid var(--cor-linha); }
+
+/* lista do resultado: título, progresso ("12 de 20 itens pesquisados") e barra fina de andamento */
+.orc-resultado { color: var(--cor-texto); }
+.orc-resultado__topo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.orc-resultado__titulo { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.orc-resultado__progresso { margin: 0; color: var(--cor-texto-2); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.orc-progresso { height: 2px; margin: 8px 0 0; background: var(--cor-linha); }
+.orc-progresso__feito { display: block; height: 100%; background: var(--cor-acao); transition: width 300ms ease-out; }
+.orc-resultado__erro {
+  margin: 0 0 12px 80px; padding: 8px 12px; font-size: 0.875rem;
+  border-left: 2px solid var(--cor-erro); background: var(--cor-superficie);
+}
+@media (max-width: 720px) { .orc-resultado__erro { margin-left: 0; } }
 
 .orc-item {
   display: grid;
@@ -138,4 +151,5 @@
 @media (prefers-reduced-motion: reduce) {
   .orc-item--chegou, .orc-cota--chegou .orc-cota__svg, .orc-cota--chegou .orc-cota__ponto,
   .orc-cota--chegou .orc-cota__medio strong { animation: none; }
+  .orc-progresso__feito { transition: none; }
 }

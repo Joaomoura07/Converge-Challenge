@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "ui-fatia-b", "run", "dev"],
       "port": 5174
+    },
+    {
+      "name": "site-orca",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "3100"],
+      "port": 3100
     }
   ]
 }

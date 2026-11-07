@@ -1,0 +1,15 @@
+/* Papéis de cor da skill (skills/04-ui-design.md, seção 2) ligados à paleta do site (globals.css: papel + cobalto).
+   É o ÚNICO lugar com valor de cor dos componentes da fatia B: trocar a paleta é mudar aqui ou no globals.css.
+   Definido e pendente não existiam na paleta do site: verde e âmbar escuros, distinguíveis também com daltonismo
+   porque o status nunca é só cor (ícone + texto). Contraste conferido sobre --papel (#f6f2e8). */
+:root {
+  --cor-fundo: var(--papel, #f6f2e8);
+  --cor-superficie: var(--papel-2, #efe9db);
+  --cor-texto: var(--tinta, #1d1d22);
+  --cor-texto-2: var(--tinta-suave, #5b5a60);
+  --cor-linha: var(--linha, #d8d0bd);
+  --cor-acao: var(--cobalto, #0047ab);
+  --cor-erro: var(--erro, #a3261f);
+  --cor-definido: #1e6b43;   /* 5,8:1 sobre o papel (medido) */
+  --cor-pendente: #9a5b00;   /* 4,85:1 sobre o papel (medido); usado em borda e ícone, com texto em --cor-texto */
+}
