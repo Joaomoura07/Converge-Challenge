@@ -15,7 +15,7 @@
 --   * Leitura de orcamentos e orcamento_itens: chave pública (anon), para o Realtime.
 --     O orcamento_id é um UUID gerado na tela, mas a política NÃO filtra por dono:
 --     quem tiver a chave anon consegue listar tudo. Aceitável só para a demo sintética.
---   * cache_precos e fornecedores: sem acesso público, só pelo backend.
+--   * cache_precos (formato do Enzo) e fornecedores: sem acesso público, só pelo backend.
 --
 -- ===========================================================================
 -- COMO A FATIA B USA A PESQUISA (protocolo único: reservar → gravar → finalizar)
@@ -351,37 +351,33 @@ create trigger orcamento_itens_atualizado_em before update on orcamento_itens
 alter table orcamento_itens replica identity full;
 
 -- ---------------------------------------------------------------------------
--- cache_precos (B). Validade de 7 dias contada a partir de atualizado_em
--- (PROPOSTA a confirmar com B): válido se atualizado_em > now() - interval '7 days'.
--- Vencido continua guardado, para servir de reserva ("preço de dd/mm").
+-- cache_precos (B). FORMATO REAL DO ENZO (src/cache.py e sql/002_cache_precos.sql da fatia B):
+-- guarda as ofertas conferidas e a imagem; a conta é refeita a cada uso. Validade de 7 dias
+-- contada a partir de atualizado_em; vencido continua guardado ("preço de dd/mm").
+-- Esta definição vale para banco novo e para banco em que a tabela do Enzo já existe
+-- (create table if not exists + colunas faltantes adicionadas). Nunca renomeia nem apaga a tabela.
 -- ---------------------------------------------------------------------------
--- Se já existir uma cache_precos com OUTRO formato (criada à mão ou por outro rascunho), ela é
--- guardada com outro nome e a tabela do contrato é criada limpa. É só cache: nada se perde de
--- importante, e os dados antigos ficam em cache_precos_antiga_<AAAAMMDDHH24MISS>.
-do $$
-declare
-    v_sufixo text := to_char(now(), 'YYYYMMDDHH24MISS');
-begin
-    if to_regclass('cache_precos') is not null
-       and (select count(*) from information_schema.columns
-             where table_schema = current_schema() and table_name = 'cache_precos'
-               and column_name in ('chave', 'resultado', 'imagem_url', 'atualizado_em')) < 4 then
-        execute format('alter table cache_precos rename to %I', 'cache_precos_antiga_' || v_sufixo);
-        -- liberar os nomes automáticos que a tabela nova vai precisar
-        if to_regclass('cache_precos_pkey') is not null then
-            execute format('alter index cache_precos_pkey rename to %I', 'cache_precos_antiga_' || v_sufixo || '_pkey');
-        end if;
-        execute format('alter table %I enable row level security', 'cache_precos_antiga_' || v_sufixo);
-    end if;
-end;
-$$;
-
 create table if not exists cache_precos (
-    chave         text primary key,                 -- produto normalizado (regra da B)
-    resultado     jsonb not null,
-    imagem_url    text,
-    atualizado_em timestamptz not null default now()
+    chave          text primary key,                      -- descrição normalizada (chave_cache)
+    descricao      text not null default '',              -- descrição original, para leitura humana
+    ofertas        jsonb not null default '[]'::jsonb,    -- [{loja, dominio, url, titulo, preco, embalagem, mesmo_produto}]
+    imagem_url     text,
+    modelo         text,
+    provedor       text,                                  -- tavily | duckduckgo
+    iteracoes      integer not null default 0,
+    atualizado_em  timestamptz not null default now()
 );
+
+-- Tabela que já existia com formato diferente: completa o que falta, sem perder dados.
+alter table cache_precos add column if not exists descricao     text not null default '';
+alter table cache_precos add column if not exists ofertas       jsonb not null default '[]'::jsonb;
+alter table cache_precos add column if not exists imagem_url    text;
+alter table cache_precos add column if not exists modelo        text;
+alter table cache_precos add column if not exists provedor      text;
+alter table cache_precos add column if not exists iteracoes     integer not null default 0;
+alter table cache_precos add column if not exists atualizado_em timestamptz not null default now();
+-- `resultado` era do rascunho da A e o código do Enzo não grava nessa coluna (NOT NULL a quebraria).
+alter table cache_precos drop column if exists resultado;
 
 create index if not exists cache_precos_atualizado_idx on cache_precos (atualizado_em);
 
@@ -491,14 +487,6 @@ alter table orcamento_itens
         not sugerido or (sugestao_regra is not null
                          and coalesce(cardinality(origem_linhas), 0) > 0
                          and aceito is not null));
-
--- Preço no resultado do cache exige fontes válidas, como nos itens (PROPOSTA: assume que o
--- resultado usa as mesmas chaves preco_emb_* / preco_un_* / fontes).
-alter table cache_precos
-    add constraint cache_resultado_ck check (
-        jsonb_typeof(resultado) = 'object'
-        and (not resultado ? 'fontes' or fontes_validas(resultado -> 'fontes'))
-        and (not resultado_com_preco(resultado) or fontes_nao_vazias_validas(resultado -> 'fontes')));
 
 alter table fornecedores
     add constraint fornecedores_dominio_ck check (dominio = normalizar_dominio(dominio)),

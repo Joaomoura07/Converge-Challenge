@@ -210,18 +210,16 @@ check "pergunta e motivo de pendente (sem preço)" t "$(gravar $IT2 1 '{"status"
 check "similar (T2) com fonte própria" t "$(gravar $IT1 1 "{\"similar\":{\"descricao\":\"Votomassa AC-II\",\"preco_emb_med\":18.9,\"fontes\":[{\"loja\":\"L\",\"dominio\":\"WWW.Leroymerlin.com.br\",\"url\":\"https://x\",\"preco_embalagem\":18.9}]}}")"
 check "domínio do similar também é normalizado" "leroymerlin.com.br" "$(Ql "select \"similar\" -> 'fontes' -> 0 ->> 'dominio' from orcamento_itens where id='$IT1'")"
 
-echo "## 9. Cache de preços (B): chave, resultado, imagem_url, atualizado_em"
-Qs "insert into cache_precos (chave, resultado, imagem_url) values ('tinta-suvinil-18l','{\"preco_emb_med\":455.9,\"fontes\":$FONTE}','https://img/t.png')"
-check "cache aceita resultado com fonte" 0 $?
+echo "## 9. Cache de preços (B): formato real do Enzo (chave, descricao, ofertas, imagem_url, modelo, provedor, iteracoes, atualizado_em)"
+OFERTAS='[{"loja":"Leroy","dominio":"leroymerlin.com.br","url":"https://x/1","titulo":"Tinta","preco":455.9,"embalagem":"18 L","mesmo_produto":true}]'
+Qs "insert into cache_precos (chave, descricao, ofertas, imagem_url, modelo, provedor, atualizado_em, iteracoes) values ('tinta-suvinil-18l','Tinta Suvinil 18L','$OFERTAS','https://img/t.png','glm','tavily', now(), 2)"
+check "cache aceita a linha exata que src/cache.py grava (upsert completo)" 0 $?
+Qs "insert into cache_precos (chave, descricao, ofertas, imagem_url, modelo, provedor, atualizado_em) values ('sem-iter','x','[]',null,null,'duckduckgo', now())"
+check "cache aceita a linha sem iteracoes (default 0)" "0" "$(Ql "select iteracoes from cache_precos where chave='sem-iter'")"
+Qs "insert into cache_precos (chave, descricao, ofertas, imagem_url, atualizado_em) values ('tinta-suvinil-18l','Tinta Suvinil 18L','$OFERTAS','https://img/t.png', now()) on conflict (chave) do update set ofertas=excluded.ofertas"
+check "upsert por chave funciona" 0 $?
 check "validade de 7 dias vem de atualizado_em" t "$(Ql "select atualizado_em > now() - interval '7 days' from cache_precos where chave='tinta-suvinil-18l'")"
-Qs "update cache_precos set atualizado_em = now() - interval '9 days' where chave='tinta-suvinil-18l'"
-Qs "update cache_precos set resultado = resultado where chave='tinta-suvinil-18l'"
-check "UPDATE renova atualizado_em (cache vencido volta a valer)" t "$(Ql "select atualizado_em > now() - interval '1 minute' from cache_precos where chave='tinta-suvinil-18l'")"
-Qs "insert into cache_precos (chave, resultado) values ('x','{\"preco_emb_med\":10}')"; check "cache: preço sem fonte é rejeitado" 3 $?
-Qs "insert into cache_precos (chave, resultado) values ('y','{\"preco_un_med\":10,\"fontes\":[]}')"; check "cache: preço por unidade com fontes vazias é rejeitado" 3 $?
-Qs "insert into cache_precos (chave, resultado) values ('z','{\"fontes\":[{\"loja\":\"L\"}]}')"; check "cache: fonte inválida é rejeitada" 3 $?
-Qs "insert into cache_precos (chave, resultado) values ('w','{\"produto\":\"sem preço ainda\"}')"; check "cache: resultado sem preço é aceito" 0 $?
-check "cache sem expira_em/criado_em" 0 "$(Ql "select count(*) from information_schema.columns where table_name='cache_precos' and column_name in ('expira_em','criado_em')")"
+check "cache NÃO tem a coluna antiga resultado" 0 "$(Ql "select count(*) from information_schema.columns where table_name='cache_precos' and column_name in ('resultado','expira_em','criado_em')")"
 
 echo "## 10. Fornecedores (C): nomes exatos"
 Qs "insert into fornecedores (nome, dominio, cep, frete_base, rs_por_km, pedido_minimo) values ('Leroy Merlin Recife','WWW.LeroyMerlin.com.br','51021000',50,2.5,200)"
@@ -410,12 +408,21 @@ check "service_role lê/escreve cache e fornecedores" 0 "$(Qs "set role service_
 D=base
 
 # ===========================================================================
-echo "## 15b. cache_precos pré-existente com outro formato (caso do Supabase real)"
-novo_banco cacheantigo
-docker exec pgtest psql -U postgres -d cacheantigo -q -c "create table cache_precos (chave text primary key, valor jsonb, criado_em timestamptz default now()); insert into cache_precos values ('k','{\"a\":1}')" >/dev/null 2>&1
-aplicar cacheantigo; check "aplica sobre cache_precos de outro formato" 0 $?
-aplicar cacheantigo; check "reaplica (não renomeia de novo)" 0 $?
-check "tabela antiga preservada com os dados; nova tem as 4 colunas" "1|1|4" "$(docker exec pgtest psql -U postgres -d cacheantigo -tA -c "select (select count(*) from pg_class where relname like 'cache_precos_antiga_%' and relkind='r')||'|'||(select count(*) from cache_precos_antiga_$(docker exec pgtest psql -U postgres -d cacheantigo -tA -c "select substr(relname,21) from pg_class where relname like 'cache_precos_antiga_%' and relkind='r'") )||'|'||(select count(*) from information_schema.columns where table_name='cache_precos')")"
+echo "## 15b. cache_precos que já existia (tabela do Enzo / versão anterior deste arquivo)"
+psqlx() { docker exec -i "$CT" psql -U postgres -d "$1" -v ON_ERROR_STOP=1 -tA -q -c "$2" 2>&1; }
+ENZO_DDL="create table cache_precos (chave text primary key, descricao text not null, ofertas jsonb not null default '[]'::jsonb, imagem_url text, modelo text, provedor text, atualizado_em timestamptz not null default now()); alter table cache_precos enable row level security; insert into cache_precos (chave, descricao, ofertas, provedor) values ('k1','Tinta X','[{\"loja\":\"L\"}]','tavily')"
+novo_banco cacheenzo; psqlx cacheenzo "$ENZO_DDL" >/dev/null
+aplicar cacheenzo; check "aplica sobre a tabela do Enzo já com dados (sem iteracoes)" 0 $?
+aplicar cacheenzo; check "reaplica" 0 $?
+check "dados do Enzo preservados e iteracoes acrescentada (default 0)" "Tinta X|[{\"loja\": \"L\"}]|tavily|0" "$(psqlx cacheenzo "select descricao||'|'||ofertas::text||'|'||provedor||'|'||iteracoes from cache_precos where chave='k1'")"
+check "nada foi renomeado: não existe cache_precos_antiga_*" 0 "$(psqlx cacheenzo "select count(*) from pg_class where relname like 'cache_precos_antiga%'")"
+check "upsert do Enzo (com iteracoes) funciona depois" 0 "$(psqlx cacheenzo "insert into cache_precos (chave,descricao,ofertas,imagem_url,modelo,provedor,atualizado_em,iteracoes) values ('k1','Tinta X','[]',null,'m','tavily',now(),3) on conflict (chave) do update set iteracoes=excluded.iteracoes" >/dev/null; echo $?)"
+# Estado em que o Supabase do Samuel ficou com a versão anterior deste arquivo: cache_precos (resultado) + cópia antiga
+novo_banco cachemeio
+psqlx cachemeio "create table cache_precos_antiga_1 (chave text primary key, descricao text, ofertas jsonb, atualizado_em timestamptz default now()); insert into cache_precos_antiga_1 values ('velho','d','[]',now()); create table cache_precos (chave text primary key, resultado jsonb not null, imagem_url text, atualizado_em timestamptz not null default now(), constraint cache_resultado_ck check (jsonb_typeof(resultado)='object'))" >/dev/null
+aplicar cachemeio; check "conserta o estado da versão anterior (resultado → formato do Enzo)" 0 $?
+check "cache_precos agora tem ofertas e não tem resultado" "1|0" "$(psqlx cachemeio "select (select count(*) from information_schema.columns where table_name='cache_precos' and column_name='ofertas')||'|'||(select count(*) from information_schema.columns where table_name='cache_precos' and column_name='resultado')")"
+check "a cópia antiga (cache_precos_antiga_1) não é tocada" 1 "$(psqlx cachemeio "select count(*) from cache_precos_antiga_1")"
 
 echo "## 15. Migração do rascunho anterior (dados preservados)"
 novo_banco rascunho
@@ -446,7 +453,7 @@ check "migração: domínio da fonte normalizado" "leroymerlin.com.br" "$(Ql "se
 check "migração: preco_data date → timestamptz" "timestamp with time zone" "$(col orcamento_itens preco_data | cut -d'|' -f1)"
 check "migração: erro do item vira motivo" "timeout" "$(Ql "select motivo from orcamento_itens where orcamento_id='$A1' and id_linha='l2'")"
 check "migração: linha vazia recebe a posição, linha existente fica" "1|2|7" "$(Ql "select string_agg(linha::text, '|' order by id_linha) from orcamento_itens where orcamento_id='$A1'")"
-check "migração: cache mantém a chave e o resultado; sem expira_em" "tinta-x|0" "$(Ql "select chave||'|'||(select count(*) from information_schema.columns where table_name='cache_precos' and column_name in ('expira_em','criado_em')) from cache_precos")"
+check "migração: cache mantém a chave; resultado e expira_em somem; ofertas existe" "tinta-x|0|1" "$(Ql "select chave||'|'||(select count(*) from information_schema.columns where table_name='cache_precos' and column_name in ('expira_em','criado_em','resultado'))||'|'||(select count(*) from information_schema.columns where table_name='cache_precos' and column_name='ofertas') from cache_precos")"
 check "migração: fornecedor com rs_por_km, lat, lon e domínio normalizado" "2.50|-8.050000|-34.900000|leroymerlin.com.br" "$(Ql "select rs_por_km||'|'||lat||'|'||lon||'|'||dominio from fornecedores")"
 # O esquema migrado precisa ser igual ao de um banco novo
 esquema() { Ql "select md5(string_agg(table_name||'.'||column_name||':'||data_type||':'||coalesce(numeric_precision::text,'')||':'||coalesce(numeric_scale::text,'')||':'||is_nullable||':'||coalesce(column_default,''), ',' order by table_name, column_name)) from information_schema.columns where table_schema='public' and table_name in ('orcamentos','orcamento_itens','cache_precos','fornecedores')"; }

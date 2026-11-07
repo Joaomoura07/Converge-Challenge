@@ -27,7 +27,7 @@ esperado_colunas(tabela, coluna) as (values
     ('orcamento_itens','imagem_url'),('orcamento_itens','preco_data'),('orcamento_itens','atualizado_em'),
     ('orcamento_itens','sugerido'),('orcamento_itens','sugestao_regra'),('orcamento_itens','sugestao_motivo'),
     ('orcamento_itens','origem_linhas'),('orcamento_itens','aceito'),('orcamento_itens','estimativa_consumo'),
-    ('cache_precos','chave'),('cache_precos','resultado'),('cache_precos','imagem_url'),('cache_precos','atualizado_em')
+    ('cache_precos','chave'),('cache_precos','descricao'),('cache_precos','ofertas'),('cache_precos','imagem_url'),('cache_precos','modelo'),('cache_precos','provedor'),('cache_precos','iteracoes'),('cache_precos','atualizado_em')
 ),
 esperado_funcoes(nome) as (values
     ('reservar_pesquisa'),('gravar_resultado_item'),('finalizar_pesquisa'),('renovar_pesquisa'),('criar_orcamento')
