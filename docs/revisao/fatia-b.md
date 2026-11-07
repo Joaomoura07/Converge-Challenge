@@ -481,3 +481,23 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
   | Gemma 4 31B (reserva anterior) | 5/5 | 4,6–19,8 s |
   | Qwen3-14B | 3/3 | 3,0–8,7 s |
   | Qwen3-8B | 0/2 | resposta vazia (43–61 s) |
+
+## Etapa 2 — busca aberta com cidade/UF da obra + anúncios com preço antes dos sem preço · 07/11 16:55 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 601 passed, 12 skipped, 16 deselected, 2 warnings in 13.25s |
+| coerência com o programa | ✅ | 7 passed in 0.51s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ❌ | 2 failed, 4 passed, 217 deselected in 31.34s |
+
+## Etapa 2 — teste real aceita loja aberta com preço; nome da loja confere com o domínio · 07/11 16:57 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 603 passed, 12 skipped, 16 deselected, 2 warnings in 15.27s |
+| coerência com o programa | ✅ | 7 passed in 0.43s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ✅ | 6 passed, 219 deselected in 16.65s |

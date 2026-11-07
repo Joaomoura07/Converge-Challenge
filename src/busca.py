@@ -1,7 +1,10 @@
 """Etapa ①② da pesquisa: monta a consulta e busca na web (Tavily → DuckDuckGo).
 
-Só traz resultados de uma LISTA FIXA de lojas brasileiras (decisão do plano: evita blog,
-fórum e preço em dólar). Não extrai preço: isso é da etapa ③ (src/precos.py).
+Duas buscas em paralelo por item:
+1. FIXA: uma lista de lojas brasileiras conhecidas (sem blog, fórum ou preço em dólar; imagem confiável);
+2. ABERTA: qualquer loja do Brasil, com a cidade e a UF da obra (do CEP), só anúncios com preço escrito.
+   Medido em 07/11: só com a lista fixa a média era 1,4 loja por item.
+Não extrai preço: isso é da etapa ③ (src/precos.py).
 """
 
 from __future__ import annotations
@@ -11,6 +14,8 @@ import logging
 import re
 import time
 import unicodedata
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -237,6 +242,8 @@ def eh_pagina_de_busca(url: str) -> bool:
 
 
 def _filtra(brutos: list[tuple[str, str, str]], limite: int) -> list[ResultadoWeb]:
+    """Lojas da lista fixa. Anúncio com preço escrito vem antes do sem preço: a Leroy Merlin carrega o preço por
+    JavaScript e o anúncio dela, sem 'R$', tomava a vaga de uma loja que rende preço (achado de 07/11)."""
     vistos, por_loja, saida = set(), {}, []
     for titulo, url, trecho in brutos:
         dom = dominio_de(url)
@@ -246,9 +253,114 @@ def _filtra(brutos: list[tuple[str, str, str]], limite: int) -> list[ResultadoWe
         vistos.add(url)
         por_loja[loja] = por_loja.get(loja, 0) + 1
         saida.append(ResultadoWeb(titulo=titulo or "", url=url, dominio=dom, loja=loja, trecho=(trecho or "")[:1200]))
-        if len(saida) >= limite:
-            break
-    return saida
+    saida.sort(key=lambda r: not tem_preco(r.titulo, r.trecho))   # sort estável: mantém a ordem da busca
+    return saida[:limite]
+
+
+# ------------------------------------------------------------------ busca aberta (lojas da região da obra)
+@dataclass(frozen=True)
+class Local:
+    cidade: str
+    uf: str
+
+
+# O local da obra vale para a pesquisa inteira do orçamento (inclusive dentro do agente) sem mudar a assinatura de
+# nenhuma função nem o contrato com A/C: quem pesquisa um orçamento define com `na_regiao(...)`.
+LOCAL_DA_OBRA: ContextVar[Local | None] = ContextVar("local_da_obra", default=None)
+
+
+@contextmanager
+def na_regiao(local: Local | None):
+    token = LOCAL_DA_OBRA.set(local)
+    try:
+        yield
+    finally:
+        LOCAL_DA_OBRA.reset(token)
+
+
+_locais: dict[str, Local | None] = {}
+
+
+async def local_do_cep(cep: str | None) -> Local | None:
+    """CEP da obra → cidade e UF (ViaCEP, grátis, sem chave). Falha = None (a busca segue sem local)."""
+    digitos = re.sub(r"\D", "", cep or "")
+    if len(digitos) != 8:
+        return None
+    if digitos in _locais:
+        return _locais[digitos]
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=4) as c:
+            j = (await c.get(f"https://viacep.com.br/ws/{digitos}/json/")).json()
+        local = Local(j["localidade"], j["uf"]) if j.get("localidade") and j.get("uf") else None
+    except Exception as exc:  # noqa: BLE001 — sem rede/ViaCEP fora: pesquisa continua sem local
+        logger.warning("ViaCEP falhou para o CEP da obra (%s): busca sem cidade", type(exc).__name__)
+        return None   # não guarda a falha: tenta de novo no próximo orçamento
+    _locais[digitos] = local
+    return local
+
+
+# Sites que não são loja (ou cujo preço não é de uma loja: comparadores, importados)
+BLOQUEADOS = ["youtube.com", "facebook.com", "instagram.com", "pinterest.com", "pinterest.com.br", "tiktok.com",
+              "x.com", "twitter.com", "linkedin.com", "reddit.com", "wikipedia.org", "reclameaqui.com.br",
+              "buscape.com.br", "zoom.com.br", "google.com", "aliexpress.com", "shein.com", "temu.com",
+              "shopee.com.br", "olx.com.br", "gov.br", "jusbrasil.com.br"]
+_TEM_PRECO = re.compile(r"R\$\s?\d")
+_PARTES_DO_DOMINIO = re.compile(r"^(www|loja|lojas|shop|m)\.", re.I)
+
+
+def tem_preco(titulo: str, trecho: str) -> bool:
+    """Anúncio sem 'R$ 123' escrito não rende preço: a trava anti-alucinação descartaria o que o LLM dissesse."""
+    return bool(_TEM_PRECO.search(f"{titulo} {trecho}"))
+
+
+def nome_da_loja(dominio: str, titulo: str) -> str:
+    """'Tinta Coral 18L | Casa do Construtor' (casadoconstrutor.com.br) -> 'Casa do Construtor'.
+    O fim do título só vale se combinar com o domínio: medido em 07/11, ele às vezes é categoria ou estado
+    ('material elétrico', 'SP'). Senão, o domínio: 'acmateriais.com.br' -> 'Acmateriais'."""
+    base = _PARTES_DO_DOMINIO.sub("", dominio).split(".")[0]
+    rotulo = re.sub(r"[^a-z0-9]", "", _sem_acento(base))
+    for sep in (" | ", " - ", " – "):
+        if sep in (titulo or ""):
+            fim = titulo.rsplit(sep, 1)[1].strip()
+            compacto = re.sub(r"[^a-z0-9]", "", _sem_acento(fim))
+            if 2 <= len(fim) <= 30 and len(compacto) >= 3 and (compacto in rotulo or rotulo in compacto):
+                return fim
+    return base.replace("-", " ").title() or dominio
+
+
+def _bloqueado(dominio: str) -> bool:
+    return any(dominio == b or dominio.endswith("." + b) for b in BLOQUEADOS)
+
+
+def _da_regiao(texto: str, local: Local | None) -> bool:
+    if not local:
+        return False
+    t = _sem_acento(texto)
+    return _sem_acento(local.cidade) in t or bool(re.search(rf"\b{local.uf.lower()}\b", t))
+
+
+def _sem_acento(s: str) -> str:
+    return unicodedata.normalize("NFKD", (s or "").lower()).encode("ascii", "ignore").decode()
+
+
+def _filtra_aberto(brutos: list[tuple[str, str, str]], limite: int, local: Local | None) -> list[ResultadoWeb]:
+    """Lojas fora da lista fixa: só com preço escrito, sem página de busca, 1 por domínio; as da região primeiro."""
+    vistos, saida = set(), []
+    for titulo, url, trecho in brutos:
+        dom = dominio_de(url)
+        if (not dom or dom in vistos or loja_de(dom) or _bloqueado(dom) or eh_pagina_de_busca(url)
+                or not tem_preco(titulo or "", trecho or "")):
+            continue
+        vistos.add(dom)
+        saida.append(ResultadoWeb(titulo=titulo or "", url=url, dominio=dom, loja=nome_da_loja(dom, titulo or ""),
+                                  trecho=(trecho or "")[:1200]))
+    saida.sort(key=lambda r: not _da_regiao(f"{r.titulo} {r.trecho}", local))   # sort estável: mantém a ordem
+    return saida[:limite]
+
+
+def consulta_regional(consulta: str, local: Local | None) -> str:
+    return f"{consulta} {local.cidade} {local.uf}" if local else consulta
 
 
 class _RodizioChaves:
@@ -314,12 +426,81 @@ async def _duckduckgo(consulta: str, limite: int) -> RespostaBusca:
     return RespostaBusca(consulta, "duckduckgo", _filtra(brutos, limite))
 
 
+async def _tavily_aberto(consulta: str, limite: int, rodizio: _RodizioChaves, local: Local | None) -> RespostaBusca:
+    """Qualquer loja do Brasil (menos as da lista fixa, que a outra busca já cobre), com a cidade/UF da obra."""
+    from tavily import AsyncTavilyClient
+    from tavily.errors import ForbiddenError, InvalidAPIKeyError, UsageLimitExceededError
+
+    q = consulta_regional(consulta, local)
+    while rodizio.atual:
+        try:
+            r = await AsyncTavilyClient(api_key=rodizio.atual).search(
+                q, search_depth="basic", max_results=10, include_images=True, country="brazil",
+                exclude_domains=list(LOJAS) + BLOQUEADOS, timeout=20)
+            brutos = [(x.get("title"), x.get("url"), x.get("content")) for x in r.get("results", [])]
+            imagens = [ImagemWeb(i.get("url", ""), i.get("description") or "") if isinstance(i, dict) else ImagemWeb(i)
+                       for i in r.get("images", [])]
+            return RespostaBusca(q, "tavily", _filtra_aberto(brutos, limite, local), [i for i in imagens if i.url])
+        except (UsageLimitExceededError, InvalidAPIKeyError, ForbiddenError) as exc:
+            rodizio.descartar_atual(type(exc).__name__)
+    return RespostaBusca(q, "nenhum", erro="sem chave Tavily válida")
+
+
+async def _duckduckgo_aberto(consulta: str, limite: int, local: Local | None) -> RespostaBusca:
+    from ddgs import DDGS
+
+    q = consulta_regional(consulta, local)
+
+    def _sync():
+        with DDGS() as d:
+            return d.text(q, region="br-pt", max_results=25) or []
+
+    texto = await asyncio.wait_for(asyncio.to_thread(_sync), timeout=DDG_TIMEOUT_S)
+    return RespostaBusca(q, "duckduckgo", _filtra_aberto([(x.get("title"), x.get("href"), x.get("body")) for x in texto],
+                                                        limite, local))
+
+
+async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, local: Local | None) -> RespostaBusca:
+    """Nunca levanta exceção: busca aberta que falha só deixa o item com as lojas da lista fixa."""
+    try:
+        r = await _tavily_aberto(consulta, limite, rodizio, local)
+        if r.resultados:
+            return r
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Busca aberta no Tavily falhou (%s); tentando DuckDuckGo", type(exc).__name__)
+    try:
+        return await _duckduckgo_aberto(consulta, limite, local)
+    except Exception as exc:  # noqa: BLE001
+        return RespostaBusca(consulta, "nenhum", erro=f"busca aberta: {type(exc).__name__}")
+
+
 @observe(as_type="retriever", name="busca.web")
 async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChaves | None = None) -> RespostaBusca:
-    """Tavily primeiro; se der erro OU vier sem nenhuma loja da lista, tenta o DuckDuckGo."""
-    limite = limite or get_settings().pesquisa_max_lojas
+    """Busca FIXA (lista de lojas) e ABERTA (região da obra) em paralelo; junta as duas.
+    A aberta pode ser desligada em `pesquisa_busca_aberta` (ex.: cota do Tavily acabando)."""
+    s = get_settings()
+    limite = limite or s.pesquisa_max_lojas
     rodizio = rodizio or _rodizio_global()
     t0 = time.perf_counter()
+    if not s.pesquisa_busca_aberta:
+        resp = await _buscar_fixa(consulta, limite, rodizio)
+    else:
+        resp, aberta = await asyncio.gather(_buscar_fixa(consulta, limite, rodizio),
+                                            _buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, LOCAL_DA_OBRA.get()))
+        resp.resultados = (resp.resultados + aberta.resultados)[: s.pesquisa_max_anuncios]
+        if resp.resultados:
+            resp.erro = None
+        if not resp.imagens:
+            resp.imagens = aberta.imagens
+        if resp.provedor == "nenhum":
+            resp.provedor = aberta.provedor
+    resp.imagem = await escolher_imagem_verificada(resp.imagens, consulta)
+    resp.ms = int((time.perf_counter() - t0) * 1000)
+    return resp
+
+
+async def _buscar_fixa(consulta: str, limite: int, rodizio: _RodizioChaves) -> RespostaBusca:
+    """Tavily primeiro; se der erro OU vier sem nenhuma loja da lista, tenta o DuckDuckGo."""
     resp, erros = None, []
     for tentativa in range(2):  # o Tavily às vezes volta vazio sob carga: 1 nova tentativa antes da reserva
         try:
@@ -346,6 +527,4 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
         resp = RespostaBusca(consulta, "nenhum")
     if not resp.resultados:
         resp.erro = "; ".join(erros) or "nenhuma loja da lista retornou resultado"
-    resp.imagem = await escolher_imagem_verificada(resp.imagens, consulta)
-    resp.ms = int((time.perf_counter() - t0) * 1000)
     return resp

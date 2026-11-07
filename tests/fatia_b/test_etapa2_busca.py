@@ -15,6 +15,16 @@ def rodar(coro):
     return asyncio.run(coro)
 
 
+@pytest.fixture(autouse=True)
+def sem_busca_aberta_de_verdade(monkeypatch, request):
+    """Os testes offline desta etapa tratam da busca FIXA; a aberta (testada em test_busca_aberta.py) não pode ir à rede."""
+    if "real" in request.keywords:
+        return
+    async def vazia(consulta, *a):
+        return b.RespostaBusca(consulta, "nenhum")
+    monkeypatch.setattr(b, "_buscar_aberta", vazia)
+
+
 # ---------------------------------------------------------------- offline: consulta e filtro
 def test_consulta_tira_quantidade_e_pede_preco():
     item = ItemEntrada(id="1", descricao="Porcelanato Portobello Cimento Queimado 90x90 48 m²")
@@ -152,7 +162,8 @@ def test_etapa2_busca_real_traz_lojas_da_lista_e_imagem(descricao):
     dur = time.perf_counter() - t0
     assert r.provedor in ("tavily", "duckduckgo"), r.erro
     assert len(r.resultados) >= 2, f"poucas lojas: {[x.loja for x in r.resultados]} ({r.erro})"
-    assert all(b.loja_de(x.dominio) for x in r.resultados)
+    # loja da lista fixa OU loja da busca aberta, que só entra com preço escrito no anúncio
+    assert all(b.loja_de(x.dominio) or b.tem_preco(x.titulo, x.trecho) for x in r.resultados)
     assert r.imagens, "sem imagens candidatas"
     assert r.imagem is None or r.imagem.startswith("http")
     assert dur < 15, f"busca lenta: {dur:.1f}s"

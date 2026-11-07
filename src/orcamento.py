@@ -22,6 +22,7 @@ from typing import Protocol
 
 from langfuse import observe, propagate_attributes
 
+from .busca import local_do_cep, na_regiao
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
 from .pesquisa import pesquisar_item, pesquisar_itens
@@ -119,6 +120,11 @@ class BancoSupabase:
     async def orcamento_do_item(self, item_id: str) -> str | None:
         r = await self._rodar(lambda: self.sb.table(ITENS).select("orcamento_id").eq("id", item_id).limit(1).execute())
         return str(r.data[0]["orcamento_id"]) if r.data else None
+
+    async def cep(self, orcamento_id: str) -> str | None:
+        """CEP da obra (a fatia A grava só dígitos em orcamentos.cep)."""
+        r = await self._rodar(lambda: self.sb.table(ORCAMENTOS).select("cep").eq("id", orcamento_id).limit(1).execute())
+        return (r.data[0].get("cep") if r.data else None) or None
 
     async def somar_custo(self, orcamento_id: str, usd: float) -> None:
         """Soma o custo de uma nova pesquisa (ex.: 'Pesquisar de novo') ao total do orçamento."""
@@ -219,8 +225,20 @@ async def pesquisar_orcamento(orcamento_id: str, banco: Banco | None = None, **o
     """Ponto de entrada da fatia A. Pesquisa só os itens com status 'buscando' e grava cada um ao ficar pronto.
     Langfuse: 1 árvore por orçamento (session_id = orcamento_id), 1 galho por item."""
     banco = banco or BancoSupabase()
-    with propagate_attributes(trace_name="orcamento", session_id=str(orcamento_id), tags=["fatia-b"]):
+    local = await _local_da_obra(banco, str(orcamento_id))
+    with propagate_attributes(trace_name="orcamento", session_id=str(orcamento_id), tags=["fatia-b"]), na_regiao(local):
         return await _pesquisar_orcamento(str(orcamento_id), banco, opcoes)
+
+
+async def _local_da_obra(banco: Banco, orcamento_id: str | None):
+    """CEP do orçamento → cidade/UF para a busca aberta achar lojas da região. Qualquer falha = busca sem local."""
+    if not orcamento_id or not hasattr(banco, "cep"):
+        return None
+    try:
+        return await local_do_cep(await banco.cep(orcamento_id))
+    except Exception:  # noqa: BLE001
+        logger.warning("Não deu para ler o CEP do orçamento %s: busca sem cidade", orcamento_id)
+        return None
 
 
 @observe(name="repesquisar_item")
@@ -237,11 +255,11 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
         item = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
         campos |= {"descricao": nova_descricao, "classificacao": "definido"}
     await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
-    with acumular_custo() as custo:
+    orcamento_id = await banco.orcamento_do_item(item_id)
+    with acumular_custo() as custo, na_regiao(await _local_da_obra(banco, orcamento_id)):
         resultado = await pesquisar_item(item, usar_cache=False, **opcoes)
     await banco.gravar_item(resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
-    orcamento_id = await banco.orcamento_do_item(item_id)
     if orcamento_id:
         await banco.somar_custo(orcamento_id, custo.usd)
         await _chamar_fatia_c(orcamento_id)

@@ -45,7 +45,10 @@ class Settings(BaseSettings):
     tavily_api_keys: str = ""
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
-    pesquisa_max_lojas: int = 5
+    pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
+    pesquisa_busca_aberta: bool = True      # 2ª busca em qualquer loja do Brasil, com a cidade/UF da obra
+    pesquisa_max_abertas: int = 4           # anúncios da busca aberta (só os com preço escrito)
+    pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
