@@ -428,3 +428,86 @@ button:disabled {
     order: 1;
   }
 }
+
+/* Importação de arquivos (etapa 04) */
+.somente-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+.importador {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.importador-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.exemplos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px dashed var(--cobalto);
+  border-radius: 4px;
+  padding: 8px;
+  background: repeating-linear-gradient(45deg, transparent 0 7px, rgba(0, 71, 171, 0.05) 7px 8px);
+}
+.exemplo {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  text-align: left;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-radius: 4px;
+  color: var(--tinta);
+}
+.exemplo:hover {
+  border-color: var(--cobalto);
+}
+.exemplo-nome {
+  font-weight: 700;
+  color: var(--cobalto);
+}
+.aviso-erro,
+.aviso-ok,
+.aviso-decisao {
+  padding: 12px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--linha);
+  background: var(--papel-2);
+}
+.aviso-erro {
+  border-color: var(--erro);
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+.aviso-erro p,
+.aviso-ok p,
+.aviso-decisao p {
+  margin: 0 0 8px;
+}
+.aviso-titulo {
+  font-weight: 700;
+}
+.lista-avisos {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  max-height: 220px;
+  overflow: auto;
+}
+.aviso-decisao {
+  border-color: var(--cobalto);
+}

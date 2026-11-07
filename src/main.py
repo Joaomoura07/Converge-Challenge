@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from .agent import Agent, AgentResult
 from .config import get_settings
 from .database import save_agent_run
+from .rotas_resultado import router as resultado_router   # Fatia C: sugestões, resultado e exportar
 from .tools import registry
 
 settings = get_settings()
@@ -31,6 +32,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Converge Agents API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(resultado_router)
 
 
 class RunRequest(BaseModel):

@@ -7,16 +7,18 @@ import {
   estadoInicial,
   primeiroErro,
   reduzir,
+  type Linha,
   type ModoEntrada,
 } from "@/lib/lista";
 import { formatarCep, gerarUuid } from "@/lib/validacao";
 import { CabecalhoPagina } from "./shell/CabecalhoPagina";
 import { NovaObra, type Obra, type RascunhoObra } from "./NovaObra";
+import { Importador } from "./Importador";
 import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 
 const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "manual", rotulo: "Cadastro manual", etapa: null },
-  { id: "csv", rotulo: "CSV", etapa: "04" },
+  { id: "csv", rotulo: "CSV", etapa: null },
   { id: "excel", rotulo: "Excel", etapa: "09" },
   { id: "revit", rotulo: "TXT do Revit", etapa: "10" },
   { id: "pdf", rotulo: "PDF com texto", etapa: "11" },
@@ -35,6 +37,13 @@ export function Caderno() {
   const totalErros = contarErros(erros);
   const semItens = lista.linhas.length === 0;
   const envioBloqueado = semItens || totalErros > 0;
+  const itensPreenchidos = lista.linhas.filter((l) => l.descricao || l.quantidade || l.unidade || l.categoria).length;
+
+  function aplicarImportacao(linhas: Linha[], como: "acrescentar" | "substituir") {
+    despachar({ tipo: "importar", linhas, como });
+    // Mostra já os campos que o arquivo deixou em branco ou inválidos.
+    despachar({ tipo: "revelar_erros" });
+  }
 
   function iniciar(nova: Obra) {
     setObra(nova);
@@ -128,15 +137,19 @@ export function Caderno() {
                   A importação de <strong>{modoAtual.rotulo}</strong> chega na etapa {modoAtual.etapa}. Os materiais já digitados
                   continuam na lista abaixo e serão a mesma lista quando a importação existir.
                 </p>
+              ) : lista.modo === "csv" ? (
+                <p className="apoio">
+                  Envie um CSV exportado do Excel ou de outro programa. Cada linha vira um item editável na tabela abaixo, com a linha do arquivo de origem.
+                </p>
               ) : (
                 <p className="apoio">Digite os materiais um a um. Quantidade aceita vírgula decimal (12,5) e a unidade aceita m².</p>
               )}
-              <div className="reservada" aria-label="Arquivo de exemplo">
-                <button type="button" className="botao-secundario" disabled>
-                  Usar arquivo de exemplo
-                </button>
-                <span className="nota">Três obras de exemplo chegam na etapa 04.</span>
-              </div>
+              <Importador
+                mostrarArquivo={lista.modo === "csv"}
+                linhasExistentes={itensPreenchidos}
+                novoId={gerarUuid}
+                onAplicar={aplicarImportacao}
+              />
             </div>
 
             <TabelaMateriais estado={lista} erros={erros} despachar={despachar} novoId={gerarUuid} />
