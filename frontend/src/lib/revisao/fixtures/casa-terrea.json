@@ -1,0 +1,649 @@
+{
+ "entrada": [
+  {
+   "id": "casa-1",
+   "descricao": "Selador Coral",
+   "quantidade": "520",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 2
+  },
+  {
+   "id": "casa-2",
+   "descricao": "Massa corrida Suvinil",
+   "quantidade": "380",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 3
+  },
+  {
+   "id": "casa-3",
+   "descricao": "Coral Rende Muito branco",
+   "quantidade": "380",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 4
+  },
+  {
+   "id": "casa-4",
+   "descricao": "Massa acrílica Coral",
+   "quantidade": "140",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 5
+  },
+  {
+   "id": "casa-5",
+   "descricao": "Metalatex verde oliva",
+   "quantidade": "140",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 6
+  },
+  {
+   "id": "casa-6",
+   "descricao": "Eliane Munari 60x60",
+   "quantidade": "120",
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas",
+   "linhaOrigem": 7
+  },
+  {
+   "id": "casa-7",
+   "descricao": "Votomassa AC-II",
+   "quantidade": "162",
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas",
+   "linhaOrigem": 8
+  },
+  {
+   "id": "casa-8",
+   "descricao": "Rejunte Quartzolit cinza platina",
+   "quantidade": "120",
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas",
+   "linhaOrigem": 9
+  },
+  {
+   "id": "casa-9",
+   "descricao": "Ceusa branco 30x60",
+   "quantidade": "42",
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas",
+   "linhaOrigem": 10
+  },
+  {
+   "id": "casa-10",
+   "descricao": "Rodapé Santa Luzia 10 cm",
+   "quantidade": "95",
+   "unidade": "m",
+   "categoria": "Revestimentos e argamassas",
+   "linhaOrigem": 11
+  },
+  {
+   "id": "casa-11",
+   "descricao": "Cimento Votoran",
+   "quantidade": "180",
+   "unidade": "sc",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 12
+  },
+  {
+   "id": "casa-12",
+   "descricao": "Areia média",
+   "quantidade": "22",
+   "unidade": "m3",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 13
+  },
+  {
+   "id": "casa-13",
+   "descricao": "Brita 1",
+   "quantidade": "14",
+   "unidade": "m3",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 14
+  },
+  {
+   "id": "casa-14",
+   "descricao": "Cal Qualical",
+   "quantidade": "60",
+   "unidade": "sc",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 15
+  },
+  {
+   "id": "casa-15",
+   "descricao": "Tijolo 14x19x29",
+   "quantidade": "",
+   "unidade": "un",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 16
+  },
+  {
+   "id": "casa-16",
+   "descricao": "Ferro 3/8 Gerdau",
+   "quantidade": "160",
+   "unidade": "br",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 17
+  },
+  {
+   "id": "casa-17",
+   "descricao": "Ferro 5 mm Gerdau",
+   "quantidade": "90",
+   "unidade": "br",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 18
+  },
+  {
+   "id": "casa-18",
+   "descricao": "Arame Belgo 18",
+   "quantidade": "40",
+   "unidade": "kg",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 19
+  },
+  {
+   "id": "casa-19",
+   "descricao": "Tela Q-92 Gerdau",
+   "quantidade": "12",
+   "unidade": "un",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 20
+  },
+  {
+   "id": "casa-20",
+   "descricao": "Concreto Supermix fck25",
+   "quantidade": "18",
+   "unidade": "m3",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 21
+  },
+  {
+   "id": "casa-21",
+   "descricao": "Sikatop 107",
+   "quantidade": "45",
+   "unidade": "m2",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 22
+  },
+  {
+   "id": "casa-22",
+   "descricao": "Telha Brasilit 6 mm",
+   "quantidade": "160",
+   "unidade": "m2",
+   "categoria": "Estrutura e alvenaria",
+   "linhaOrigem": 23
+  },
+  {
+   "id": "casa-23",
+   "descricao": "Deca Vogue Plus",
+   "quantidade": "2",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 24
+  },
+  {
+   "id": "casa-24",
+   "descricao": "Celite Azalea",
+   "quantidade": "1",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 25
+  },
+  {
+   "id": "casa-25",
+   "descricao": "Hydra Max",
+   "quantidade": "3",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 26
+  },
+  {
+   "id": "casa-26",
+   "descricao": "Lorenzetti Acqua Duo",
+   "quantidade": "2",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 27
+  },
+  {
+   "id": "casa-27",
+   "descricao": "Tubo Tigre 25 mm",
+   "quantidade": "60",
+   "unidade": "m",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 28
+  },
+  {
+   "id": "casa-28",
+   "descricao": "Tubo Tigre 32 mm",
+   "quantidade": "36",
+   "unidade": "m",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 29
+  },
+  {
+   "id": "casa-29",
+   "descricao": "Joelho Tigre 25",
+   "quantidade": "40",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 30
+  },
+  {
+   "id": "casa-30",
+   "descricao": "Tubo esgoto Amanco 100",
+   "quantidade": "48",
+   "unidade": "m",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 31
+  },
+  {
+   "id": "casa-31",
+   "descricao": "Tubo esgoto Amanco 40",
+   "quantidade": "30",
+   "unidade": "m",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 32
+  },
+  {
+   "id": "casa-32",
+   "descricao": "Caixa sifonada Tigre 150",
+   "quantidade": "4",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 33
+  },
+  {
+   "id": "casa-33",
+   "descricao": "Caixa d'água Fortlev 1000",
+   "quantidade": "1",
+   "unidade": "un",
+   "categoria": "Hidráulica, louças e metais",
+   "linhaOrigem": 34
+  },
+  {
+   "id": "casa-34",
+   "descricao": "Cabo SIL 2,5 azul",
+   "quantidade": "600",
+   "unidade": "m",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 35
+  },
+  {
+   "id": "casa-35",
+   "descricao": "Cabo SIL 2,5 verde",
+   "quantidade": "400",
+   "unidade": "m",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 36
+  },
+  {
+   "id": "casa-36",
+   "descricao": "Cabo SIL 4 preto",
+   "quantidade": "200",
+   "unidade": "m",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 37
+  },
+  {
+   "id": "casa-37",
+   "descricao": "Afumex 1,5 branco",
+   "quantidade": "500",
+   "unidade": "m",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 38
+  },
+  {
+   "id": "casa-38",
+   "descricao": "Tigreflex 25",
+   "quantidade": "300",
+   "unidade": "m",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 39
+  },
+  {
+   "id": "casa-39",
+   "descricao": "Disjuntor Easy9 1P 20A",
+   "quantidade": "14",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 40
+  },
+  {
+   "id": "casa-40",
+   "descricao": "Disjuntor Easy9 2P 40A",
+   "quantidade": "2",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 41
+  },
+  {
+   "id": "casa-41",
+   "descricao": "DR Steck 40A",
+   "quantidade": "1",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 42
+  },
+  {
+   "id": "casa-42",
+   "descricao": "Quadro Steck 24",
+   "quantidade": "1",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 43
+  },
+  {
+   "id": "casa-43",
+   "descricao": "Tomada Liz 10A",
+   "quantidade": "30",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 44
+  },
+  {
+   "id": "casa-44",
+   "descricao": "Tomada Liz 20A",
+   "quantidade": "8",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 45
+  },
+  {
+   "id": "casa-45",
+   "descricao": "Interruptor Pial Plus+",
+   "quantidade": "22",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 46
+  },
+  {
+   "id": "casa-46",
+   "descricao": "Caixinha 4x2 Tigre",
+   "quantidade": "60",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 47
+  },
+  {
+   "id": "casa-47",
+   "descricao": "Lâmpada Philips 9W",
+   "quantidade": "20",
+   "unidade": "un",
+   "categoria": "Elétrica e iluminação",
+   "linhaOrigem": 48
+  },
+  {
+   "id": "casa-48",
+   "descricao": "Porta Sincol 80",
+   "quantidade": "7",
+   "unidade": "un",
+   "categoria": "Esquadrias, vidros e ferragens",
+   "linhaOrigem": 49
+  },
+  {
+   "id": "casa-49",
+   "descricao": "Fechadura Pado externa",
+   "quantidade": "2",
+   "unidade": "un",
+   "categoria": "Esquadrias, vidros e ferragens",
+   "linhaOrigem": 50
+  },
+  {
+   "id": "casa-50",
+   "descricao": "Fechadura Papaiz banheiro",
+   "quantidade": "3",
+   "unidade": "un",
+   "categoria": "Esquadrias, vidros e ferragens",
+   "linhaOrigem": 51
+  },
+  {
+   "id": "casa-51",
+   "descricao": "Janela Sasazaki 120x120",
+   "quantidade": "6",
+   "unidade": "un",
+   "categoria": "Esquadrias, vidros e ferragens",
+   "linhaOrigem": 52
+  },
+  {
+   "id": "casa-52",
+   "descricao": "Maxim-ar Sasazaki 60x60",
+   "quantidade": "3",
+   "unidade": "un",
+   "categoria": "Esquadrias, vidros e ferragens",
+   "linhaOrigem": 53
+  },
+  {
+   "id": "casa-53",
+   "descricao": "Grama esmeralda",
+   "quantidade": "80",
+   "unidade": "m2",
+   "categoria": "Paisagismo e piscina",
+   "linhaOrigem": 54
+  }
+ ],
+ "resposta": {
+  "revisao_id": "44a4dbbcb7fb9d27",
+  "erros": [
+   {
+    "id": "78ab6b7352f8",
+    "regra": "unidade",
+    "linhas": [
+     12
+    ],
+    "item_ids": [
+     "casa-11"
+    ],
+    "campo": "unidade",
+    "valor_atual": "sc",
+    "correcao": {
+     "acao": "alterar",
+     "alteracoes": [
+      {
+       "item_id": "casa-11",
+       "linha": 12,
+       "campo": "unidade",
+       "de": "sc",
+       "para": "un"
+      }
+     ],
+     "remover": []
+    },
+    "motivo": "A unidade \"sc\" (saco) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar sacos como un; a pesquisa converte a embalagem.",
+    "fatos": {
+     "unidade": "sc",
+     "familia": "cimento/cal",
+     "subtipo": "fora_da_lista",
+     "significado": "saco"
+    },
+    "texto": "A unidade \"sc\" (saco) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar sacos como un; a pesquisa converte a embalagem.",
+    "redacao": "fixa"
+   },
+   {
+    "id": "6192da316e58",
+    "regra": "unidade",
+    "linhas": [
+     15
+    ],
+    "item_ids": [
+     "casa-14"
+    ],
+    "campo": "unidade",
+    "valor_atual": "sc",
+    "correcao": {
+     "acao": "alterar",
+     "alteracoes": [
+      {
+       "item_id": "casa-14",
+       "linha": 15,
+       "campo": "unidade",
+       "de": "sc",
+       "para": "un"
+      }
+     ],
+     "remover": []
+    },
+    "motivo": "A unidade \"sc\" (saco) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar sacos como un; a pesquisa converte a embalagem.",
+    "fatos": {
+     "unidade": "sc",
+     "familia": "cimento/cal",
+     "subtipo": "fora_da_lista",
+     "significado": "saco"
+    },
+    "texto": "A unidade \"sc\" (saco) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar sacos como un; a pesquisa converte a embalagem.",
+    "redacao": "fixa"
+   },
+   {
+    "id": "1a6236e1bb3c",
+    "regra": "unidade",
+    "linhas": [
+     17
+    ],
+    "item_ids": [
+     "casa-16"
+    ],
+    "campo": "unidade",
+    "valor_atual": "br",
+    "correcao": {
+     "acao": "alterar",
+     "alteracoes": [
+      {
+       "item_id": "casa-16",
+       "linha": 17,
+       "campo": "unidade",
+       "de": "br",
+       "para": "un"
+      }
+     ],
+     "remover": []
+    },
+    "motivo": "A unidade \"br\" (barra) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar barras como un; a pesquisa converte a embalagem.",
+    "fatos": {
+     "unidade": "br",
+     "familia": "ferro/arame/tela",
+     "subtipo": "fora_da_lista",
+     "significado": "barra"
+    },
+    "texto": "A unidade \"br\" (barra) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar barras como un; a pesquisa converte a embalagem.",
+    "redacao": "fixa"
+   },
+   {
+    "id": "71bea08f2979",
+    "regra": "unidade",
+    "linhas": [
+     18
+    ],
+    "item_ids": [
+     "casa-17"
+    ],
+    "campo": "unidade",
+    "valor_atual": "br",
+    "correcao": {
+     "acao": "alterar",
+     "alteracoes": [
+      {
+       "item_id": "casa-17",
+       "linha": 18,
+       "campo": "unidade",
+       "de": "br",
+       "para": "un"
+      }
+     ],
+     "remover": []
+    },
+    "motivo": "A unidade \"br\" (barra) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar barras como un; a pesquisa converte a embalagem.",
+    "fatos": {
+     "unidade": "br",
+     "familia": "ferro/arame/tela",
+     "subtipo": "fora_da_lista",
+     "significado": "barra"
+    },
+    "texto": "A unidade \"br\" (barra) não está na lista oficial (m, m2, m3, un, kg, l, cm, mm). Proposta: contar barras como un; a pesquisa converte a embalagem.",
+    "redacao": "fixa"
+   }
+  ],
+  "complementos": [
+   {
+    "id": "ae41ac3bc49f",
+    "regra": "porcelanato",
+    "descricao": "Argamassa colante AC-III 20 kg (saco)",
+    "quantidade": 98.0,
+    "unidade": "un",
+    "categoria": "Revestimentos e argamassas",
+    "motivo": "Para 324 m² de piso/revestimento costumam faltar argamassa, rejunte e niveladores.",
+    "origem_linhas": [
+     7,
+     8,
+     10
+    ],
+    "origem_item_ids": [
+     "casa-6",
+     "casa-7",
+     "casa-9"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "8fe556943bd1",
+    "regra": "porcelanato",
+    "descricao": "Espaçador/nivelador de piso (pacote 100 un)",
+    "quantidade": 17.0,
+    "unidade": "un",
+    "categoria": "Revestimentos e argamassas",
+    "motivo": "Para 324 m² de piso/revestimento costumam faltar argamassa, rejunte e niveladores.",
+    "origem_linhas": [
+     7,
+     8,
+     10
+    ],
+    "origem_item_ids": [
+     "casa-6",
+     "casa-7",
+     "casa-9"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "ec975b9ba489",
+    "regra": "pintura",
+    "descricao": "Fita crepe 48 mm x 50 m (rolo)",
+    "quantidade": 35.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 520 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     4,
+     6
+    ],
+    "origem_item_ids": [
+     "casa-3",
+     "casa-5"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "aedc906cbcbc",
+    "regra": "pintura",
+    "descricao": "Lixa para massa grão 150 (folha)",
+    "quantidade": 260.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 520 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     4,
+     6
+    ],
+    "origem_item_ids": [
+     "casa-3",
+     "casa-5"
+    ],
+    "estimativa_consumo": true
+   }
+  ],
+  "complementos_disponiveis": true,
+  "complementos_erro": null
+ }
+}

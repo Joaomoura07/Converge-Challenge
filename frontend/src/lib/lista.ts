@@ -1,6 +1,8 @@
 // Lista única de revisão. Todos os modos de entrada (manual, CSV, Excel, Revit, PDF)
 // alimentam esta mesma lista. Cada linha tem ID estável; erros são derivados e indexados por ID.
 
+import { aplicarCorrecao, camposTocados } from "./revisao/aplicar";
+import type { CorrecaoSugerida } from "./revisao/tipos";
 import {
   validarDescricao,
   validarQuantidade,
@@ -12,6 +14,17 @@ export type ModoEntrada = "manual" | "csv" | "excel" | "revit" | "pdf";
 
 export type Campo = "descricao" | "quantidade" | "unidade" | "categoria";
 
+/** Complemento E2 aceito pelo arquiteto: a linha lembra por que existe. Só entra na conta depois do aceite. */
+export type Sugerida = {
+  sugestaoId: string;
+  regra: string;
+  motivo: string;
+  /** linhas da lista que motivaram o complemento */
+  origemLinhas: number[];
+  /** estimativa de CONSUMO (da C); não é estimativa de preço (da B) */
+  estimativaConsumo: boolean;
+};
+
 export type Linha = {
   id: string; // estável: nunca é o índice
   descricao: string;
@@ -20,15 +33,21 @@ export type Linha = {
   categoria: string;
   /** linha do arquivo importado; ausente nas linhas digitadas */
   linhaOrigem?: number;
+  /** presente só nas linhas criadas por um complemento aceito */
+  sugerida?: Sugerida;
 };
 
 export type ErrosLinha = Partial<Record<"descricao" | "quantidade" | "unidade", string>>;
+
+export type Decisao = "aceita" | "recusada";
 
 export type EstadoLista = {
   modo: ModoEntrada;
   linhas: Linha[];
   /** campos já visitados (blur) ou revelados: "id:campo" */
   tocados: Record<string, true>;
+  /** decisões sobre sugestões (id da sugestão → aceita/recusada): garantem que o aceite vale uma vez só */
+  decisoes: Record<string, Decisao>;
 };
 
 export type Acao =
@@ -39,9 +58,13 @@ export type Acao =
   | { tipo: "revelar_erros" }
   | { tipo: "alternar_modo"; modo: ModoEntrada }
   // Importadores (CSV na etapa 04; Excel, Revit e PDF nas seguintes) entram por aqui.
-  | { tipo: "importar"; linhas: Linha[]; como: "acrescentar" | "substituir" };
+  | { tipo: "importar"; linhas: Linha[]; como: "acrescentar" | "substituir" }
+  // Sugestões (etapa 06): só mudam a lista quando chegam por um clique do arquiteto, e cada id vale uma vez.
+  | { tipo: "aceitar_correcao"; id: string; correcao: CorrecaoSugerida }
+  | { tipo: "aceitar_complemento"; id: string; linha: Linha }
+  | { tipo: "recusar_sugestao"; id: string };
 
-export const estadoInicial: EstadoLista = { modo: "manual", linhas: [], tocados: {} };
+export const estadoInicial: EstadoLista = { modo: "manual", linhas: [], tocados: {}, decisoes: {} };
 
 export function linhaVazia(id: string): Linha {
   return { id, descricao: "", quantidade: "", unidade: "", categoria: "" };
@@ -66,7 +89,11 @@ export function reduzir(estado: EstadoLista, acao: Acao): EstadoLista {
     case "remover": {
       const tocados = { ...estado.tocados };
       for (const k of Object.keys(tocados)) if (k.startsWith(`${acao.id}:`)) delete tocados[k];
-      return { ...estado, linhas: estado.linhas.filter((l) => l.id !== acao.id), tocados };
+      // Remover um complemento aceito libera a sugestão para ser proposta de novo.
+      const sugestaoId = estado.linhas.find((l) => l.id === acao.id)?.sugerida?.sugestaoId;
+      const decisoes = { ...estado.decisoes };
+      if (sugestaoId) delete decisoes[sugestaoId];
+      return { ...estado, linhas: estado.linhas.filter((l) => l.id !== acao.id), tocados, decisoes };
     }
     case "tocar":
       return { ...estado, tocados: { ...estado.tocados, [chaveToque(acao.id, acao.campo)]: true } };
@@ -84,7 +111,27 @@ export function reduzir(estado: EstadoLista, acao: Acao): EstadoLista {
       return {
         ...estado,
         linhas: acao.como === "substituir" ? acao.linhas : [...estado.linhas, ...acao.linhas],
+        decisoes: acao.como === "substituir" ? {} : estado.decisoes,
       };
+    case "aceitar_correcao": {
+      if (estado.decisoes[acao.id]) return estado; // aceite repetido (ou já recusada): não reaplica
+      const linhas = aplicarCorrecao(estado.linhas, acao.correcao);
+      if (!linhas) return estado; // a lista mudou desde o cálculo: nada é alterado
+      const tocados = { ...estado.tocados };
+      for (const t of camposTocados(acao.correcao)) tocados[chaveToque(t.id, t.campo)] = true;
+      return { ...estado, linhas, tocados, decisoes: { ...estado.decisoes, [acao.id]: "aceita" } };
+    }
+    case "aceitar_complemento":
+      if (estado.decisoes[acao.id]) return estado;
+      if (estado.linhas.some((l) => l.sugerida?.sugestaoId === acao.id)) return estado;
+      return {
+        ...estado,
+        linhas: [...estado.linhas, { ...acao.linha, sugerida: { ...acao.linha.sugerida!, sugestaoId: acao.id } }],
+        decisoes: { ...estado.decisoes, [acao.id]: "aceita" },
+      };
+    case "recusar_sugestao":
+      if (estado.decisoes[acao.id]) return estado;
+      return { ...estado, decisoes: { ...estado.decisoes, [acao.id]: "recusada" } };
   }
 }
 

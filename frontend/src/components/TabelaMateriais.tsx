@@ -183,6 +183,20 @@ export function TabelaMateriais({ estado, erros, despachar, novoId }: Props) {
 
                   </div>
 
+                  {l.sugerida && (
+                    <div className="sugerida-linha" data-sugerida={l.sugerida.regra}>
+                      <span className="selo-sugerido">Sugerido · aceito por você</span>
+                      {l.sugerida.estimativaConsumo && (
+                        <span className="selo-consumo" title="Quantidade estimada pela regra de consumo; não é preço">
+                          Quantidade estimada
+                        </span>
+                      )}
+                      <span className="nota">
+                        {l.sugerida.motivo} (linha{l.sugerida.origemLinhas.length === 1 ? "" : "s"} de origem:{" "}
+                        {l.sugerida.origemLinhas.join(", ")})
+                      </span>
+                    </div>
+                  )}
 
                   <button
 

@@ -511,3 +511,132 @@ button:disabled {
 .aviso-decisao {
   border-color: var(--cobalto);
 }
+
+/* Sugestões da revisão (etapa 06) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.contagem {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--cobalto);
+}
+.lendo {
+  padding: 12px;
+  border: 1px dashed var(--cobalto);
+  background: repeating-linear-gradient(45deg, transparent 0 7px, rgba(0, 71, 171, 0.05) 7px 8px);
+}
+.sugestoes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.sugestoes[hidden] {
+  display: none;
+}
+.sugestao {
+  padding: 12px 14px;
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--cobalto);
+  background: var(--papel-2);
+}
+.sugestao.complemento {
+  border-left-style: dashed;
+}
+.sugestao p {
+  margin: 0 0 6px;
+}
+.sugestao-tipo {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 17px;
+}
+.sugestao-linhas {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+.sugestao-texto {
+  font-size: 15px;
+}
+.proposta {
+  margin: 4px 0 10px;
+  font-size: 14px;
+}
+.proposta summary {
+  cursor: pointer;
+  color: var(--cobalto);
+}
+.proposta ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-family: var(--mono);
+  font-size: 13px;
+  max-height: 160px;
+  overflow: auto;
+}
+.sugestao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+.sugestao-acoes button {
+  min-height: 40px;
+}
+.aviso-falha {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--erro);
+  background: var(--erro-fundo);
+}
+.aviso-falha p {
+  margin: 0 0 8px;
+}
+/* Quantidade estimada (consumo, da C): hachura e rótulo próprios, distintos de um futuro "preço estimado" da B */
+.selo-consumo,
+.selo-sugerido {
+  display: inline-block;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+}
+.selo-consumo {
+  border: 1px dashed var(--cobalto);
+  color: var(--cobalto);
+  background: repeating-linear-gradient(45deg, transparent 0 5px, rgba(0, 71, 171, 0.12) 5px 6px);
+}
+.selo-sugerido {
+  border: 1px solid var(--cobalto);
+  background: var(--cobalto);
+  color: #fff;
+}
+.sugerida-linha {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.sugerida-linha .nota {
+  margin: 0;
+}
+@media (min-width: 720px) {
+  .sugerida-linha {
+    order: 2;
+  }
+}
