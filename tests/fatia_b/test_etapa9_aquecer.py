@@ -92,3 +92,11 @@ def test_aquecer_pesquisa_sem_cache_e_apaga_a_parte_ao_vivo(monkeypatch):
 def test_cep_da_obra_vem_do_json_de_orcamento():
     assert aq.cep_do_arquivo(COZINHA / "orcamento_cozinha-gracas.json") == "52011-050"
     assert aq.cep_do_arquivo(COZINHA / "lista_materiais_cozinha-gracas.csv") is None
+
+
+@pytest.mark.parametrize("arquivo,n", [("apto-boa-viagem", 47), ("casa-terrea-aldeia", 53), ("escritorio-ilha-do-leite", 33)])
+def test_le_os_tres_exemplos_do_site(arquivo, n):
+    """São os arquivos do botão 'Usar arquivo de exemplo' (o que o jurado testa): o aquecimento precisa ler todos,
+    inclusive o do escritório, que tem cabeçalho em inglês (Category,Description,Unit,Qty)."""
+    itens = aq.ler_itens(COZINHA.parents[2] / "frontend" / "public" / "exemplos" / f"{arquivo}.csv")
+    assert len(itens) == n and all(i.descricao and i.quantidade for i in itens)

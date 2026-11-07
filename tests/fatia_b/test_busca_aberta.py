@@ -220,3 +220,23 @@ def test_busca_aberta_lenta_nao_segura_o_item(monkeypatch, sem_imagem):
                                                       pesquisa_max_anuncios=8, pesquisa_prazo_aberta_s=0.05))
     r = asyncio.run(asyncio.wait_for(b.buscar("q", rodizio=b._RodizioChaves(["k"])), timeout=2))
     assert [x.loja for x in r.resultados] == ["Telhanorte"]
+
+
+def test_lista_fixa_com_2_precos_nao_espera_a_aberta(monkeypatch, sem_imagem):
+    """Item fácil não espera a busca aberta (o 1º item na tela tinha ido de ~6 s para 12–20 s)."""
+    cancelada = []
+
+    async def fixa(consulta, limite, rodizio):
+        return _resp("tavily", ["Telhanorte", "C&C"])          # 2 anúncios com "R$"
+
+    async def aberta_lenta(*a):
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelada.append(True)
+            raise
+
+    monkeypatch.setattr(b, "_buscar_fixa", fixa)
+    monkeypatch.setattr(b, "_buscar_aberta", aberta_lenta)
+    r = asyncio.run(asyncio.wait_for(b.buscar("q", rodizio=b._RodizioChaves(["k"])), timeout=1))
+    assert [x.loja for x in r.resultados] == ["Telhanorte", "C&C"], "voltou sem esperar a aberta (timeout de 1 s)"

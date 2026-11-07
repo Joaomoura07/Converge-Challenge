@@ -5,7 +5,7 @@ import type { Linha } from "@/lib/lista";
 import { abasEscolhaveis, lerArquivo } from "@/lib/importar/arquivo";
 import { EXEMPLOS, type Exemplo } from "@/lib/importar/exemplos";
 import { importacaoParaLinhas, resumoAvisos } from "@/lib/importar/paraLinhas";
-import { ehErro, LIMITE_BYTES, type Importacao } from "@/lib/importar/tipos";
+import { ehErro, LIMITE_BYTES, LIMITE_ITENS_ORCAMENTO, type Importacao } from "@/lib/importar/tipos";
 
 type Props = {
   /** Qual aba de entrada está ativa: CSV e Excel mostram o seletor de arquivo; as demais só os exemplos. */
@@ -78,6 +78,14 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
     }
     if (resultado.itens.length === 0) {
       setSituacao({ tipo: "erro", nome, mensagem: "O arquivo tem cabeçalho, mas nenhuma linha de dados. A lista atual foi mantida." });
+      return;
+    }
+    if (resultado.itens.length > LIMITE_ITENS_ORCAMENTO) {
+      setSituacao({
+        tipo: "erro",
+        nome,
+        mensagem: `O arquivo tem ${resultado.itens.length.toLocaleString("pt-BR")} itens e um orçamento aceita até ${LIMITE_ITENS_ORCAMENTO.toLocaleString("pt-BR")}. Divida a lista em partes. A lista atual foi mantida.`,
+      });
       return;
     }
     const linhas = importacaoParaLinhas(resultado, novoId);

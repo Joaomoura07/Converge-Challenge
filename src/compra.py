@@ -84,13 +84,31 @@ def conteudo_embalagem(embalagem: str | None) -> Conteudo | None:
     return None
 
 
-def perda_para(produto: str) -> float:
+# Lista real do arquiteto quase nunca diz "tinta" ou "argamassa": diz a marca/linha ("Suvinil T. Seda branco neve",
+# "Coral Decora", "Quartzolit AC-III", "Votomassa AC-II"). Medido no site em 07/11: 12 de 33 itens do escritório
+# ficavam sem nº de embalagens ("não sei converter m2 em l") e fora do subtotal. O apelido acrescenta a palavra do
+# material; as tabelas acima continuam decidindo pela ordem (ex.: "Selador Coral" segue sendo selador).
+APELIDOS = [
+    (r"\bac[- ]?(i{1,3}|[123])\b|argamassa", "argamassa"),
+    (r"suvinil|\bcoral\b|sherwin|lukscolor|eucatex|renner|iquine|hidracor|toque de seda|t\. ?seda|decora|"
+     r"fosco completo|acrilic|latex", "tinta"),
+    (r"portinari|portobello|eliane|ceusa|biancogres|incepa|ceramica|ceramico", "porcelanato revestimento"),
+]
+
+
+def _com_apelidos(produto: str) -> str:
     p = _norm(produto)
+    extras = [palavra for padrao, palavra in APELIDOS if re.search(padrao, p)]
+    return " ".join([p, *extras])
+
+
+def perda_para(produto: str) -> float:
+    p = _com_apelidos(produto)
     return next((v for padrao, v in PERDAS if re.search(padrao, p)), 0.0)
 
 
 def _tabela(tabela, produto):
-    p = _norm(produto)
+    p = _com_apelidos(produto)
     return next(((nome, v) for nome, v in tabela if nome in p), None)
 
 

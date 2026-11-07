@@ -181,6 +181,8 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     ui = normalizar_unidade(item.unidade)
     mesma_unidade = ui == unidade_base
     n_emb, perda, premissa = qtd_embalagens(item.descricao, item.quantidade, item.unidade, ref)
+    if n_emb is None:
+        premissa = None   # o motivo da falha ("não sei converter m2 em l") não é conta: a tela mostrava como se fosse
 
     lojas = len({n.oferta.loja for n in validas})
     confianca = _confianca(lojas, (u_max - u_min) / u_med if u_med else 1.0)
