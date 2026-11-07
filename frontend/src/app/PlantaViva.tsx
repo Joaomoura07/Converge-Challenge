@@ -11,9 +11,9 @@
 import { useEffect, useRef } from "react";
 
 const ALTURA_PAREDE = 260;
-const ALTURA_VOO = 230; // no topo da página: logo abaixo do teto (pé-direito 260)
+const ALTURA_VOO = 340; // no topo da página: um pouco acima das paredes (pé-direito 260)
 const ALTURA_ROLADA = 150; // no fim da rolagem: altura dos olhos…
-const PITCH_TOPO = 0.42, PITCH_ROLADO = 0.12; // …e levanta o olhar (rad abaixo do horizonte)
+const PITCH_TOPO = 0.5, PITCH_ROLADO = 0.12; // …e levanta o olhar (rad abaixo do horizonte)
 const ALTURA_INICIAL = 1700;
 const DURACAO_INTRO = 3.4; // s
 const VELOCIDADE = 0.0075; // voltas do caminho por segundo
