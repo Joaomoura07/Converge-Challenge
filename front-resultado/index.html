@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultado da obra · Orçamentista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="resultado.css">
+</head>
+<body>
+<header class="topo">
+  <div>
+    <h1 id="titulo">Resultado da obra</h1>
+    <p id="subtitulo" class="secundario"></p>
+  </div>
+  <label class="dev" id="dev" hidden>Cenário
+    <select id="cenario">
+      <option value="cabe">Cabe no orçamento</option>
+      <option value="nao-cabe">Não cabe</option>
+      <option value="parcial">Itens sem preço</option>
+    </select>
+  </label>
+</header>
+
+<main class="grade">
+  <section aria-labelledby="h-itens">
+    <h2 id="h-itens" class="h2">Itens da compra</h2>
+    <ul id="lista" class="lista"></ul>
+    <div id="pendentes-bloco" hidden>
+      <h2 class="h2">Precisam da sua decisão</h2>
+      <ul id="pendentes" class="lista"></ul>
+    </div>
+  </section>
+
+  <aside class="painel" aria-label="Resumo da compra" id="painel"></aside>
+</main>
+
+<script src="mock.js"></script>
+<script src="resultado.js"></script>
+</body>
+</html>

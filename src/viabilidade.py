@@ -111,8 +111,10 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
     pend = [i for i, it in enumerate(itens) if it.get("status") == "pendente_especificacao"]
     if pend:
         sug.append(Sugestao(tipo="pendencias", itens=pend,
-                            texto=f"{len(pend)} item(ns) ainda sem especificação entram com valor estimado: "
-                                  f"defini-los pode mudar o total."))
+                            texto=(f"{len(pend)} item ainda sem especificação entra com valor estimado: "
+                                   if len(pend) == 1 else
+                                   f"{len(pend)} itens ainda sem especificação entram com valor estimado: ")
+                                  + "defini-los pode mudar o total."))
     sug.sort(key=lambda s: (s.economia is None, -(s.economia or 0)))
     sug = sug[:3] if not cabe else sug[:1]             # se cabe, só a dica mais útil
 
