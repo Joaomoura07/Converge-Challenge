@@ -35,7 +35,8 @@ class Viabilidade(BaseModel):
     diferenca: float                   # med - orçamento (positivo = falta; negativo = sobra)
     resumo: str
     inclui_estimativas: bool
-    completo: bool                     # False se há itens sem preço: o total é só um piso
+    estimado_med: float = 0.0           # parte do total_med que é estimativa de item pendente (a tela soma só os definidos)
+    completo: bool                    # False se há itens sem preço: o total é só um piso
     itens_sem_preco: list[int]
     sugestoes: list[Sugestao]
 
@@ -57,6 +58,7 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
     mn = md = mx = 0.0
     sem_preco: list[int] = []
     estim = False
+    est_md, n_est = 0.0, 0
     linhas: list[tuple[int, float, float]] = []      # (idx, med, med-min)
     for i, it in enumerate(itens):
         c = None if it.get("status") in ("nao_encontrado", "erro", "buscando") else _custos(it)
@@ -64,7 +66,10 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
             sem_preco.append(i)
             continue
         mn, md, mx = mn + c[0], md + c[1], mx + c[2]
-        estim = estim or bool(it.get("estimativa")) or it.get("status") == "pendente_especificacao"
+        e = bool(it.get("estimativa")) or it.get("status") == "pendente_especificacao"
+        if e:
+            est_md, n_est = est_md + c[1], n_est + 1
+        estim = estim or e
         linhas.append((i, c[1], c[1] - c[0]))
     frete = round(float(frete_total or 0), 2)
     mn, md, mx = round(mn + frete, 2), round(md + frete, 2), round(mx + frete, 2)
@@ -88,6 +93,11 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
                       + resumo.replace("Cabe:", "Até agora cabe:", 1).replace("Cabe só", "Até agora cabe só", 1))
         else:
             resumo += f" E {n_sem} {plural} fora desse total, então a diferença tende a ser maior."
+    if n_est:
+        # Medido no site em 07/11: a tela mostrava "Subtotal R$ 36.400" (só definidos) e a viabilidade "média
+        # R$ 42.913" sem dizer de onde vinha a diferença. O total segue com as estimativas; o texto explica.
+        qual = "item pendente de especificação" if n_est == 1 else "itens pendentes de especificação"
+        resumo += f" A média inclui {_brl(est_md)} de estimativa para {n_est} {qual}."
 
     sug: list[Sugestao] = []
     for i, it in enumerate(itens):                     # T2: similar técnico mais barato
@@ -120,4 +130,4 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
 
     return Viabilidade(orcamento_cliente=orcamento_cliente, total_min=mn, total_med=md, total_max=mx,
                        frete=frete, cabe=cabe, cabe_no_minimo=cabe_min, diferenca=dif, resumo=resumo,
-                       inclui_estimativas=estim, completo=completo, itens_sem_preco=sem_preco, sugestoes=sug)
+                       inclui_estimativas=estim, estimado_med=round(est_md, 2), completo=completo, itens_sem_preco=sem_preco, sugestoes=sug)

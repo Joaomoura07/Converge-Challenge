@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60
     llm_max_retries: int = 3
     agent_max_steps: int = 8
+    # POST /agent/run (agente genérico do template, sem uso no site): desligado por padrão para ninguém gastar os
+    # créditos da Featherless pelo link público. AGENT_RUN_ATIVO=true no .env local para usar nos testes manuais.
+    agent_run_ativo: bool = False
 
     # Supabase
     supabase_url: str = ""
@@ -65,6 +68,9 @@ class Settings(BaseSettings):
     pesquisa_concorrencia_agente: int = 1   # cota PRÓPRIA de chamadas simultâneas ao GLM do agente
     pesquisa_agentes_simultaneos: int = 2   # itens com agente ao mesmo tempo (um pensa enquanto o outro busca)
     pesquisa_prazo_agentes_s: float = 90    # prazo total da fase 2 (era 60: muitos itens ficavam "sem tempo"; a função tem 300 s)
+    # Prazo do orçamento inteiro (fases 1 e 2), abaixo dos 300 s da função: sobra tempo para gravar, concluir e
+    # chamar a Fatia C. Item que não termina a tempo vira "erro" com "Pesquisar de novo" (não fica "buscando").
+    pesquisa_prazo_total_s: float = 240
 
     @property
     def langfuse_url(self) -> str:

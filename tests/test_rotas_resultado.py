@@ -108,9 +108,10 @@ def test_segundos_invalidos_nao_quebram():
 
 
 def test_resultado_nao_grava_colunas_que_nao_existem(api):
-    """Só grava logistica/viabilidade/ganho: uma coluna inexistente no SQL faria o update falhar (502)."""
+    """Só grava colunas do SQL único: uma coluna inexistente faria o update falhar (502). Os totais
+    (orcamentos.total_min/med/max) existem no SQL e passaram a ser gravados com a viabilidade."""
     api.post("/orcamentos/o1/resultado")
-    assert set(api.gravado["dados"]) == {"logistica", "viabilidade", "ganho"}
+    assert set(api.gravado["dados"]) == {"logistica", "viabilidade", "ganho", "total_min", "total_med", "total_max"}
 
 
 # --- frete em pausa (padrão): sempre R$ 0, sem CEP/API/fornecedores ------------------------------------------

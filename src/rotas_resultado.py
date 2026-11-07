@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
+from langfuse import observe
 from pydantic import BaseModel, Field
 
 from .complementos import sugerir_complementos
@@ -106,6 +107,7 @@ def _reaproveitados(itens: list[dict[str, Any]], inicio: Any) -> int:
     return n
 
 
+@observe(name="fatia_c.resultado", as_type="chain", capture_input=False, capture_output=False)
 def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
                        fornecedores: list[Fornecedor]) -> dict[str, Any]:
     """Roda logística (E7), viabilidade (E8) e ganho (E10). Cada parte vem ``None`` se faltar dado."""
@@ -128,11 +130,14 @@ def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
                             reaproveitados=_reaproveitados(itens, inicio))
              if seg is not None else None)
 
-    return {
+    dados = {
         "logistica": lg.model_dump(mode="json") if lg else None,
         "viabilidade": vi.model_dump(mode="json") if vi else None,
         "ganho": ganho.model_dump(mode="json") if ganho else None,
     }
+    if vi:   # colunas do SQL único (orcamentos.total_*) que ninguém gravava; mesmos números da viabilidade
+        dados |= {"total_min": vi.total_min, "total_med": vi.total_med, "total_max": vi.total_max}
+    return dados
 
 
 # --- Rotas ---------------------------------------------------------------------------------------------

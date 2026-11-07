@@ -107,6 +107,8 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
 @app.post("/agent/run", response_model=RunResponse)
 def run_agent(req: RunRequest) -> RunResponse:
     # Endpoint síncrono: o FastAPI executa em threadpool, sem bloquear o event loop.
+    if not settings.agent_run_ativo:   # o site não usa; aberto, gastaria crédito da Featherless pelo link público
+        raise HTTPException(status_code=404, detail="Not Found")
     result = Agent().run(req.task, req.context, session_id=req.session_id, tags=req.tags)
     run_id = save_agent_run(req.task, result) if req.persist and settings.supabase_configured else None
     return RunResponse(**result.model_dump(), run_id=run_id)

@@ -17,6 +17,7 @@ import importlib
 import inspect
 import logging
 import re
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Protocol
 
@@ -26,7 +27,7 @@ from .alternativas import Objetivo, decidir, sugerir_alternativa
 from .busca import local_do_cep, na_regiao
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
-from .pesquisa import pesquisar_item, pesquisar_itens
+from .pesquisa import aceitar_mais_proximo, pesquisar_item, pesquisar_itens
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +188,10 @@ class BancoSupabase:
         await self._rodar(lambda: self.sb.table(ITENS).update({**campos, "atualizado_em": _agora().isoformat()})
                           .eq("id", item_id).execute())
 
+    async def metricas(self, orcamento_id: str, campos: dict) -> None:
+        """trace_url e tempo_ms (colunas do SQL único que ninguém gravava). Nunca derruba a pesquisa."""
+        await self._extras(orcamento_id, campos)
+
     async def concluir(self, orcamento_id: str, erro: str | None = None, custo_usd: float | None = None) -> None:
         await self._rodar(lambda: self.sb.table(ORCAMENTOS).update({
             "status_pesquisa": "falhou" if erro else "concluida", "pesquisa_erro": erro,
@@ -218,10 +223,35 @@ async def _chamar_fatia_c(orcamento_id: str) -> list[str]:
     return feitos
 
 
+def _link_do_trace() -> str | None:
+    """Link do trace atual, público (o jurado abre sem login). Telemetria nunca derruba a pesquisa."""
+    try:
+        from langfuse import get_client
+        lf = get_client()
+        trace_id = lf.get_current_trace_id()
+        if not trace_id:
+            return None
+        lf.set_current_trace_as_public()
+        return lf.get_trace_url(trace_id=trace_id)
+    except Exception:  # noqa: BLE001
+        logger.warning("Langfuse indisponível: orçamento sem trace_url", exc_info=True)
+        return None
+
+
+async def _gravar_metricas(banco: Banco, orcamento_id: str, inicio: float) -> None:
+    if not hasattr(banco, "metricas"):
+        return
+    campos = {"tempo_ms": int((time.perf_counter() - inicio) * 1000)}
+    if url := _link_do_trace():
+        campos["trace_url"] = url
+    await banco.metricas(orcamento_id, campos)
+
+
 @observe(name="orcamento")
 async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) -> dict:
     if not await banco.reservar(orcamento_id):
         return {"orcamento_id": orcamento_id, "status": "ja_em_andamento_ou_concluido", "itens": 0}
+    inicio = time.perf_counter()
     with acumular_custo() as custo:
         try:
             itens = await banco.itens_para_pesquisar(orcamento_id)
@@ -231,6 +261,7 @@ async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) ->
             await banco.concluir(orcamento_id, erro=f"{type(exc).__name__}: {exc}"[:500], custo_usd=custo.usd)
             return {"orcamento_id": orcamento_id, "status": "falhou", "itens": 0}
     await banco.concluir(orcamento_id, custo_usd=custo.usd)   # antes da C: o "ganho" lê custo_usd
+    await _gravar_metricas(banco, orcamento_id, inicio)
     fatia_c = await _chamar_fatia_c(orcamento_id)
     contagem: dict[str, int] = {}
     for r in resultados:
@@ -282,6 +313,13 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
     if item is None:
         return None
     orcamento_id = await banco.orcamento_do_item(item_id)
+    # Mesma sessão do orçamento no Langfuse: "Pesquisar de novo"/"Responder" aparecem junto da pesquisa original.
+    with propagate_attributes(session_id=str(orcamento_id or item_id), tags=["fatia-b", "repesquisar"]):
+        return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes)
+
+
+async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None, nova_descricao: str | None,
+                       banco: Banco, objetivo: Objetivo | None, opcoes: dict) -> ResultadoItem:
     with acumular_custo() as custo:
         anterior = alt = None
         busca = item
@@ -298,6 +336,8 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
         await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
         with na_regiao(await _local_da_obra(banco, orcamento_id)):
             resultado = await pesquisar_item(busca, usar_cache=False, **opcoes)
+        if nova_descricao:
+            resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
         if alt is not None:
             resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
     await banco.gravar_item(resultado)

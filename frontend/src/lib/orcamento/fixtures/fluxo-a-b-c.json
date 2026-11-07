@@ -310,11 +310,15 @@
     "qtd_itens": 5,
     "status_pesquisa": "concluida",
     "tentativa_pesquisa": 0,
+    "total_max": 1939.8,
+    "total_med": 1777.3,
+    "total_min": 1620.0,
     "viabilidade": {
       "cabe": true,
       "cabe_no_minimo": true,
       "completo": false,
       "diferenca": -2222.7,
+      "estimado_med": 0.0,
       "frete": 0.0,
       "inclui_estimativas": false,
       "itens_sem_preco": [

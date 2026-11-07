@@ -193,7 +193,8 @@ def test_varios_itens_avisam_cada_um_ao_terminar(mundo):
             raise RuntimeError("supabase fora")   # não pode derrubar os outros
     itens = [TINTA.model_copy(update={"id": x}) for x in "abc"]
     rs = asyncio.run(p.pesquisar_itens(itens, ao_terminar=ao_terminar, cliente_llm=LLMFalso([])))
-    assert sorted(prontos) == ["a", "b", "c"] and all(r.status == "definido" for r in rs)
+    assert sorted(set(prontos)) == ["a", "b", "c"] and all(r.status == "definido" for r in rs)
+    assert prontos.count("b") == 2   # a gravação falhou: tenta gravar "erro" para o item não ficar "buscando"
 
 
 # ---------------------------------------------------------------- duas fases (achado da etapa 9)

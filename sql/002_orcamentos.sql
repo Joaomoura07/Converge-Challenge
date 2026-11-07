@@ -340,6 +340,10 @@ create table if not exists orcamento_itens (
     -- regras (checks): bloco "Regras" mais abaixo, igual para banco novo e migrado
 );
 
+-- Conta da compra que a B grava (ex.: "rendimento ≈ 11 m²/L (selador, 2 demãos)"); a tela mostra "Conta: ...".
+-- Sem esta coluna a B tirava o campo calado e a linha nunca aparecia (medido no site em 07/11).
+alter table orcamento_itens add column if not exists premissa text;
+
 create index if not exists orcamento_itens_orcamento_idx on orcamento_itens (orcamento_id);
 create index if not exists orcamento_itens_status_idx on orcamento_itens (orcamento_id, status);
 
