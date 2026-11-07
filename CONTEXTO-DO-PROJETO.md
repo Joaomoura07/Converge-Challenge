@@ -46,6 +46,17 @@ Os prompts completos e os critérios de teste estão no plano.
 
 ### Estado em 07/11/2026
 
+- **Fechamento do backend (07/11, noite, Enzo).** Backend novo em `https://orca-api-x7k2.vercel.app` (o domínio
+  `converge-challenge.vercel.app` saiu); site em `https://converge-challenge-3k6i.vercel.app`, que precisa de
+  `NEXT_PUBLIC_API_URL` **com** `https://` (sem ele a revisão deu 404). Feito, a partir do teste como jurado:
+  conferências da oferta (código do título lido como preço, embalagem do título, fonte que não é loja, ferramenta no
+  lugar do material); agente também nos itens sem marca; depois do "Responder" o item não repete a pergunta; prazo
+  total da pesquisa (240 s) e item que falha ao gravar viram `erro` em vez de ficar "buscando"; `trace_url`,
+  `tempo_ms` e `total_*` gravados; viabilidade explica a parte estimada; `/agent/run` desligado por padrão
+  (`AGENT_RUN_ATIVO`); coluna `premissa` no SQL. Decidido manter o frete em pausa. Testes: backend 729 ok, site 376 ok,
+  SQL 275 ok. **Falta rodar no Supabase:** `alter table orcamento_itens add column if not exists premissa text;`.
+  Nota para o João: `docs/PARA-JOAO-TRACE.md`.
+
 - **Etapa 14 PARCIAL (07/11/2026) — demo e entrega: preparada, NÃO validada no link final. Não commitada.** Skills: `building-orca-ui` (jornada) e `tracing-with-langfuse` (só leitura do plano; nenhum trace foi aberto). Plano da etapa 14, `docs/FALTA-ENZO.md` e `docs/SUBMISSAO-FATIA-B.md` lidos.
   - **O que foi feito:** `docs/ENTREGA-FATIA-A.md` (o que está provado e com qual evidência; como publicar o site e fechar a validação em 10 minutos; roteiro da demo; matriz de aceitação do plano × evidência; pendências por função E1 a E11 com responsável; quem faz o quê até a submissão) e `scripts/ensaio_link_final.mjs` (Node, sem dependências: confere as rotas da API, as páginas do site e a RLS com a chave anon; com `--enviar` faz UM orçamento real, mede a duração e confere o resultado pela chave anon; nunca usa a chave de serviço).
   - **Medido com o código real sobre os três exemplos do botão (revisor E1 e complementos E2 da C):** exemplo 1 Apartamento Boa Viagem = **2 erros** (linha 9 cimento em m2 e linha 18 nivelador em m2, ambos propõem `un`) e 3 complementos, **é o exemplo da demo ("dois erros sinalizados")**; exemplo 2 Casa térrea = 4 erros (`sc` e `br`) mais o `9.500` ambíguo que bloqueia o envio; exemplo 3 Escritório = 0 erros e 0 complementos. O `lista_materiais_INCOMPLETA.csv` dá 10 erros (não serve para "dois").
@@ -299,7 +310,7 @@ Um sistema em que o arquiteto **sobe a lista de materiais e recebe um estudo de 
 | Backend | FastAPI (Python) | ✅ no ar na Vercel |
 | Site | Vercel (framework a definir com o Samuel) | conta criada, site vazio |
 
-**Backend no ar:** https://converge-challenge.vercel.app
+**Backend no ar:** https://orca-api-x7k2.vercel.app
 - `/health` → mostra o que está conectado (LLM, Supabase e Langfuse: tudo `true`)
 - `/docs` → Swagger para testar a API
 

@@ -54,7 +54,7 @@ Fatia C (João): frete por CEP, viabilidade, ganho, exportar ⚠️ (branch dele
   - `POST /orcamentos` e `POST /orcamentos/{id}/resultado`: ficam nas fatias A e C ⚠️.
   - `/docs`: página Swagger gerada automaticamente, útil para os jurados testarem.
 - **P: Por que FastAPI?** Gera validação e documentação a partir dos modelos Pydantic, e suporta `async`, que usamos para pesquisar vários itens ao mesmo tempo.
-- **P: Os jurados conseguem testar?** O backend está em https://converge-challenge.vercel.app (docs do projeto). ⚠️ O site final depende da Fatia A.
+- **P: Os jurados conseguem testar?** O backend está em https://orca-api-x7k2.vercel.app (docs do projeto). ⚠️ O site final depende da Fatia A.
 - **Limite:** o CORS está aberto para qualquer origem (`allow_origins=["*"]`) e não há autenticação. Decisão consciente para a demo; para produção seria preciso restringir.
 
 ### 1.3 Pydantic e pydantic-settings ✅

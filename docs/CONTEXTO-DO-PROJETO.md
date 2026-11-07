@@ -112,7 +112,7 @@ Um sistema em que o arquiteto **sobe a lista de materiais e recebe um estudo de 
 | Backend | FastAPI (Python) | ✅ no ar na Vercel |
 | Site | Vercel (framework a definir com o Samuel) | conta criada, site vazio |
 
-**Backend no ar:** https://converge-challenge.vercel.app
+**Backend no ar:** https://orca-api-x7k2.vercel.app
 - `/health` → mostra o que está conectado (LLM, Supabase e Langfuse: tudo `true`)
 - `/docs` → Swagger para testar a API
 

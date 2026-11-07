@@ -23,7 +23,7 @@
 | SQL das 4 tabelas | 275 verificações ok em Postgres 16 descartável, aplicado e verificado no Supabase real por Samuel | `scripts/testar_sql_orcamentos.sh`, `sql/verificar_supabase.sql` |
 | Encaixe A → B → C | `POST /orcamentos` chama a pesquisa da B, que chama a C no fim; ordem provada; com o gancho desligado 6 testes quebram | `tests/test_fluxo_a_b_c.py` |
 | Ambiente real | `check_setup`: GLM-5.2 com tool calling, Featherless, Langfuse, Supabase, Tavily 3/3, DuckDuckGo ok | `python -m scripts.check_setup` |
-| Backend publicado | `/health` ok (LLM, Supabase, Langfuse ligados); `/openapi.json` lista todas as rotas; `POST /orcamentos` inválido devolve 422 sem gravar | `node scripts/ensaio_link_final.mjs --api https://converge-challenge.vercel.app` |
+| Backend publicado | `/health` ok (LLM, Supabase, Langfuse ligados); `/openapi.json` lista todas as rotas; `POST /orcamentos` inválido devolve 422 sem gravar | `node scripts/ensaio_link_final.mjs --api https://orca-api-x7k2.vercel.app` |
 
 Tudo que depende de **Supabase real + Realtime real + pesquisa real pelo link** foi simulado nos testes e **não** foi provado em produção
 (exceção: o Enzo relata, em `docs/FALTA-ENZO.md`, um orçamento real pelo site: 16 itens em 49 s, US$ 0,0026).
@@ -31,11 +31,12 @@ Tudo que depende de **Supabase real + Realtime real + pesquisa real pelo link** 
 ## 2. Como fechar a validação no link final (10 minutos)
 
 ### 2.1 Publicar o site (hoje só o backend está publicado)
-`https://converge-challenge.vercel.app` responde **404 em `/`, `/nova` e `/obra/...`**: lá só existe a API. O front é um **segundo projeto** na Vercel:
+`https://orca-api-x7k2.vercel.app` responde **404 em `/`, `/nova` e `/obra/...`**: lá só existe a API. O front é um **segundo projeto** na Vercel:
 
 1. Vercel → **Add New → Project** → o mesmo repositório → **Root Directory: `frontend`** (framework Next.js, comandos padrão).
 2. **Environment Variables** (sem aspas):
-   - `NEXT_PUBLIC_API_URL` = `https://converge-challenge.vercel.app`
+   - `NEXT_PUBLIC_API_URL` = `https://orca-api-x7k2.vercel.app` (**com** `https://`, sem barra no fim e sem aspas; sem o
+     `https://` o navegador trata o endereço como caminho do próprio site e a revisão dá 404, medido em 07/11)
    - `NEXT_PUBLIC_SUPABASE_URL` = a URL do projeto Supabase
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = a chave **pública (anon)**. **Nunca** a `service_role`: ela iria para o navegador.
 3. Deploy. Anote a URL do site.
@@ -47,7 +48,7 @@ Tudo que depende de **Supabase real + Realtime real + pesquisa real pelo link** 
 
 ### 2.3 Rodar o ensaio (lê as rotas, o site e a RLS; com `--enviar` faz UM orçamento real)
 ```bash
-node scripts/ensaio_link_final.mjs --api https://converge-challenge.vercel.app --site https://SEU-SITE.vercel.app --supabase-url https://XXXX.supabase.co --anon-key eyJ...
+node scripts/ensaio_link_final.mjs --api https://orca-api-x7k2.vercel.app --site https://SEU-SITE.vercel.app --supabase-url https://XXXX.supabase.co --anon-key eyJ...
 ```
 Só leitura: confere as rotas, as páginas `/`, `/nova` e o exemplo `/exemplos/apto-boa-viagem.csv`, e a **RLS com a chave anon**
 (anon lê `orcamentos` e `orcamento_itens`; não lê `cache_precos` nem `fornecedores`; não grava; não executa as funções do protocolo).

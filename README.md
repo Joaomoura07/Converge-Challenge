@@ -1,111 +1,133 @@
-# Converge Challenge — AI Agents
+# Orçamentista Autônomo
 
 > Hackathon **Converge Challenge powered by Tako** · Porto Digital, Recife · 7–8/11/2026
 
-Base de infraestrutura para um agente autônomo (ou sistema multiagente) em Python. A lógica do produto entra a partir das **10h de sábado, 7/11**, como pede o regulamento.
+O arquiteto sobe a lista de materiais do projeto e recebe, em poucos minutos, um estudo de viabilidade: preço
+mínimo, médio e máximo de cada item **com as lojas de onde veio**, quantas embalagens comprar, o que ainda precisa
+de especificação, onde comprar e se cabe no orçamento do cliente.
+
+- **Site:** https://converge-challenge-3k6i.vercel.app
+- **API:** https://orca-api-x7k2.vercel.app (`/health`, `/docs`)
+
+## O problema
+
+Montar orçamento e estudo de viabilidade é trabalho manual: a lista sai do Revit, do SketchUp ou de uma planilha, e o
+arquiteto pesquisa preço loja por loja, converte metro quadrado em latas e caixas e soma tudo. Uma lista de 50 itens
+leva horas e cada preço fica sem rastro de onde veio.
+
+## Como funciona
+
+1. **Entrada:** nome, CEP e orçamento do cliente; lista importada (CSV, Excel, TXT do Revit, PDF com texto),
+   digitada à mão ou um dos três exemplos.
+2. **Revisão antes de gastar IA:** regras apontam erros (unidade incompatível, quantidade fora da faixa, duplicados,
+   colunas trocadas) e sugerem itens que costumam faltar (argamassa e rejunte para porcelanato, selador para pintura).
+   **Nada muda sem o clique do arquiteto.**
+3. **Pesquisa agêntica, item por item, ao vivo na tela** (Supabase Realtime):
+   - cache de preços (7 dias);
+   - busca nas lojas (Tavily, DuckDuckGo de reserva) e em lojas da cidade da obra;
+   - um modelo rápido lê cada anúncio, extrai preço e embalagem e confere se é o **mesmo produto**;
+   - conferências sem IA descartam o que não presta: preço que não está escrito no anúncio, código do produto lido
+     como preço, embalagem que não bate com o título, ferramenta no lugar do material, fonte que não é loja;
+   - quando faltam lojas, um **agente ReAct** (GLM-5.2, tool calling) lê o que deu errado, reformula a busca e tenta
+     de novo (até 2 vezes);
+   - o cálculo (Python, sem IA) tira outliers, monta a faixa de preço, converte o quantitativo em embalagens com
+     perda e dá a confiança.
+4. **Item genérico** ("tinta branca") recebe faixa **estimada** e uma pergunta objetiva ao arquiteto. A resposta
+   dispara uma nova pesquisa daquele item.
+5. **Resultado:** plano de compra por loja, viabilidade (cabe ou quanto falta, com sugestões de economia), ganho de
+   tempo e custo de IA, e exportação em Excel.
+
+Regra de ouro: **nenhum preço sem fonte.** Cada pesquisa gera um trace no Langfuse com cada busca, cada chamada ao
+LLM, tokens, custo e tempo.
 
 ## Arquitetura
 
 ```
- Cliente / Front ──HTTP──▶ FastAPI (src/main.py)
-                               │
-                               ▼
-                      Agent loop (src/agent.py) ◀── prompts/*.md
-                      planeja → chama tool → observa → itera
-                       │                 │
-          OpenAI SDK ──┘                 └──▶ ToolRegistry (src/tools.py)
-               │                                   │
-               ▼                                   ▼
-   Featherless API (LLM gateway)        APIs / mocks (ATS, HRIS, e-mail…)
-   zai-org/GLM-5.2
-
-   Langfuse ◀── trace de cada execução (LLM + tools, tokens, custo, latência)
-   Supabase ◀── src/database.py: trilha de auditoria (agent_runs) + dados do app
+ Site (Next.js, Vercel) ── POST /orcamentos ──▶ API FastAPI (Vercel)
+        ▲                                         │ grava itens "buscando"
+        │ Realtime                                ▼
+   Supabase ◀── grava cada item pronto ── pesquisar_orcamento (mesma requisição)
+   (orcamentos,                               ├─ cache_precos
+    orcamento_itens,                          ├─ busca: Tavily / DuckDuckGo / lojas da região
+    cache_precos)                             ├─ extração: Qwen3-32B (reserva Mistral Small 3.2)
+                                              ├─ agente ReAct: GLM-5.2 (reserva Qwen3-32B)
+                                              ├─ cálculo: embalagens, perda, faixa, confiança
+                                              └─ fim: logística, viabilidade, ganho (Fatia C)
+   Langfuse ◀── 1 trace por orçamento (sessão = id do orçamento)
 ```
 
-| Pasta / arquivo | Responsabilidade |
+| Pasta / arquivo | O que tem |
 |---|---|
-| `prompts/` | Prompts versionados em Markdown, com placeholders `{{CHAVE}}` |
-| `src/config.py` | Settings tipados lidos do `.env` + `load_prompt()` |
-| `src/agent.py` | Loop de tool calling, limite de passos, tracing, métricas de uso |
-| `src/tools.py` | Registro de ferramentas com schema gerado via Pydantic; erros viram dados para o agente |
-| `src/database.py` | Cliente Supabase e persistência das execuções |
-| `src/main.py` | Rotas HTTP (`/health`, `/agent/run`) |
-| `sql/` | Migrations SQL (rodar no SQL Editor do Supabase) |
-| `scripts/check_setup.py` | Testa Featherless (chat + tool calling), Langfuse e Supabase |
-| `skills/` | Skills do time para Claude Code, Codex e ChatGPT ([como usar](skills/README.md)) |
-| `AGENTS.md` / `CLAUDE.md` | Regras do repo para assistentes de código |
-| `n8n/agent-bridge.json` | Fluxo n8n: Webhook → `/agent/run` → resposta (perfil `n8n` do compose) |
-| `docs/briefing/` | PDFs do time: oportunidades, dossiê técnico, plano de ação |
+| `src/rotas_orcamentos.py` | `POST /orcamentos`: valida, classifica, grava e chama a pesquisa |
+| `src/revisao.py`, `src/rotas_revisao.py` | Revisor E1 e `POST /revisao/sugestoes/completo` |
+| `src/complementos.py` | Itens que costumam faltar (E2) |
+| `src/pesquisa.py`, `src/busca.py`, `src/precos.py`, `src/calculo.py`, `src/compra.py`, `src/cache.py` | Pesquisa de preço (Fatia B) |
+| `src/orcamento.py` | Pesquisa do orçamento no banco, "Pesquisar de novo" e "Responder" |
+| `src/alternativas.py` | "Pesquisar de novo" buscando maior qualidade, menor preço ou semelhante |
+| `src/logistica.py`, `src/viabilidade.py`, `src/ganho.py`, `src/exportar.py`, `src/rotas_resultado.py` | Resultado (Fatia C) |
+| `src/agent.py`, `src/tools.py` | Loop ReAct e registro de ferramentas |
+| `prompts/` | Prompts versionados |
+| `sql/002_orcamentos.sql` | SQL único das tabelas, funções, RLS e Realtime |
+| `frontend/` | Site (Next.js + TypeScript) |
+| `tests/`, `frontend/src/**/*.test.ts` | Testes do backend (pytest) e do site (vitest) |
 
-### Comportamento do agente
+## Rodar localmente
 
-O loop ReAct usa tool calling nativo e termina com um destes `status`: `completed`, `escalated` (chamou `escalate_to_human` ou teve 3 falhas de tool seguidas), `max_steps_reached` ou `error`. Em 400/503, ele tenta o `FEATHERLESS_MODEL_FALLBACK`. Cada resposta traz `cost_usd`, tokens, latência e `trace_url` do Langfuse.
-
-## Setup rápido
-
-Requer Python 3.11+.
+Requer Python 3.11+ e Node 20+.
 
 ```bash
-git clone https://github.com/enzoemanuelgl/Converge-Challenge.git
-cd Converge-Challenge
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env             # preencha suas chaves
-python -m scripts.check_setup    # valida Featherless, tool calling, Langfuse e Supabase
-uvicorn src.main:app --reload
+cp .env.example .env              # preencha as chaves
+python -m scripts.check_setup     # valida Featherless, Langfuse, Supabase, Tavily
+uvicorn src.main:app --reload     # API em http://localhost:8000
 ```
-
-- API: http://localhost:8000 · Docs interativas: http://localhost:8000/docs
-- Banco: rode `sql/001_agent_runs.sql` no SQL Editor do Supabase.
-- Docker (opcional): `docker compose up --build`
-
-Teste rápido:
 
 ```bash
-curl -X POST http://localhost:8000/agent/run \
-  -H "Content-Type: application/json" \
-  -d '{"task": "Que horas são em Recife?"}'
+cd frontend && npm ci && npm run dev
 ```
+
+Banco: rode `sql/002_orcamentos.sql` no SQL Editor do Supabase (pode rodar de novo: é idempotente) e confira com
+`sql/verificar_supabase.sql`.
+
+Testes: `python -m pytest tests` (backend) e `npm test` em `frontend/` (site).
 
 ## Variáveis de ambiente
 
 | Variável | Descrição |
 |---|---|
-| `FEATHERLESS_API_KEYS` | Chaves da Featherless do time, separadas por vírgula (cada uma tem a própria cota). `FEATHERLESS_API_KEY` (uma só) continua aceita |
-| `FEATHERLESS_BASE_URL` | `https://api.featherless.ai/v1` |
-| `FEATHERLESS_MODEL` | Modelo principal (padrão `zai-org/GLM-5.2`) |
-| `FEATHERLESS_MODEL_FAST` | Modelo barato para texto simples (padrão `google/gemma-4-31B-it`) |
-| `FEATHERLESS_MODEL_FALLBACK` | Reserva em 400/503, com tool calling nativo (padrão `Qwen/Qwen3-32B`) |
-| `SUPABASE_URL` | URL do projeto Supabase |
-| `SUPABASE_KEY` | `service_role` key (somente backend) |
-| `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Chaves do projeto Langfuse |
-| `LANGFUSE_HOST` | `https://cloud.langfuse.com` ou `https://us.cloud.langfuse.com` |
-| `AGENT_MAX_STEPS`, `LLM_MAX_RETRIES`, `LLM_TIMEOUT_SECONDS`, `LLM_TEMPERATURE` | Ajustes do loop |
+| `FEATHERLESS_API_KEYS` | Chaves da Featherless separadas por vírgula (a pesquisa reparte a carga entre elas) |
+| `FEATHERLESS_MODEL` | Modelo do agente (padrão `zai-org/GLM-5.2`) |
+| `TAVILY_API_KEYS` | Chaves do Tavily separadas por vírgula (chave sem cota é pulada) |
+| `SUPABASE_URL`, `SUPABASE_KEY` | Projeto Supabase; no backend, a chave `service_role` |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | Tracing (`https://us.cloud.langfuse.com`) |
+| `PESQUISA_BUSCA_ABERTA` | `true` (padrão) busca também lojas da cidade da obra |
+| `FRETE_ATIVO` | `false` (padrão): frete em pausa, o plano agrupa por loja sem custo de frete |
+| `AGENT_RUN_ATIVO` | `false` (padrão): desliga `POST /agent/run`, o agente genérico do template |
+| `NEXT_PUBLIC_API_URL` | No site: endereço da API **com** `https://` |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No site: leitura e Realtime |
 
 Lista completa em [`.env.example`](.env.example). **Nunca** faça commit do `.env`.
 
-## Adicionando uma ferramenta
+## Ferramentas, modelos e APIs
 
-Detalhes em [`skills/01-react-agent-pattern.md`](skills/01-react-agent-pattern.md).
+- **LLM:** Featherless, com `zai-org/GLM-5.2` (agente), `Qwen/Qwen3-32B` (extração),
+  `mistralai/Mistral-Small-3.2-24B-Instruct-2506` (reserva da extração) e `google/gemma-4-31B-it` (alternativas)
+- **Busca:** Tavily e DuckDuckGo (`ddgs`); CEP pelo ViaCEP
+- **Dados e tempo real:** Supabase (Postgres, RLS, Realtime)
+- **Observabilidade:** Langfuse
+- **Backend:** FastAPI, Pydantic, OpenAI Python SDK; **site:** Next.js, React, TypeScript, PapaParse, SheetJS, PDF.js
+- **Hospedagem:** Vercel
 
-```python
-from pydantic import Field
-from src.tools import ToolArgs, registry
+## Limites conhecidos
 
-class BuscarCandidatoArgs(ToolArgs):
-    candidato_id: str = Field(description="ID do candidato no ATS")
-
-@registry.tool(description="Busca os dados de um candidato no ATS.")
-def buscar_candidato(args: BuscarCandidatoArgs) -> dict:
-    ...
-```
-
-## Ferramentas, modelos e APIs utilizados
-
-Featherless (`zai-org/GLM-5.2`), Langfuse, Supabase, FastAPI, OpenAI Python SDK. Atualizar antes da submissão.
+- Frete por CEP está em pausa (`FRETE_ATIVO`): o resultado diz "frete a confirmar".
+- Item fora das lojas pesquisadas pode sair sem preço confirmado; nesses casos a tela mostra o motivo e oferece
+  "Pesquisar de novo".
+- PDF escaneado não é lido (sem OCR): a tela orienta usar CSV, Excel ou cadastro manual.
+- Todos os dados de obras e clientes são fictícios.
 
 ## Time
 
-<!-- nomes + GitHub -->
+- **Samuel Vasconcelos:** entrada, revisão e SQL (Fatia A)
+- **Enzo:** pesquisa agêntica de preço (Fatia B)
+- **João Pedro Moura Matos:** complementos, logística, viabilidade, exportação e site (Fatia C)
