@@ -1,8 +1,9 @@
 // Ponto único de leitura de arquivos: escolhe o leitor pela extensão. Uploads e exemplos passam por aqui.
-// Etapas seguintes acrescentam o TXT do Revit (10) e o PDF com texto (11).
+// A etapa 11 acrescenta o PDF com texto.
 
 import { importarCsv } from "./csv";
 import { importarExcel, type AbaInfo } from "./excel";
+import { importarTxt } from "./txt";
 import type { ErroImportacao, Importacao, ResultadoImportacao } from "./tipos";
 
 export type ResultadoArquivo = ResultadoImportacao & { abas?: AbaInfo[] };
@@ -13,11 +14,9 @@ export function lerArquivo({ nome, bytes, aba }: { nome: string; bytes: Uint8Arr
   const ext = nome.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "";
   if (ext === "csv") return importarCsv({ nome, bytes });
   if (["xlsx", "xls", "xlsm", "ods"].includes(ext)) return importarExcel({ nome, bytes, aba });
-  if (ext === "txt") {
-    return erro("FORMATO_NAO_SUPORTADO", "Arquivos .txt (exportação do Revit) entram na etapa 10. Por ora, salve a tabela como .csv ou .xlsx.");
-  }
-  if (ext === "pdf") return erro("FORMATO_NAO_SUPORTADO", "PDF com texto entra na etapa 11. Por ora, use .csv ou .xlsx.");
-  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx ou .xls.`);
+  if (ext === "txt") return importarTxt({ nome, bytes }); // tabela tabulada do Revit
+  if (ext === "pdf") return erro("FORMATO_NAO_SUPORTADO", "PDF com texto entra na etapa 11. Por ora, use .csv, .xlsx ou .txt do Revit.");
+  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx, .xls ou .txt do Revit.`);
 }
 
 /** Abas que a pessoa poderia escolher: visíveis e com dados. */
