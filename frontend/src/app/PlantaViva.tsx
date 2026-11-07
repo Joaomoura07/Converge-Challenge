@@ -26,6 +26,38 @@ const OPACIDADE_LINHA = 0.38; // traço fino e discreto entre os pontos
 const OPACIDADE_PONTO = 1.35; // pontilhado da planta mais forte que a linha
 
 type Rotulo = { x: number; y: number; texto: string; cota?: boolean };
+/** Móvel 3D: caixa (x1,y1)-(x2,y2) ou cilindro (cx,cy,r); z0 = altura da base, h = altura do volume. */
+type Movel =
+  | { tipo: "caixa"; x1: number; y1: number; x2: number; y2: number; z0: number; h: number }
+  | { tipo: "cilindro"; cx: number; cy: number; r: number; z0: number; h: number };
+
+const caixa = (x1: number, y1: number, x2: number, y2: number, h: number, z0 = 0): Movel => ({ tipo: "caixa", x1, y1, x2, y2, z0, h });
+const cilindro = (cx: number, cy: number, r: number, h: number, z0 = 0): Movel => ({ tipo: "cilindro", cx, cy, r, z0, h });
+
+// Os mesmos contornos da planta ganham volume quando a câmera chega perto.
+const MOVEIS: Movel[] = [
+  // estar: sofá (assento + encosto), chaise, mesa de centro, pufe
+  caixa(-1120, -700, -680, -560, 42), caixa(-1120, -700, -680, -650, 38, 42),
+  caixa(-1120, -560, -1040, -380, 42), caixa(-900, -420, -700, -300, 36), cilindro(-500, -650, 70, 40),
+  // jantar: tampo redondo sobre pé central, 4 cadeiras com encosto
+  cilindro(-750, 520, 120, 6, 72), cilindro(-750, 520, 18, 72),
+  caixa(-785, 330, -715, 390, 44), caixa(-785, 330, -715, 342, 46, 44),
+  caixa(-785, 650, -715, 710, 44), caixa(-785, 698, -715, 710, 46, 44),
+  caixa(-945, 490, -875, 550, 44), caixa(-945, 490, -933, 550, 46, 44),
+  caixa(-625, 490, -555, 550, 44), caixa(-567, 490, -555, 550, 46, 44),
+  // escritório: bancada, cadeira, duas estantes
+  caixa(-240, -760, 340, -660, 6, 72), caixa(-230, -750, -200, -670, 72), caixa(300, -750, 330, -670, 72),
+  caixa(-60, -620, 60, -520, 46), caixa(-220, -200, 0, 40, 170), caixa(160, -200, 340, 40, 170),
+  // cozinha: bancadas em L e ilha
+  caixa(820, -780, 1180, -700, 90), caixa(1100, -700, 1180, -380, 90), caixa(870, -560, 1080, -440, 90),
+  // banho: bancada e vaso
+  caixa(440, -760, 760, -620, 84), cilindro(520, -420, 40, 40), caixa(640, -300, 760, -120, 48),
+  // suíte: cama, cabeceira, travesseiros, guarda-roupa
+  caixa(520, 380, 900, 720, 48), caixa(520, 360, 900, 385, 110), caixa(560, 400, 860, 480, 14, 48),
+  caixa(940, 380, 1160, 460, 210),
+  // circulação: escrivaninha
+  caixa(-260, 300, 120, 380, 74),
+];
 
 function gerarPlanta() {
   const X: number[] = [], Y: number[] = [], Z: number[] = [], K: number[] = [];
@@ -192,6 +224,10 @@ export function PlantaViva() {
     // estado
     let tempo = reduzido ? DURACAO_INTRO : 0, u = 0.02, extra = 0, foco = 0, alvoFoco = 0;
     let mx = -1e5, my = -1e5, tiltX = 0, tiltY = 0;
+    const cresce = new Float32Array(MOVEIS.length); // 0 = só o contorno no chão, 1 = volume inteiro
+    const centro = MOVEIS.map((m) => (m.tipo === "caixa" ? [(m.x1 + m.x2) / 2, (m.y1 + m.y2) / 2] : [m.cx, m.cy]));
+    const LADOS_CILINDRO = 18;
+    const BX = new Float32Array(40), BY = new Float32Array(40), TX = new Float32Array(40), TY = new Float32Array(40);
 
     const desenhar = (dt: number) => {
       tempo += dt;
@@ -299,7 +335,88 @@ export function PlantaViva() {
         }
       }
 
-      // 3) pontilhado: todos os pontos da planta, poeira, brilho perto do mouse e as partículas do foco
+      // 3) móveis: volumes translúcidos que crescem do chão quando a câmera se aproxima
+      const projetar = (x: number, y: number, z: number, saida: Float32Array, sy: Float32Array, j: number) => {
+        const dx = x - cx, dy = y - cy, dz = z - cz;
+        const frente = dx * cosY + dy * sinY;
+        const lado = -dx * sinY + dy * cosY;
+        const prof = frente * cosP - dz * sinP;
+        if (prof < 40) return false;
+        const vert = frente * sinP + dz * cosP;
+        saida[j] = meioX + (f * lado) / prof;
+        sy[j] = meioY - (f * vert) / prof;
+        return prof;
+      };
+      ctx.setLineDash([0.1, 5 * dpr]);
+      ctx.lineCap = "round";
+      for (let m = 0; m < MOVEIS.length; m++) {
+        const mv = MOVEIS[m];
+        const [mcx, mcy] = centro[m];
+        // distância até o ponto do chão para onde a câmera olha (~800 à frente)
+        const dist = Math.hypot(mcx - (cx + Math.cos(yaw) * 800), mcy - (cy + Math.sin(yaw) * 800));
+        const alvo = dist < 950 && (intro >= 1 || Math.hypot(mcx, mcy) < revelar) ? 1 : 0;
+        cresce[m] += (alvo - cresce[m]) * Math.min(1, dt * (alvo ? 1.3 : 0.8));
+        const c = cresce[m];
+        if (c < 0.01) continue;
+        const e = c < 1 ? 1 - Math.pow(1 - c, 3) : 1;
+        const z0 = mv.z0 * e + foco * 90, z1 = (mv.z0 + mv.h) * e + foco * 90;
+        // contorno: 4 cantos da caixa ou N lados do cilindro
+        let n = 0, ok = true, profMedia = 0;
+        if (mv.tipo === "caixa") {
+          const xs = [mv.x1, mv.x2, mv.x2, mv.x1], ys = [mv.y1, mv.y1, mv.y2, mv.y2];
+          for (let j = 0; j < 4 && ok; j++) {
+            const pb = projetar(xs[j], ys[j], z0, BX, BY, j), pt = projetar(xs[j], ys[j], z1, TX, TY, j);
+            ok = !!pb && !!pt; profMedia += (pb || 0) / 4;
+          }
+          n = 4;
+        } else {
+          for (let j = 0; j < LADOS_CILINDRO && ok; j++) {
+            const a = (j / LADOS_CILINDRO) * Math.PI * 2;
+            const x = mv.cx + Math.cos(a) * mv.r, y = mv.cy + Math.sin(a) * mv.r;
+            const pb = projetar(x, y, z0, BX, BY, j), pt = projetar(x, y, z1, TX, TY, j);
+            ok = !!pb && !!pt; profMedia += (pb || 0) / LADOS_CILINDRO;
+          }
+          n = LADOS_CILINDRO;
+        }
+        if (!ok) continue;
+        // mouse perto do centro do tampo acende o móvel
+        let tcx = 0, tcy = 0;
+        for (let j = 0; j < n; j++) { tcx += TX[j] / n; tcy += TY[j] / n; }
+        const acende = temMouse ? Math.max(0, 1 - Math.hypot(tcx - mxd, tcy - myd) / (raio * 1.6)) : 0;
+        const a = e * (1 - suave(1200, 3600, profMedia)) * (1 - foco * 0.85) * (1 + acende * 1.2);
+        if (a < 0.02) continue;
+        // laterais
+        ctx.fillStyle = "rgb(82,102,235)";
+        ctx.globalAlpha = 0.07 * a;
+        for (let j = 0; j < n; j++) {
+          const k2 = (j + 1) % n;
+          ctx.beginPath();
+          ctx.moveTo(BX[j], BY[j]); ctx.lineTo(BX[k2], BY[k2]); ctx.lineTo(TX[k2], TY[k2]); ctx.lineTo(TX[j], TY[j]);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // tampo
+        ctx.fillStyle = "rgb(143,156,255)";
+        ctx.globalAlpha = 0.2 * a;
+        ctx.beginPath();
+        ctx.moveTo(TX[0], TY[0]);
+        for (let j = 1; j < n; j++) ctx.lineTo(TX[j], TY[j]);
+        ctx.closePath();
+        ctx.fill();
+        // arestas em pontilhado
+        ctx.strokeStyle = "rgb(237,237,243)";
+        ctx.lineWidth = 1.8 * dpr;
+        ctx.globalAlpha = Math.min(1, 0.75 * a);
+        ctx.stroke();
+        if (mv.tipo === "caixa") {
+          ctx.beginPath();
+          for (let j = 0; j < 4; j++) { ctx.moveTo(BX[j], BY[j]); ctx.lineTo(TX[j], TY[j]); }
+          ctx.stroke();
+        }
+      }
+      ctx.setLineDash([]);
+
+      // 4) pontilhado: todos os pontos da planta, poeira, brilho perto do mouse e as partículas do foco
       for (let i = 0; i < P.n; i++) {
         const a0 = AL[i];
         if (a0 < 0.02) continue;
