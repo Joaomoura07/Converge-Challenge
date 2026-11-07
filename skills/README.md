@@ -1,12 +1,15 @@
 # Skills do time
 
-Três skills no padrão aberto [Agent Skills](https://agentskills.io) (frontmatter `name` + `description`). O mesmo arquivo funciona no Claude e nos produtos da OpenAI.
+Seis skills no padrão aberto [Agent Skills](https://agentskills.io) (frontmatter `name` + `description`). O mesmo arquivo funciona no Claude e nos produtos da OpenAI.
 
 | # | Skill | Para quê |
 |---|---|---|
 | 01 | [`building-react-agents`](01-react-agent-pattern.md) | Loop ReAct, tools Pydantic, autocorreção (3 falhas), human-in-the-loop |
 | 02 | [`integrating-featherless`](02-featherless-integration.md) | Cliente, modelos por tarefa, concorrência, erros, modelo reserva, custo |
 | 03 | [`tracing-with-langfuse`](03-langfuse-tracing.md) | SDK v5, árvore de spans, custo, evals, roteiro do Demo Day |
+| 07 | [`building-orca-ui`](07-orca-ui-fatia-a.md) | Tela de entrada, revisão e resultado com Realtime |
+| 05 | [`managing-orcamento-data`](05-orcamento-data.md) | SQL, contratos, migrações e concorrência |
+| 06 | [`importing-materials`](06-material-import.md) | Leitores e normalização de arquivos de materiais |
 
 **Fonte única:** edite só os arquivos desta pasta. As "pontes" em `.claude/skills/` e `.agents/skills/` são geradas por `bash scripts/sync_skills.sh`.
 
