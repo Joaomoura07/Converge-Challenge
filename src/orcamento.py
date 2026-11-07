@@ -31,7 +31,10 @@ logger = logging.getLogger(__name__)
 ORCAMENTOS, ITENS = "orcamentos", "orcamento_itens"
 COLUNAS_LIDAS = ["id", "orcamento_id", "descricao", "quantidade", "unidade", "categoria", "classificacao", "status"]
 COLUNAS_GRAVADAS = [c for c in ResultadoItem.model_fields if c != "item_id"] + ["atualizado_em"]
-JANELA_TRAVADO = timedelta(minutes=3)   # execução morta pela Vercel no meio libera o orçamento depois disso
+# Execução morta pela Vercel no meio libera o orçamento depois disso. PRECISA ser maior que o tempo máximo da função
+# (300 s na Vercel): com 3 min, uma pesquisa viva de 200 s podia ser "reassumida" por outro clique e as duas gravariam.
+TEMPO_MAXIMO_FUNCAO = timedelta(seconds=300)
+JANELA_TRAVADO = timedelta(minutes=6)
 # Gancho da fatia C, chamado no fim: (módulo, função). Uma chamada só faz frete + viabilidade + ganho e grava em
 # `orcamentos`. Ausente (branch da C ainda não juntada) = só registra no log.
 GANCHOS_FIM = [("src.rotas_resultado", "resultado")]
