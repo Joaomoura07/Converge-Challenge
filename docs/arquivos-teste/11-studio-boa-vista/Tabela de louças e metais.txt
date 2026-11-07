@@ -1,0 +1,10 @@
+Tabela de louças e metais
+Família e tipo	Ambiente	Contagem
+
+Bacia com caixa acoplada Celite Azalea branca : Padrão	Banheiro	1
+Cuba de apoio retangular Deca branca : Padrão	Banheiro	1
+Torneira de mesa bica alta Docol cromada : Padrão	Banheiro	1
+Ducha eletrônica Lorenzetti Acqua Duo Ultra 220 V : Padrão	Banheiro	1
+Misturador monocomando de cozinha Deca com ducha extensível : Padrão	Kitchenette	1
+Cuba de embutir inox Tramontina Morgana 56x34 cm : Padrão	Kitchenette	1
+Total geral: 6

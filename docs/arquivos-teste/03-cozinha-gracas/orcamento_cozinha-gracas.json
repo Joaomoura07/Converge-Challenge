@@ -1,0 +1,230 @@
+{
+  "origem": "exportação de aplicativo de orçamento de obra",
+  "obra": {
+    "nome": "Cozinha Planejada — Apartamento nas Graças",
+    "cliente": "Dra. Helena Siqueira",
+    "endereco": "Rua Amélia, 210, apto 801",
+    "bairro": "Graças",
+    "cidade": "Recife/PE",
+    "cep": "52011-050"
+  },
+  "gerado_em": "2026-10-21T11:26:00",
+  "itens": [
+    {
+      "descricao": "Coral Decora cinza urbano",
+      "categoria": "Pintura",
+      "unidade": "m²",
+      "quantidade": 22.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Fita crepe 3M Scotch Blue 2090 48 mm x 50 m",
+      "categoria": "Pintura",
+      "unidade": "un",
+      "quantidade": 4.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Lixa para massa Norton A275 grão 150",
+      "categoria": "Pintura",
+      "unidade": "un",
+      "quantidade": 20.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Portinari metrô branco",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 14.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Porcelanato cinza acetinado 90x90",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 11.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Quartzolit AC-III",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 11.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Votomassa AC-II",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 14.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Rejunte Quartzolit cinza platina",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 11.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Rejunte epóxi Quartzolit",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 14.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Nivelador Cortag",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 11.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Granito Branco Itaúnas",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 3.1,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Cuba de cozinha inox 56x34",
+      "categoria": "Hidráulica, louças e metais",
+      "unidade": "un",
+      "quantidade": 1.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Monocomando Deca cozinha",
+      "categoria": "Hidráulica, louças e metais",
+      "unidade": "un",
+      "quantidade": 1.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Fita LED Ledvance",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "m",
+      "quantidade": 6.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Fonte chaveada 12 V 5 A para fita LED",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 2.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Spot Stella 7W",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 6.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Tomada Liz 10A",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 8.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Tomada Tramontina Liz 2P+T 20 A branca com placa 4x2",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 4.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Dobradiça Blum Clip Top",
+      "categoria": "Esquadrias, vidros e ferragens",
+      "unidade": "un",
+      "quantidade": 32.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Corrediça Blum Tandembox antaro 500 mm (par)",
+      "categoria": "Esquadrias, vidros e ferragens",
+      "unidade": "un",
+      "quantidade": 8.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Perfil puxador Häfele",
+      "categoria": "Esquadrias, vidros e ferragens",
+      "unidade": "m",
+      "quantidade": 9.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "MDF branco TX 18",
+      "categoria": "Marcenaria e mobiliário",
+      "unidade": "m²",
+      "quantidade": 36.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "MDF Freijó 18 Guararapes",
+      "categoria": "Marcenaria e mobiliário",
+      "unidade": "m²",
+      "quantidade": 12.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    },
+    {
+      "descricao": "Fita de borda Rehau 22 mm Branco TX",
+      "categoria": "Marcenaria e mobiliário",
+      "unidade": "m",
+      "quantidade": 180.0,
+      "ambientes": [
+        "Cozinha"
+      ]
+    }
+  ]
+}

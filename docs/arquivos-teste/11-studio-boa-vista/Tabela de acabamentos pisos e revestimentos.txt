@@ -1,0 +1,7 @@
+Tabela de acabamentos - pisos e revestimentos
+Ambiente	Material de acabamento	Área
+
+Banheiro	PISO - Porcelanato Biancogres Calacata polido 60x120	3,50 m²
+Banheiro	PAREDE - Revestimento cerâmico Ceusa Branco Brilhante 30x60 retificado	14,00 m²
+Studio	PISO - Piso laminado Durafloor Nature Carvalho Hamburgo 7 mm	24,00 m²
+Total geral: 41,50 m²

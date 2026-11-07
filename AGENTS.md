@@ -11,6 +11,7 @@ Hackathon Converge Challenge (7–8/11/2026): API FastAPI com um agente autônom
 | `building-react-agents` | `skills/01-react-agent-pattern.md` | Agente, loop, tools, prompt, escalonamento humano |
 | `integrating-featherless` | `skills/02-featherless-integration.md` | Chamadas ao LLM, modelos, erros, custo |
 | `tracing-with-langfuse` | `skills/03-langfuse-tracing.md` | Tracing, métricas, evals, Demo Day |
+| `designing-orcamentista-ui` | `skills/04-ui-design.md` | Qualquer tela, componente, estilo ou texto do site |
 
 ## Regras do repositório
 - Estrutura: `prompts/` (prompts .md), `src/agent.py` (loop), `src/tools.py` (tools), `src/database.py` (Supabase), `src/main.py` (rotas), `src/config.py` (settings).

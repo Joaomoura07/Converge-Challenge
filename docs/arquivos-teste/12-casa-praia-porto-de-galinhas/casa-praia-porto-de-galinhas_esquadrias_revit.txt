@@ -1,0 +1,11 @@
+Tabela de esquadrias e ferragens
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Banheiros
+Maxim-ar Sasazaki 60x60 : Padrão	Banheiros	4
+		4
+
+Ambiente: Geral
+Janela Sasazaki 120x120 : Padrão	Geral	8
+		8
+Total geral: 12

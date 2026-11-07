@@ -1,0 +1,6 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Parede da cama	PAREDE - Tinta acrílica acetinada Coral Decora Cinza Urbano	15,00 m²
+Studio	PAREDE - Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve	70,00 m²
+Total geral: 85,00 m²

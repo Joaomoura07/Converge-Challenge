@@ -1,0 +1,9 @@
+"Tabela de louças e metais"
+"Família e tipo"	"Ambiente"	"Contagem"
+
+"Barra de apoio Deca inox 80 cm para acessibilidade : Padrão"	"Banheiro PNE"	"2"
+"Lavatório suspenso acessível Celite sem coluna : Padrão"	"Banheiro PNE"	"1"
+"Bacia com caixa acoplada Celite Azalea branca : Padrão"	"Banheiros"	"3"
+"Cuba de apoio retangular Deca branca : Padrão"	"Consultórios"	"4"
+"Torneira de mesa bica alta Docol cromada : Padrão"	"Consultórios"	"4"
+"Total geral: 14"

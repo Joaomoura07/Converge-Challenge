@@ -1,0 +1,17 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Forro
+Painel Avant 60x60 : Padrão	Forro	48
+		48
+
+Ambiente: Open space
+Tomada Orion grafite : Padrão	Open space	60
+USB Pial Plus+ : Padrão	Open space	20
+		80
+
+Ambiente: Quadro
+Disjuntor Easy9 1P 20A : Padrão	Quadro	24
+Quadro Steck 24 : Padrão	Quadro	2
+		26
+Total geral: 154

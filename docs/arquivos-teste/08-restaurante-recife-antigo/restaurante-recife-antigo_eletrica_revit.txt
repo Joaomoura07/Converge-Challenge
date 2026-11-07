@@ -1,0 +1,15 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Bar
+Fonte 12V 5A : Padrão	Bar	6
+		6
+
+Ambiente: Fachada
+Arandela Taschibra preta : Padrão	Fachada	10
+		10
+
+Ambiente: Salão
+Lâmpada Philips 9W : Padrão	Salão	40
+		40
+Total geral: 56

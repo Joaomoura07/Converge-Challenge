@@ -1,0 +1,20 @@
+"Tabela de acabamentos - pintura"
+"Ambiente"	"Material de acabamento"	"Área"
+
+"Ambiente: Detalhes da fachada"
+"Detalhes da fachada"	"PAREDE - Decor Colors vermelho cardinal"	"180,00 m²"
+""	""	"180,00 m²"
+
+"Ambiente: Fachada"
+"Fachada"	"PAREDE - Metalatex verde oliva"	"900,00 m²"
+"Fachada"	"PAREDE - Fundo preparador Suvinil"	"1.450,00 m²"
+""	""	"2.350,00 m²"
+
+"Ambiente: Fachada (reparos)"
+"Fachada (reparos)"	"PAREDE - Massa acrílica Coral"	"220,00 m²"
+""	""	"220,00 m²"
+
+"Ambiente: Grades e portões"
+"Grades e portões"	"PAREDE - Esmalte Suvinil preto"	"120,00 m²"
+""	""	"120,00 m²"
+"Total geral: 2.870,00 m²"

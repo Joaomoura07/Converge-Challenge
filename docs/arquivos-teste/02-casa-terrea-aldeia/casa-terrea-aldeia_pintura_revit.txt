@@ -1,0 +1,21 @@
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
+
+Ambiente: Fachada
+Fachada	PAREDE - Metalatex verde oliva	140,00 m²
+Fachada	PAREDE - Massa acrílica Coral	140,00 m²
+		280,00 m²
+
+Ambiente: Geral
+Geral	PAREDE - Selador Coral	520,00 m²
+		520,00 m²
+
+Ambiente: Paredes internas
+Paredes internas	PAREDE - Coral Rende Muito branco	260,00 m²
+Paredes internas	PAREDE - Massa corrida Suvinil	380,00 m²
+		640,00 m²
+
+Ambiente: Tetos
+Tetos	TETO - Coral Rende Muito branco	120,00 m²
+		120,00 m²
+Total geral: 1.560,00 m²

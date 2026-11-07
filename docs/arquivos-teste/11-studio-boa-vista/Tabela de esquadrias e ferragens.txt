@@ -1,0 +1,6 @@
+Tabela de esquadrias e ferragens
+Família e tipo	Ambiente	Contagem
+
+Fechadura digital Yale de sobrepor com senha : Padrão	Entrada	1
+Dobradiça Blum Clip Top Blumotion 110° com amortecedor : Padrão	Kitchenette	12
+Total geral: 13

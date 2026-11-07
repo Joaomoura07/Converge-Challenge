@@ -1,0 +1,6 @@
+Path,Entity Type,Definition Name,Tag,Quantity
+Loja_de_Roupas/Salao/Spot_Stella_7W,ComponentInstance,Spot_Stella_7W,ILUMINACAO_ELETRICA,28
+Loja_de_Roupas/Vitrine/Fonte_12V_5A,ComponentInstance,Fonte_12V_5A,ILUMINACAO_ELETRICA,4
+Loja_de_Roupas/Salao/Tomada_Liz_10A,ComponentInstance,Tomada_Liz_10A,ILUMINACAO_ELETRICA,10
+Loja_de_Roupas/Entrada/Fechadura_Digital_Yale,ComponentInstance,Fechadura_Digital_Yale,ESQUADRIAS,1
+Loja_de_Roupas/Salao/Split_LG_18000,ComponentInstance,Split_LG_18000,CLIMATIZACAO,2

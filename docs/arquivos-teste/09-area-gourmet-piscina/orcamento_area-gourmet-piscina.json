@@ -1,0 +1,203 @@
+{
+  "origem": "exportação de aplicativo de orçamento de obra",
+  "obra": {
+    "nome": "Área Gourmet e Piscina — Aldeia",
+    "cliente": "Família Wanderley Brito",
+    "endereco": "Estrada de Aldeia, 9101",
+    "bairro": "Aldeia dos Camarás",
+    "cidade": "Camaragibe/PE",
+    "cep": "54783-010"
+  },
+  "gerado_em": "2026-10-17T10:44:00",
+  "itens": [
+    {
+      "descricao": "Verniz Sparlack Duplo Filtro Solar acetinado",
+      "categoria": "Pintura",
+      "unidade": "m²",
+      "quantidade": 24.0,
+      "ambientes": [
+        "Deck"
+      ]
+    },
+    {
+      "descricao": "Tinta para piso Coral Pisos Cinza Chumbo",
+      "categoria": "Pintura",
+      "unidade": "m²",
+      "quantidade": 40.0,
+      "ambientes": [
+        "Área de serviço"
+      ]
+    },
+    {
+      "descricao": "Pedra hijau",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 36.0,
+      "ambientes": [
+        "Piscina"
+      ]
+    },
+    {
+      "descricao": "Pedra São Tomé amarela serrada 40x40",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 60.0,
+      "ambientes": [
+        "Deck e borda"
+      ]
+    },
+    {
+      "descricao": "Quartzolit AC-III",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 96.0,
+      "ambientes": [
+        "Piscina e deck"
+      ]
+    },
+    {
+      "descricao": "Rejunte flexível Quartzolit Cinza Platina",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 96.0,
+      "ambientes": [
+        "Piscina e deck"
+      ]
+    },
+    {
+      "descricao": "Travertino romano",
+      "categoria": "Revestimentos e argamassas",
+      "unidade": "m²",
+      "quantidade": 2.8,
+      "ambientes": [
+        "Área gourmet"
+      ]
+    },
+    {
+      "descricao": "Manta Viapol 4 mm",
+      "categoria": "Estrutura e alvenaria",
+      "unidade": "m²",
+      "quantidade": 52.0,
+      "ambientes": [
+        "Piscina"
+      ]
+    },
+    {
+      "descricao": "Impermeabilizante Sika Top 107",
+      "categoria": "Estrutura e alvenaria",
+      "unidade": "m²",
+      "quantidade": 30.0,
+      "ambientes": [
+        "Área gourmet"
+      ]
+    },
+    {
+      "descricao": "Cuba de embutir inox Tramontina Morgana 56x34 cm",
+      "categoria": "Hidráulica, louças e metais",
+      "unidade": "un",
+      "quantidade": 1.0,
+      "ambientes": [
+        "Área gourmet"
+      ]
+    },
+    {
+      "descricao": "Monocomando Deca cozinha",
+      "categoria": "Hidráulica, louças e metais",
+      "unidade": "un",
+      "quantidade": 1.0,
+      "ambientes": [
+        "Área gourmet"
+      ]
+    },
+    {
+      "descricao": "Arandela Taschibra preta",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 8.0,
+      "ambientes": [
+        "Área gourmet"
+      ]
+    },
+    {
+      "descricao": "Fita LED Ledvance",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "m",
+      "quantidade": 20.0,
+      "ambientes": [
+        "Piscina"
+      ]
+    },
+    {
+      "descricao": "Fonte para fita LED 12 V",
+      "categoria": "Elétrica e iluminação",
+      "unidade": "un",
+      "quantidade": 3.0,
+      "ambientes": [
+        "Piscina"
+      ]
+    },
+    {
+      "descricao": "Deck de madeira",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "m²",
+      "quantidade": 24.0,
+      "ambientes": [
+        "Deck"
+      ]
+    },
+    {
+      "descricao": "Grama esmeralda em placas",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "m²",
+      "quantidade": 120.0,
+      "ambientes": [
+        "Jardim"
+      ]
+    },
+    {
+      "descricao": "Seixo de rio branco nº 2",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "sc",
+      "quantidade": 30.0,
+      "ambientes": [
+        "Jardim"
+      ]
+    },
+    {
+      "descricao": "Palmeira de vaso 1,5 m",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "un",
+      "quantidade": 8.0,
+      "ambientes": [
+        "Jardim"
+      ]
+    },
+    {
+      "descricao": "Terra vegetal",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "sc",
+      "quantidade": 40.0,
+      "ambientes": [
+        "Jardim"
+      ]
+    },
+    {
+      "descricao": "Bidim RT-10",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "m²",
+      "quantidade": 40.0,
+      "ambientes": [
+        "Jardim"
+      ]
+    },
+    {
+      "descricao": "Filtro Sodramar 1/2 cv",
+      "categoria": "Paisagismo e piscina",
+      "unidade": "un",
+      "quantidade": 1.0,
+      "ambientes": [
+        "Casa de máquinas"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+"Tabela de acabamentos - pintura"
+"Ambiente"	"Material de acabamento"	"Área"
+
+"Circulação"	"PAREDE - Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve"	"20,00 m²"
+"Geral"	"TETO - Tinta acrílica fosca Coral Rende Muito Branco"	"58,00 m²"
+"Geral"	"PAREDE - Massa corrida PVA Suvinil"	"180,00 m²"
+"Geral"	"PAREDE - Selador acrílico pigmentado Coral"	"180,00 m²"
+"Quarto"	"PAREDE - Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve"	"40,00 m²"
+"Sala/Jantar"	"PAREDE - Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve"	"70,00 m²"
+"Sala/Jantar"	"PAREDE - Tinta acrílica fosca Decor Colors Vermelho Cardinal"	"12,00 m²"
+"Suíte"	"PAREDE - Tinta acrílica acetinada Suvinil Toque de Seda Branco Neve"	"50,00 m²"
+"Total geral: 610,00 m²"

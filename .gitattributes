@@ -2,3 +2,4 @@
 *.sh text eol=lf
 # Fixtures de teste: bytes exatos (quebras de linha e codificação SÃO o que está sendo testado)
 tests/importacao/fixtures/** -text
+docs/arquivos-teste/** -text
