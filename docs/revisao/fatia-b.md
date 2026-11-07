@@ -267,3 +267,115 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 | coerência com o programa | ✅ | 7 passed in 0.45s |
 | api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
 | execução real (etapa 6) | ❌ | 1 failed, 1 passed, 174 deselected, 2 warnings in 67.93s (0:01:07) |
+
+## Etapa 6 — duas fases + disjuntor de modelo fora do ar (Qwen3-32B: 'not available for inference') · 07/11 14:29 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 375 passed, 12 skipped, 16 deselected in 8.61s |
+| coerência com o programa | ✅ | 7 passed in 0.43s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 6) | ✅ | 2 passed, 176 deselected, 2 warnings in 82.99s (0:01:22) |
+
+## Etapa 2 — descarta URL de página de busca da loja · 07/11 14:31 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 375 passed, 12 skipped, 16 deselected in 6.28s |
+| coerência com o programa | ✅ | 7 passed in 0.40s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ❌ | 2 failed, 4 passed, 172 deselected in 51.59s |
+
+## Etapa 3 — disjuntor: modelo com HTTP 400 fica fora 10 min · 07/11 14:31 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 375 passed, 12 skipped, 16 deselected in 6.35s |
+| coerência com o programa | ✅ | 7 passed in 0.42s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 176 deselected in 14.59s |
+
+## Etapa 4 — trava: preço por m² rotulado como caixa · 07/11 14:31 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 375 passed, 12 skipped, 16 deselected in 6.52s |
+| coerência com o programa | ✅ | 7 passed in 0.47s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 4) | ✅ | 1 passed, 177 deselected in 5.61s |
+
+## Etapa 5 — cache guarda iterações do agente (sql/003 opcional) · 07/11 14:32 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 375 passed, 12 skipped, 16 deselected in 6.33s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 5) | ❌ | 1 failed, 177 deselected, 2 warnings in 3.00s |
+
+## Etapa 7 — banco real da fatia A: tolera coluna ausente (premissa), orçamento sintético completo, rota repesquisar · 07/11 14:35 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 377 passed, 12 skipped, 16 deselected in 6.47s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 7) | ❌ | 1 failed, 179 deselected, 2 warnings in 2.65s |
+
+## Etapa 7 — banco real da fatia A: classificacao 'pendente', coluna premissa ausente tolerada, orçamento sintético, rota repesquisar · 07/11 14:37 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 383 passed, 12 skipped, 16 deselected in 6.25s |
+| coerência com o programa | ✅ | 7 passed in 0.47s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 7) | ✅ | 1 passed, 185 deselected, 2 warnings in 18.19s |
+
+## Etapa 2 — descarta URL de página de busca da loja (refeita: falha anterior foi variação da busca real) · 07/11 14:38 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 383 passed, 12 skipped, 16 deselected in 6.49s |
+| coerência com o programa | ✅ | 7 passed in 0.40s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ✅ | 6 passed, 180 deselected in 15.71s |
+
+## Etapa 5 — cache no formato do SQL único (resultado jsonb) + iterações; lê o formato antigo · 07/11 14:38 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 383 passed, 12 skipped, 16 deselected in 6.34s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 5) | ✅ | 1 passed, 185 deselected, 2 warnings in 3.17s |
+
+### Avaliação manual — continuação da passagem (P0/P1) · 07/11 tarde
+- **P0-1 duas fases (medido, Cozinha Graças, 24 itens):**
+
+| Cenário | 1º item na tela | 5º item | Fim |
+|---|---|---|---|
+| Antes (etapa 9, agente disputando vaga) | 33 s | — | 127 s |
+| Só fase 1, sem cache | 5,6–7,8 s | 10,5–14,2 s | 34–41 s |
+| Duas fases, sem cache | 5,6 s | 10,5 s | 93 s (fase 2 limitada a 60 s) |
+| Demo: metade no cache | **1,6 s** | **1,9 s** | 107 s (Featherless lenta: LLM médio 20 s, máx 44 s) |
+
+  - Gargalo da fase 1 = fila de vagas do LLM (3 simultâneas; espera média 9–13 s), não a busca (~2–3 s).
+  - A Featherless oscila muito hoje: o mesmo código deu o 1º item em 52 s numa rodada (aquecimento das 14h40) e 5,6 s na seguinte.
+  - Fase 2 cabe ~4 itens com agente em 60 s; os outros ficam com o resultado da fase 1 (provisório com preço, ou "não encontrado" + "Pesquisar de novo"). Para a demo, o aquecimento guarda no cache justamente os itens lentos.
+- **Qwen3-32B saiu do ar** ("not available for inference", HTTP 400, até 19 s por chamada perdida) → disjuntor em `src/precos.py`: modelo com 400 fica fora 10 min; vai direto para a reserva (Gemma 4, 1,1 s).
+- **Semáforo por `id(loop)`** reaproveitava semáforo com vagas presas de loop fechado (travou a suíte) → agora guardado pelo próprio loop (WeakKeyDictionary).
+- **Banco da fatia A no ar — divergências achadas e tratadas no código da B:**
+  1. `cache_precos` foi **recriada** como `(chave, resultado jsonb, imagem_url, atualizado_em)` e zerada → cache grava em `resultado` (com as iterações) e lê os dois formatos. `sql/003` removido (não precisa mais).
+  2. `orcamento_itens` **sem `premissa`** → `gravar_item` tira a coluna ausente e grava o resto (antes o item ficaria "buscando" para sempre). **Pedir ao Samuel: `alter table orcamento_itens add column premissa text;`**
+  3. `classificacao` no banco é `definido | pendente` (check `itens_classificacao_ck`) → `item_da_linha` mapeia `pendente` → `pendente_especificacao` (antes o genérico era pesquisado como definido, sem pergunta).
+  4. `orcamentos.cep` só aceita dígitos; `orcamento_itens.fontes` é NOT NULL sem padrão (a B sempre manda `[]`).
+- **Trava de embalagem (P1-6):** só na direção observada (preço por m² rotulado como caixa). A direção contrária é indistinguível com 3 lojas (testado: corrigia a loja errada) e fica para o filtro de outlier.

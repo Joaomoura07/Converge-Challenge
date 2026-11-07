@@ -74,16 +74,19 @@ def _tabela_ausente(exc: Exception) -> bool:
 
 
 def _para_entrada(linha: dict, dias: int, agora: datetime) -> EntradaCache | None:
+    """Lê os dois formatos da tabela: o do SQL único da fatia A (`resultado` jsonb com tudo dentro)
+    e o antigo da fatia B (colunas soltas: descricao, ofertas, modelo, provedor)."""
     try:
         atualizado = datetime.fromisoformat(str(linha["atualizado_em"]).replace("Z", "+00:00"))
-        ofertas = [Oferta(**o) for o in (linha.get("ofertas") or [])]
-        iteracoes = max(0, int(linha.get("iteracoes") or 0))
+        dados = linha["resultado"] if isinstance(linha.get("resultado"), dict) else linha
+        ofertas = [Oferta(**o) for o in (dados.get("ofertas") or [])]
+        iteracoes = max(0, int(dados.get("iteracoes") or 0))
     except Exception:  # noqa: BLE001 — linha corrompida não pode quebrar a pesquisa
         logger.warning("Linha do cache ilegível (%s): ignorada", linha.get("chave"))
         return None
-    return EntradaCache(chave=linha["chave"], descricao=linha.get("descricao") or "",
-                        extracao=ResultadoExtracao(ofertas=ofertas, modelo=linha.get("modelo") or "cache"),
-                        imagem_url=linha.get("imagem_url"), provedor=linha.get("provedor"),
+    return EntradaCache(chave=linha["chave"], descricao=dados.get("descricao") or "",
+                        extracao=ResultadoExtracao(ofertas=ofertas, modelo=dados.get("modelo") or "cache"),
+                        imagem_url=linha.get("imagem_url"), provedor=dados.get("provedor"),
                         atualizado_em=atualizado, vencido=agora - atualizado > timedelta(days=dias), iteracoes=iteracoes)
 
 
@@ -125,26 +128,40 @@ async def apagar(descricao: str, cliente=None) -> bool:
         return False
 
 
-_sem_coluna_iteracoes = False
+# Formatos da tabela, do oficial para os de reserva. Medido em 07/11 à tarde: a tabela passou por um formato
+# temporário (`resultado` jsonb) e voltou ao de colunas com `iteracoes` (sql/002_orcamentos.sql da fatia A).
+def _colunas(linha: dict) -> dict:                       # oficial: sql/002_orcamentos.sql
+    return linha
 
 
-def _falta_coluna_iteracoes(exc: Exception) -> bool:
-    """PostgREST: PGRST204 = coluna não existe (sql/003 ainda não rodado)."""
-    return "iteracoes" in str(exc) and ("PGRST204" in str(exc) or "column" in str(exc).lower())
+def _colunas_sem_iteracoes(linha: dict) -> dict:         # banco ainda no sql/002_cache_precos.sql da fatia B
+    return {k: v for k, v in linha.items() if k != "iteracoes"}
+
+
+def _resultado_jsonb(linha: dict) -> dict:               # formato temporário visto em 07/11 ~14h30
+    dentro = {k: linha[k] for k in ("descricao", "ofertas", "modelo", "provedor", "iteracoes")}
+    return {"chave": linha["chave"], "resultado": dentro, "imagem_url": linha["imagem_url"],
+            "atualizado_em": linha["atualizado_em"]}
+
+
+_FORMATOS = [_colunas, _colunas_sem_iteracoes, _resultado_jsonb]
+_formato = 0   # índice do formato que o banco aceitou (fica guardado: não tenta de novo o que já falhou)
 
 
 def _gravar_sync(linha: dict, cliente) -> None:
-    global _sem_coluna_iteracoes
-    if _sem_coluna_iteracoes:
-        linha = {k: v for k, v in linha.items() if k != "iteracoes"}
-    try:
-        cliente.table(TABELA).upsert(linha, on_conflict="chave").execute()
-    except Exception as exc:  # noqa: BLE001
-        if "iteracoes" not in linha or not _falta_coluna_iteracoes(exc):
-            raise
-        logger.warning("Coluna cache_precos.iteracoes não existe (rode sql/003_cache_precos_iteracoes.sql): gravando sem ela")
-        _sem_coluna_iteracoes = True
-        cliente.table(TABELA).upsert({k: v for k, v in linha.items() if k != "iteracoes"}, on_conflict="chave").execute()
+    """Grava no formato oficial; se o banco recusar alguma coluna (PGRST204), passa para o próximo formato.
+    (Com várias colunas faltando o PostgREST cita só uma, então não dá para escolher pelo nome.)"""
+    global _formato
+    while True:
+        try:
+            cliente.table(TABELA).upsert(_FORMATOS[_formato](linha), on_conflict="chave").execute()
+            return
+        except Exception as exc:  # noqa: BLE001
+            if "PGRST204" not in str(exc) or _formato == len(_FORMATOS) - 1:
+                raise
+            _formato += 1
+            logger.warning("cache_precos recusou uma coluna (%s): gravando no formato %s", str(exc)[:90],
+                           _FORMATOS[_formato].__name__)
 
 
 @observe(name="cache.gravar")
@@ -159,9 +176,8 @@ async def gravar(descricao: str, extracao: ResultadoExtracao, imagem_url: str | 
         "chave": chave, "descricao": descricao,
         "ofertas": [o.model_dump() for o in extracao.ofertas],
         "imagem_url": (anterior.imagem_url if anterior and anterior.imagem_url else None) or imagem_url,
-        "modelo": extracao.modelo or None, "provedor": provedor,
+        "modelo": extracao.modelo or None, "provedor": provedor, "iteracoes": iteracoes,
         "atualizado_em": datetime.now(timezone.utc).isoformat(),
-        "iteracoes": iteracoes,
     }
     try:
         await asyncio.to_thread(_gravar_sync, linha, cliente or _cliente())

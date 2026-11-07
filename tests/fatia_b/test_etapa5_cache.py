@@ -74,6 +74,54 @@ def test_tamanho_diferente_e_outro_produto(a, b):
     assert cache.chave_cache(a) != cache.chave_cache(b)
 
 
+# ---------------------------------------------------------------- formatos da tabela
+class SupabaseSemColunas(SupabaseFalso):
+    """Banco em outro formato: recusa as colunas listadas como o PostgREST real (PGRST204)."""
+
+    def __init__(self, sem: set[str]):
+        super().__init__()
+        self.sem = sem
+
+    def table(self, nome):
+        c = super().table(nome)
+        upsert = c.upsert
+        def so_as_que_existem(linha, on_conflict=None):
+            falta = next((k for k in linha if k in self.sem), None)
+            if falta:
+                raise Exception({"message": f"Could not find the '{falta}' column of 'cache_precos' in the schema cache",
+                                 "code": "PGRST204"})
+            return upsert(linha, on_conflict)
+        c.upsert = so_as_que_existem
+        return c
+
+
+def test_grava_no_formato_oficial_com_as_iteracoes(monkeypatch):
+    """sql/002_orcamentos.sql (fatia A): colunas soltas + iteracoes."""
+    monkeypatch.setattr(cache, "_formato", 0)
+    db = SupabaseFalso()
+    assert asyncio.run(cache.gravar(DESC, ResultadoExtracao(ofertas=OFERTAS, modelo="m"), "https://img/1.jpg", "tavily",
+                                    cliente=db, iteracoes=2))
+    linha = db.linhas[cache.chave_cache(DESC)]
+    assert linha["iteracoes"] == 2 and linha["descricao"] == DESC and "resultado" not in linha
+    e = asyncio.run(cache.ler(DESC, cliente=db))
+    assert e.iteracoes == 2 and e.extracao.ofertas == OFERTAS and e.provedor == "tavily" and e.descricao == DESC
+
+
+@pytest.mark.parametrize("sem,esperado_iteracoes,chave_presente", [
+    ({"iteracoes"}, 0, "descricao"),                                   # banco no sql/002 antigo da fatia B
+    ({"descricao", "ofertas", "modelo", "provedor", "iteracoes"}, 1, "resultado"),   # formato temporário de 07/11
+])
+def test_banco_em_outro_formato_continua_funcionando(monkeypatch, sem, esperado_iteracoes, chave_presente):
+    monkeypatch.setattr(cache, "_formato", 0)
+    db = SupabaseSemColunas(sem)
+    assert asyncio.run(cache.gravar(DESC, ResultadoExtracao(ofertas=OFERTAS), "https://img/1.jpg", cliente=db, iteracoes=1))
+    linha = db.linhas[cache.chave_cache(DESC)]
+    assert chave_presente in linha and not (set(linha) & sem)
+    e = asyncio.run(cache.ler(DESC, cliente=db))
+    assert e.extracao.ofertas == OFERTAS and e.iteracoes == esperado_iteracoes and e.descricao == DESC
+    assert cache._formato > 0, "depois do 1º erro não tenta mais o formato que falhou"
+
+
 # ---------------------------------------------------------------- ler / gravar
 def test_grava_e_le_e_a_conta_e_refeita_para_a_quantidade_do_item():
     db = SupabaseFalso()

@@ -125,6 +125,30 @@ async def _sem_espera(_):
     return None
 
 
+def test_modelo_fora_do_ar_e_pulado_nas_proximas_extracoes(monkeypatch):
+    """Achado real (07/11 14h): 'Qwen/Qwen3-32B is not available for inference' (HTTP 400). Sem o disjuntor,
+    cada extração perdia até 19 s nessa chamada antes da reserva e o agente estourava os 40 s."""
+    monkeypatch.setattr(p, "_indisponivel_ate", {})
+    cli = _ClienteFalso([_http(400), "0|739.90|lata 18 L|S", "0|739.90|lata 18 L|S"])
+    asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
+    r = asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
+    assert cli.modelos == ["Qwen/Qwen3-32B", p.MODELO_RESERVA_EXTRACAO, p.MODELO_RESERVA_EXTRACAO]
+    assert r.modelo == p.MODELO_RESERVA_EXTRACAO and r.conferidas
+
+
+def test_503_nao_desliga_o_modelo_e_disjuntor_volta_depois_da_pausa(monkeypatch):
+    monkeypatch.setattr(p, "_indisponivel_ate", {})
+    cli = _ClienteFalso([_http(503), "0|739.90|lata 18 L|S", "0|739.90|lata 18 L|S"])
+    asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
+    asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
+    assert cli.modelos[2] == "Qwen/Qwen3-32B", "503 é passageiro: o principal continua sendo tentado"
+    p._marcar_indisponivel("Qwen/Qwen3-32B")
+    p._indisponivel_ate["Qwen/Qwen3-32B"] = 0   # pausa acabou
+    assert p.modelos_extracao()[0] == "Qwen/Qwen3-32B"
+    p._marcar_indisponivel("Qwen/Qwen3-32B"); p._marcar_indisponivel(p.MODELO_RESERVA_EXTRACAO)
+    assert p.modelos_extracao() == ["Qwen/Qwen3-32B", p.MODELO_RESERVA_EXTRACAO], "todos fora: tenta todos"
+
+
 def test_sem_anuncios_nao_chama_llm():
     r = asyncio.run(p.extrair_e_conferir(PRODUTO, [], cliente=_ClienteFalso([])))
     assert r.erro and not r.ofertas
