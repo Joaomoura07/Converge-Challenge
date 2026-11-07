@@ -72,52 +72,116 @@ def test_haversine_recife_olinda():
     assert 4 < _haversine(-8.0476, -34.8770, -8.0089, -34.8553) < 6
 
 
-# --- cache de CEP: falha de rede não pode ficar guardada para sempre ---------------------------------
+# --- geocodificação de CEP (APIs simuladas por URL) --------------------------------------------------
 import pytest
 
 from src import logistica as lg_mod
 
+VIACEP = {"logradouro": "Rua Amélia", "bairro": "Graças", "localidade": "Recife", "uf": "PE"}
+
 
 class _Resp:
-    status_code = 200
+    def __init__(self, dados, status=200):
+        self._d, self.status_code = dados, status
 
     def json(self):
-        return {"location": {"coordinates": {"latitude": "-8.05", "longitude": "-34.88"}}}
+        return self._d
 
 
-@pytest.fixture(autouse=False)
-def cep_limpo():
+@pytest.fixture
+def api(monkeypatch):
+    """Fábrica: api(viacep=..., nominatim=..., brasilapi=...) -> lista de URLs chamadas."""
+    chamadas: list[str] = []
     lg_mod.limpar_cache_cep()
-    yield
+    monkeypatch.setattr(lg_mod, "_NOMINATIM_INTERVALO_S", 0)
+
+    def montar(viacep=VIACEP, nominatim=lambda q: [{"lat": "-8.04", "lon": "-34.90"}], brasilapi=None):
+        def get(url, timeout=5.0, **kw):
+            chamadas.append(url)
+            if "viacep" in url:
+                if isinstance(viacep, Exception):
+                    raise viacep
+                return _Resp(viacep)
+            if "nominatim" in url:
+                dados = nominatim(kw["params"]["q"])
+                return _Resp(dados)
+            if "brasilapi" in url:
+                if isinstance(brasilapi, Exception):
+                    raise brasilapi
+                return _Resp(brasilapi, 200 if brasilapi else 404)
+            raise AssertionError(url)
+
+        monkeypatch.setattr(lg_mod.httpx, "get", get)
+        return chamadas
+
+    yield montar
     lg_mod.limpar_cache_cep()
 
 
-def test_falha_de_rede_nao_fica_para_sempre(cep_limpo, monkeypatch):
-    chamadas = []
+def test_usa_viacep_e_nominatim_com_precisao_de_rua(api):
+    chamadas = api()
+    assert lg_mod._coordenada("52011-050") == (-8.04, -34.90, "rua")
+    assert not any("brasilapi" in u for u in chamadas)
 
-    def get(url, timeout):
-        chamadas.append(url)
-        if len(chamadas) == 1:
+
+def test_sem_a_rua_cai_para_o_bairro(api):
+    api(nominatim=lambda q: [{"lat": "-8.1", "lon": "-34.9"}] if q.startswith("Graças") else [])
+    assert lg_mod._coordenada("52011-050") == (-8.1, -34.9, "bairro")
+
+
+def test_brasilapi_so_como_ultimo_recurso_e_marca_cidade(api):
+    api(viacep=TimeoutError("fora"), brasilapi={"location": {"coordinates": {"latitude": "-8.05", "longitude": "-34.88"}}})
+    assert lg_mod._coordenada("50070000") == (-8.05, -34.88, "cidade")
+
+
+def test_coordenada_so_de_cidade_nao_vira_distancia_zero(api):
+    api(viacep=TimeoutError("fora"), brasilapi={"location": {"coordinates": {"latitude": "-8.05", "longitude": "-34.88"}}})
+    f = Fornecedor(id="L", nome="L", dominio="x.com", cep="51021-040")
+    assert lg_mod.distancias_km("52011-050", [f]) == {"L": lg_mod.KM_PADRAO}
+
+
+def test_distancia_real_entre_dois_ceps_distintos(api):
+    pontos = {"Rua Amélia": ("-8.0453", "-34.9029"), "Avenida": ("-8.1226", "-34.8995")}
+    api(viacep=VIACEP, nominatim=lambda q: [dict(zip(("lat", "lon"), pontos["Rua Amélia" if q.startswith("Rua") else "Avenida"]))])
+    lg_mod.limpar_cache_cep()
+    # obra: ViaCEP devolve Rua Amélia; loja tem lat/lon manuais (Boa Viagem)
+    f = Fornecedor(id="L", nome="L", dominio="x.com", cep="51021-040", lat=-8.1226, lon=-34.8995)
+    km = lg_mod.distancias_km("52011-050", [f])["L"]
+    assert 10 < km < 14          # ~ 8,6 km em linha reta × 1,3
+
+
+def test_loja_com_lat_lon_manual_nao_chama_api(api):
+    chamadas = api()
+    f = Fornecedor(id="L", nome="L", dominio="x.com", cep="51021-040", lat=-8.12, lon=-34.90)
+    lg_mod.distancias_km("52011-050", [f])
+    assert len([u for u in chamadas if "viacep" in u]) == 1   # só o CEP da obra
+
+
+def test_falha_de_rede_nao_fica_para_sempre(api, monkeypatch):
+    estado = {"fora": True}
+
+    def nominatim(q):
+        if estado["fora"]:
             raise TimeoutError("oscilou")
-        return _Resp()
+        return [{"lat": "-8.04", "lon": "-34.90"}]
 
-    monkeypatch.setattr(lg_mod.httpx, "get", get)
-    assert lg_mod.coordenadas_cep("50070-000") is None          # 1ª: falhou
-    assert lg_mod.coordenadas_cep("50070-000") is None          # dentro do TTL: nem tenta de novo
-    assert len(chamadas) == 1
+    chamadas = api(nominatim=nominatim, brasilapi={})
+    assert lg_mod._coordenada("52011-050") is None
+    n = len(chamadas)
+    assert lg_mod._coordenada("52011-050") is None and len(chamadas) == n   # dentro do TTL: não tenta
+    estado["fora"] = False
     t = lg_mod.time.monotonic()
     monkeypatch.setattr(lg_mod.time, "monotonic", lambda: t + lg_mod.FALHA_TTL_S + 1)
-    assert lg_mod.coordenadas_cep("50070-000") == (-8.05, -34.88)  # API voltou: recupera
-    assert len(chamadas) == 2
+    assert lg_mod._coordenada("52011-050") == (-8.04, -34.90, "rua")
 
 
-def test_acerto_fica_em_cache(cep_limpo, monkeypatch):
-    n = []
-    monkeypatch.setattr(lg_mod.httpx, "get", lambda url, timeout: (n.append(1), _Resp())[1])
-    assert lg_mod.coordenadas_cep("50070000") == lg_mod.coordenadas_cep("50070-000") == (-8.05, -34.88)
-    assert len(n) == 1
+def test_acerto_fica_em_cache_e_ignora_formatacao(api):
+    chamadas = api()
+    assert lg_mod.coordenadas_cep("52011050") == lg_mod.coordenadas_cep("52011-050") == (-8.04, -34.90)
+    assert len([u for u in chamadas if "viacep" in u]) == 1
 
 
-def test_cep_invalido_nao_chama_a_api(cep_limpo, monkeypatch):
-    monkeypatch.setattr(lg_mod.httpx, "get", lambda *a, **k: pytest.fail("não deveria chamar"))
+def test_cep_invalido_nao_chama_api(api):
+    chamadas = api()
     assert lg_mod.coordenadas_cep("123") is None and lg_mod.coordenadas_cep("") is None
+    assert chamadas == []

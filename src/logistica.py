@@ -207,18 +207,59 @@ def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * r * math.asin(math.sqrt(a))
 
 
-_CACHE_OK: dict[str, tuple[float, float]] = {}   # CEP -> coordenadas (respostas que deram certo: para sempre)
-_CACHE_FALHA: dict[str, float] = {}               # CEP -> instante da falha (só evita repetir timeout)
+# precisão da coordenada: "rua" > "bairro" > "cidade" (BrasilAPI cai no centro da cidade quando não tem a rua)
+_CACHE_OK: dict[str, tuple[float, float, str]] = {}   # CEP -> (lat, lon, precisão); acertos: para sempre
+_CACHE_FALHA: dict[str, float] = {}                    # CEP -> instante da falha (só evita repetir timeout)
 FALHA_TTL_S = 60.0
+_UA = {"User-Agent": "orcamentista-hackathon/0.1"}      # exigido pelo Nominatim (nome genérico, sem dados pessoais)
+_NOMINATIM_INTERVALO_S = 1.1                            # política de uso do Nominatim: no máx. 1 req/s
+_ultimo_nominatim = 0.0
 
 
-def coordenadas_cep(cep: str) -> tuple[float, float] | None:
-    """(lat, lon) do CEP via BrasilAPI v2. ``None`` se indisponível (o chamador usa ``KM_PADRAO``).
+def _get_json(url: str, **kw: Any) -> Any:
+    r = httpx.get(url, timeout=5.0, **kw)
+    return r.json() if r.status_code == 200 else None
 
-    Só acertos ficam em cache permanente. Falhas (timeout, erro HTTP) são lembradas por
-    ``FALHA_TTL_S`` segundos e depois tentadas de novo: uma oscilação de rede não pode fixar 15 km
-    para sempre.
-    """
+
+def _nominatim(consulta: str) -> tuple[float, float] | None:
+    global _ultimo_nominatim
+    # nunca espera mais que o intervalo (mesmo se o relógio andar para trás)
+    espera = min(_NOMINATIM_INTERVALO_S, _NOMINATIM_INTERVALO_S - (time.monotonic() - _ultimo_nominatim))
+    if espera > 0:
+        time.sleep(espera)
+    _ultimo_nominatim = time.monotonic()
+    dados = _get_json("https://nominatim.openstreetmap.org/search",
+                      params={"q": consulta, "format": "json", "limit": 1}, headers=_UA)
+    return (float(dados[0]["lat"]), float(dados[0]["lon"])) if dados else None
+
+
+def _geocodificar(cep: str) -> tuple[float, float, str] | None:
+    """ViaCEP (endereço) -> Nominatim (rua, depois bairro) -> BrasilAPI (só cidade). Qualquer etapa pode falhar."""
+    try:
+        v = _get_json(f"https://viacep.com.br/ws/{cep}/json/") or {}
+        if not v.get("erro") and v.get("localidade"):
+            fim = f"{v.get('localidade')}, {v.get('uf')}, Brasil"
+            tentativas = []
+            if v.get("logradouro") and v.get("bairro"):
+                tentativas.append((f"{v['logradouro']}, {v['bairro']}, {fim}", "rua"))
+            if v.get("bairro"):
+                tentativas.append((f"{v['bairro']}, {fim}", "bairro"))
+            for consulta, precisao in tentativas:
+                ponto = _nominatim(consulta)
+                if ponto:
+                    return (*ponto, precisao)
+    except Exception:  # noqa: BLE001
+        logger.warning("ViaCEP/Nominatim falharam para o CEP %s", cep)
+    try:
+        c = ((_get_json(f"https://brasilapi.com.br/api/cep/v2/{cep}") or {}).get("location") or {}).get("coordinates") or {}
+        if c.get("latitude") and c.get("longitude"):
+            return float(c["latitude"]), float(c["longitude"]), "cidade"
+    except Exception:  # noqa: BLE001
+        logger.warning("BrasilAPI falhou para o CEP %s", cep)
+    return None
+
+
+def _coordenada(cep: str) -> tuple[float, float, str] | None:
     cep = re.sub(r"\D", "", cep or "")
     if len(cep) != 8:
         return None
@@ -227,32 +268,45 @@ def coordenadas_cep(cep: str) -> tuple[float, float] | None:
     falhou_em = _CACHE_FALHA.get(cep)
     if falhou_em is not None and time.monotonic() - falhou_em < FALHA_TTL_S:
         return None
-    try:
-        r = httpx.get(f"https://brasilapi.com.br/api/cep/v2/{cep}", timeout=5.0)
-        if r.status_code == 200:
-            c = (r.json().get("location") or {}).get("coordinates") or {}
-            lat, lon = c.get("latitude"), c.get("longitude")
-            if lat and lon:
-                _CACHE_FALHA.pop(cep, None)
-                _CACHE_OK[cep] = (float(lat), float(lon))
-                return _CACHE_OK[cep]
-    except Exception:  # noqa: BLE001
-        logger.warning("Falha ao geolocalizar CEP %s", cep)
-    _CACHE_FALHA[cep] = time.monotonic()
+    achou = _geocodificar(cep)
+    if achou:
+        _CACHE_FALHA.pop(cep, None)
+        _CACHE_OK[cep] = achou
+        return achou
+    _CACHE_FALHA[cep] = time.monotonic()   # falha NÃO fica para sempre: retenta após FALHA_TTL_S
     return None
+
+
+def coordenadas_cep(cep: str) -> tuple[float, float] | None:
+    """(lat, lon) do CEP ou ``None`` se indisponível (o chamador usa ``KM_PADRAO``)."""
+    c = _coordenada(cep)
+    return (c[0], c[1]) if c else None
 
 
 def limpar_cache_cep() -> None:
     """Esvazia os caches (usado nos testes)."""
+    global _ultimo_nominatim
+    _ultimo_nominatim = 0.0
     _CACHE_OK.clear()
     _CACHE_FALHA.clear()
 
 
 def distancias_km(cep_obra: str, fornecedores: list[Fornecedor]) -> dict[str, float]:
-    """{id_fornecedor: km (linha reta ×1,3 para aproximar a rota)}; ``KM_PADRAO`` se faltar coordenada."""
-    obra = coordenadas_cep(cep_obra)
+    """{id_fornecedor: km (linha reta ×1,3 para aproximar a rota)}.
+
+    Usa ``KM_PADRAO`` quando falta coordenada OU quando uma das pontas só tem precisão de cidade
+    (todas as coordenadas iguais dariam 0 km, o que seria uma distância falsa).
+    Dica: preencha ``lat``/``lon`` das lojas em ``fornecedores`` (precisão máxima, sem depender de API).
+    """
+    obra = _coordenada(cep_obra)
     saida: dict[str, float] = {}
     for f in fornecedores:
-        loja = (f.lat, f.lon) if f.lat is not None and f.lon is not None else coordenadas_cep(f.cep)
-        saida[f.id] = round(_haversine(*obra, *loja) * 1.3, 1) if obra and loja else KM_PADRAO
+        if f.lat is not None and f.lon is not None:
+            loja = (f.lat, f.lon, "manual")
+        else:
+            loja = _coordenada(f.cep)
+        if not obra or not loja or "cidade" in (obra[2], loja[2]):
+            saida[f.id] = KM_PADRAO
+        else:
+            saida[f.id] = round(_haversine(obra[0], obra[1], loja[0], loja[1]) * 1.3, 1)
     return saida
