@@ -31,7 +31,7 @@ class Fornecedor(BaseModel):
     id: str
     nome: str
     dominio: str                       # mesmo domínio que a busca encontra (ex.: leroymerlin.com.br)
-    cep: str
+    cep: str | None = None              # None em e-commerce (sem loja física): distância não entra no frete
     frete_base: float = 0.0            # R$ fixo por entrega
     rs_por_km: float = 0.0             # R$ por km de distância
     pedido_minimo: float = 0.0         # R$ mínimo de produtos para entregar

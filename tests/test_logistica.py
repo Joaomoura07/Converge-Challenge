@@ -185,3 +185,18 @@ def test_cep_invalido_nao_chama_api(api):
     chamadas = api()
     assert lg_mod.coordenadas_cep("123") is None and lg_mod.coordenadas_cep("") is None
     assert chamadas == []
+
+
+# --- e-commerce: sem CEP/coordenadas, frete fixo por loja -----------------------------------------------
+def test_ecommerce_sem_cep_nao_consulta_api_e_usa_frete_fixo(api):
+    chamadas = api()
+    lojas = [Fornecedor(id=d, nome=d, dominio=d, frete_base=35) for d in ("leroymerlin.com.br", "cec.com.br")]
+    assert lojas[0].cep is None
+    km = lg_mod.distancias_km("52011-050", lojas)
+    assert all(v == lg_mod.KM_PADRAO for v in km.values())                 # sem coordenada: padrão, sem 0 km falso
+    assert len([u for u in chamadas if "viacep" in u]) == 1                # só a obra é geocodificada
+    itens = [item(100, 105), item(50, 52)]
+    r = calcular_logistica(itens, [Fornecedor(id="L", nome="L", dominio="leroymerlin.com.br", frete_base=35),
+                                   Fornecedor(id="C", nome="C", dominio="cec.com.br", frete_base=35)], km)
+    assert r.frete_total in (35.0, 70.0) and r.lojas[0].distancia_km == lg_mod.KM_PADRAO
+    assert r.estrategia == "loja_unica" and r.total == 185.0               # L: 150 + 35 (dividir custaria +35 de frete)
