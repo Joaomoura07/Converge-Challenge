@@ -422,3 +422,40 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 - **Métricas para o pitch** (`python -m scripts.metricas_pitch <arquivo>`), Cozinha Graças, 24 itens, cache da demo:
   96% com preço e fonte · 83% definidos · 12% pedem especificação · 4% não encontrados · 8% com busca refeita pelo agente ·
   1,4 loja por item (ponto fraco: muita confiança baixa) · 1º item em 1,3 s · completo em 69 s · US$ 0,0057 por orçamento.
+
+## Etapa revisao-geral — análise do que falta para o Enzo (07/11, 15h50) · 07/11 15:49 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 458 passed, 12 skipped, 16 deselected, 2 warnings in 12.39s |
+| coerência com o programa | ✅ | 7 passed in 0.43s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+
+## Etapa 3 — rodízio de chaves da Featherless: vagas por chave, chave do agente separada, chave que falha esfria · 07/11 16:40 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 581 passed, 12 skipped, 16 deselected, 2 warnings in 15.04s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 201 deselected in 14.44s |
+
+## Etapa 6 — agente com a chave própria (a última de FEATHERLESS_API_KEYS) · 07/11 16:41 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 581 passed, 12 skipped, 16 deselected, 2 warnings in 12.46s |
+| coerência com o programa | ✅ | 7 passed in 0.42s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 6) | ❌ | 1 failed, 1 passed, 201 deselected, 2 warnings in 66.89s (0:01:06) |
+
+### Rodízio de chaves da Featherless (FEATHERLESS_API_KEYS) · 07/11 ~16h30
+- `check_setup`: as 3 chaves respondem. Backend publicado lendo `FEATHERLESS_API_KEYS` (`/health` com `llm: true`).
+- Extração: vagas por chave (3 × 2 chaves de extração = 6 simultâneas); a 3ª chave fica só para o GLM-5.2 do agente;
+  resposta vazia, 429 e 5xx esfriam a chave por 30 s e a nova tentativa vai para outra. Revisão real da etapa 3 aprovada.
+- **Etapa 6 real reprovada (não é o rodízio):** o agente usou a chave própria e reformulou para "misturador monocomando
+  Deca Link cozinha", mas Amazon e Loja Dexco vieram com o produto certo **sem preço no anúncio**; o tempo de 40 s
+  acabou antes da 2ª busca. Ataque previsto: priorizar anúncios com preço e busca aberta (passo 5 do plano).

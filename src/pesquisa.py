@@ -31,7 +31,8 @@ from pydantic import Field
 
 from . import cache
 from . import custo as _custo
-from .agent import Agent
+from .agent import Agent, build_llm_client
+from .chaves_llm import chave_agente
 from .busca import buscar, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -156,8 +157,10 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
 def criar_agente(cliente=None) -> Agent:
     """Reaproveita o Agent de src/agent.py para o LLM: modelo, reserva em 400/503, custo e tracing."""
     s = get_settings()
+    # Com 2+ chaves, o agente usa a última, que fica só para ele (src/chaves_llm.py): não disputa cota com as extrações.
     agente = Agent(name="pesquisador", system_prompt=load_prompt("pesquisador_precos"), tools=FERRAMENTAS,
-                   model=s.pesquisa_modelo_agente or s.featherless_model, client=cliente)
+                   model=s.pesquisa_modelo_agente or s.featherless_model,
+                   client=cliente or build_llm_client(api_key=chave_agente()))
     agente.fallback_model = agente.fallback_model or MODELO_RESERVA_AGENTE
     return agente
 

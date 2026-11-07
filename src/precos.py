@@ -22,6 +22,7 @@ from openai import APIStatusError, AsyncOpenAI
 from pydantic import BaseModel
 
 from . import custo as _custo
+from . import chaves_llm
 from .busca import ResultadoWeb
 from .config import get_settings, load_prompt
 from .modelos import Fonte
@@ -134,19 +135,14 @@ def semaforo_do_loop(registro: weakref.WeakKeyDictionary, vagas: int) -> asyncio
     return registro[loop]
 
 
-_semaforos: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
-
-
-def _porteiro() -> asyncio.Semaphore:
-    """No máximo N chamadas simultâneas à Featherless (evita erro 429). Um por event loop."""
-    return semaforo_do_loop(_semaforos, get_settings().pesquisa_concorrencia_llm)
-
-
-def _cliente() -> AsyncOpenAI:
+def _cliente(chave: str | None = None) -> AsyncOpenAI:
     s = get_settings()
     # Tempo curto + 1 nova tentativa: se o modelo principal travar, a reserva assume rápido (demo de ~30 s).
-    return AsyncOpenAI(api_key=s.featherless_key or "missing", base_url=s.featherless_base_url,
+    return AsyncOpenAI(api_key=chave or s.featherless_key or "missing", base_url=s.featherless_base_url,
                        timeout=TIMEOUT_EXTRACAO_S, max_retries=1)
+
+
+ERROS_DA_CHAVE = {429, 500, 502, 503, 504}   # problema da conta/servidor: vale tentar com outra chave
 
 
 class RespostaVazia(Exception):
@@ -170,17 +166,30 @@ async def _chamar(cliente, modelo: str, produto: str, anuncios: str):
                  {"role": "user", "content": f"Produto pedido: {produto}\n\n{anuncios}{sufixo}"}]
     lf = get_client()
     lf.update_current_generation(model=modelo, input=mensagens)
+    falhou = None
     for tentativa in range(TENTATIVAS_RESPOSTA_VAZIA):
-        async with _porteiro():
-            r = await cliente.chat.completions.create(model=modelo, messages=mensagens, temperature=0, max_tokens=400)
+        # vaga numa das chaves de extração (a menos ocupada; evita a que acabou de falhar)
+        async with chaves_llm.pool_extracao().vaga(evitar=falhou) as chave:
+            cli = cliente or _cliente(chave)
+            try:
+                r = await cli.chat.completions.create(model=modelo, messages=mensagens, temperature=0, max_tokens=400)
+            except APIStatusError as exc:
+                if exc.status_code in ERROS_DA_CHAVE:
+                    chaves_llm.esfriar(chave)
+                raise
+            finally:
+                if cliente is None:
+                    await cli.close()   # sem isso o httpx reclama "Event loop is closed" ao sair
         try:
             conferir_resposta(r)
             break
         except RespostaVazia:
+            chaves_llm.esfriar(chave)   # a próxima tentativa vai para outra chave
+            falhou = chave
             if tentativa == TENTATIVAS_RESPOSTA_VAZIA - 1:
                 raise
             logger.info("Featherless devolveu resposta vazia (%s); tentando de novo", modelo)
-            await asyncio.sleep(1.0 + random.random())   # espalha as novas tentativas
+            await asyncio.sleep(0.3 + random.random() / 2)   # espalha as novas tentativas
     custo = getattr(r.usage, "cost", None) if r.usage else None
     lf.update_current_generation(
         output=r.choices[0].message.content,
@@ -194,13 +203,8 @@ async def extrair_e_conferir(produto: str, resultados: list[ResultadoWeb], clien
     der erro ou não devolver nenhuma linha válida."""
     if not resultados:
         return ResultadoExtracao(erro="nenhum anúncio para ler")
-    proprio = cliente is None
-    cliente = cliente or _cliente()
-    try:
-        return await _extrair(produto, resultados, cliente)
-    finally:
-        if proprio:
-            await cliente.close()   # sem isso o httpx reclama "Event loop is closed" ao sair
+    # cliente=None (produção): cada chamada usa a chave que o rodízio escolher (src/chaves_llm.py)
+    return await _extrair(produto, resultados, cliente)
 
 
 # Disjuntor: modelo que a Featherless recusa com 400 ("not available for inference" / frio carregando)
