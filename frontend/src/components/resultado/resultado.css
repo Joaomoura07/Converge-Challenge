@@ -1,0 +1,95 @@
+/* Resultado da Fatia C. Só papéis de cor/variáveis do site (globals.css + styles/papeis-de-cor.css): nenhum hex novo. */
+.rs-painel {
+  display: grid;
+  gap: 14px;
+}
+.rs-topo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+}
+.rs-valor {
+  display: block;
+  font-family: var(--serif);
+  font-size: 34px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.rs-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rs-bloco {
+  padding-top: 12px;
+  border-top: 1px solid var(--cor-linha, var(--linha));
+}
+.rs-texto {
+  margin: 6px 0 4px;
+  max-width: 64ch;
+}
+.rs-ganho {
+  font-family: var(--serif);
+  font-size: 20px;
+}
+.rs-veredito {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 6px 0 2px;
+  font-family: var(--serif);
+  font-size: 22px;
+}
+.rs-veredito span:last-child {
+  color: var(--cor-texto, var(--tinta));
+}
+.rs-sim span:first-child { color: var(--cor-definido, #1e6b43); }
+.rs-talvez span:first-child { color: var(--cor-pendente, #9a5b00); }
+.rs-nao span:first-child { color: var(--cor-erro, var(--erro)); }
+.rs-lista {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  max-width: 64ch;
+  font-size: 14px;
+}
+.rs-lista li + li { margin-top: 6px; }
+.rs-lojas {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+.rs-lojas li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cor-linha, var(--linha));
+  font-size: 14px;
+}
+.rs-lojas small {
+  display: block;
+  font-size: 11px;
+  color: var(--cor-texto-2, var(--tinta-suave));
+}
+.rs-lojas strong { font-variant-numeric: tabular-nums; }
+.rs-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.rs-documento .linha span:last-child { font-variant-numeric: tabular-nums; }
+
+/* "Imprimir / salvar PDF": imprime só o documento */
+@media print {
+  body * { visibility: hidden; }
+  .rs-fundo, .rs-fundo * { visibility: visible; }
+  .rs-fundo { position: absolute; inset: 0; background: none; padding: 0; display: block; }
+  .rs-documento { box-shadow: none; border: 0; max-height: none; width: 100%; }
+  .rs-acoes { display: none; }
+}
+
+/* Fotos reais (imagem_url) nas miniaturas e no painel de referência */
+.rs-foto { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rs-lateral-viab { margin-top: 18px; }

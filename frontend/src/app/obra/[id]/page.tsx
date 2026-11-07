@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use } from "react";
+import { reenviar, useEnvio } from "@/lib/envio/armazem";
 import { EncaixeResultado } from "@/components/obra/EncaixeResultado";
 import { ResultadoItens } from "@/components/orcamento/ResultadoItens";
 import { CabecalhoPagina } from "@/components/shell/CabecalhoPagina";
@@ -37,7 +38,9 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
-  const aguardando = carregado && !orcamento;
+  const envio = useEnvio(valido ? id : null);
+  const enviando = envio?.tipo === "enviando";
+  const aguardando = carregado && !orcamento && !enviando && envio?.tipo !== "erro";
 
   return (
     <>
@@ -53,6 +56,41 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
           </span>
         }
       />
+
+      {enviando && (
+        <section className="obra-bloco" role="status" aria-live="polite">
+          <h2 className="obra-bloco__titulo">Enviando e pesquisando preços…</h2>
+          <p className="obra-bloco__texto">
+            Os itens aparecem aqui sozinhos, um a um, enquanto a pesquisa roda. Pode levar alguns minutos: não feche esta
+            página.
+          </p>
+        </section>
+      )}
+
+      {envio?.tipo === "erro" && (
+        <section className="obra-bloco" role="alert">
+          <h2 className="obra-bloco__titulo">
+            {envio.erro.motivo === "validacao"
+              ? "O servidor recusou a lista"
+              : envio.erro.motivo === "conflito"
+                ? "Este código já foi usado com outro conteúdo"
+                : envio.erro.motivo === "config"
+                  ? "O servidor não está pronto"
+                  : "O envio não terminou"}
+          </h2>
+          <p className="obra-bloco__texto">{envio.erro.mensagem}</p>
+          <div className="obra-acoes">
+            {envio.erro.recuperavel && (
+              <button type="button" className="sh-botao" onClick={() => void reenviar(id)}>
+                Reenviar o mesmo pedido
+              </button>
+            )}
+            <Link href={`/nova?retomar=${id}`} className="sh-link">
+              ← Voltar e corrigir a lista
+            </Link>
+          </div>
+        </section>
+      )}
 
       {conexao === "sem-configuracao" && (
         <section className="obra-bloco" role="alert">
@@ -105,7 +143,7 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
           <ResultadoItens itens={itens} />
 
           {/* ENCAIXE DA C: totais, "cabe ou não", frete, ganho de tempo e Exportar. */}
-          <EncaixeResultado orcamento={orcamento} />
+          <EncaixeResultado orcamento={orcamento} itens={itens} />
         </>
       )}
     </>

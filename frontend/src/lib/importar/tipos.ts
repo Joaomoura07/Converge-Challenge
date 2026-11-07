@@ -11,7 +11,8 @@ export type CodigoErro =
   | "ARQUIVO_CORROMPIDO"
   | "ARQUIVO_GRANDE_DEMAIS"
   | "CSV_MALFORMADO"
-  | "CABECALHO_NAO_ENCONTRADO";
+  | "CABECALHO_NAO_ENCONTRADO"
+  | "PDF_SEM_TEXTO";
 
 export type CodigoAviso =
   | "SEM_DADOS"
@@ -29,7 +30,9 @@ export type CodigoAviso =
   | "CODIFICACAO_INVALIDA"
   | "TEXTO_TRUNCADO"
   | "EXTENSAO_INCORRETA"
-  | "CABECALHO_MULTILINHA";
+  | "CABECALHO_MULTILINHA"
+  | "EMBALAGEM_COMO_UNIDADE"
+  | "EXTRACAO_AMBIGUA";
 
 export type ItemImportado = {
   /** Linha do arquivo original (1 = primeira linha). */
@@ -50,7 +53,7 @@ export type AvisoImportacao = {
 
 export type OrigemImportacao = {
   arquivo: string;
-  formato: "csv" | "xlsx" | "xls" | "xlsm" | "txt";
+  formato: "csv" | "xlsx" | "xls" | "xlsm" | "txt" | "pdf";
   software: "revit" | "sketchup" | "desconhecido";
   aba: string | null;
   delimitador: string | null;

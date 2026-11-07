@@ -368,7 +368,7 @@ export type EntradaMapa = {
   registros: Registro[];
   avisos: AvisoImportacao[];
   nome: string;
-  formato: "csv" | "txt" | "xlsx" | "xls" | "xlsm";
+  formato: "csv" | "txt" | "xlsx" | "xls" | "xlsm" | "pdf";
   aba: string | null;
   delimitador: string | null;
   codificacao: string | null;
