@@ -18,6 +18,8 @@ export type Linha = {
   quantidade: string; // texto digitado; o número só sai da validação
   unidade: string;
   categoria: string;
+  /** linha do arquivo importado; ausente nas linhas digitadas */
+  linhaOrigem?: number;
 };
 
 export type ErrosLinha = Partial<Record<"descricao" | "quantidade" | "unidade", string>>;
@@ -36,7 +38,7 @@ export type Acao =
   | { tipo: "tocar"; id: string; campo: Campo }
   | { tipo: "revelar_erros" }
   | { tipo: "alternar_modo"; modo: ModoEntrada }
-  // Encaixe dos importadores das próximas etapas (ainda sem uso na tela).
+  // Importadores (CSV na etapa 04; Excel, Revit e PDF nas seguintes) entram por aqui.
   | { tipo: "importar"; linhas: Linha[]; como: "acrescentar" | "substituir" };
 
 export const estadoInicial: EstadoLista = { modo: "manual", linhas: [], tocados: {} };
