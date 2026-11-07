@@ -73,8 +73,9 @@ Falha total → cache vencido ("preço de dd/mm") ou `nao_encontrado` com as con
 > P0-2 (etapa 7 aprovada no banco real), P0-3 (rota `POST /orcamento-itens/{item_id}/repesquisar`, corpo opcional
 > `{"nova_descricao": "..."}`), P1-6, P1-7 e P1-9, mais disjuntor de modelo fora do ar e adaptação ao SQL da fatia A
 > (cache em `resultado` jsonb, `classificacao = pendente`). Números e achados em `docs/revisao/fatia-b.md`.
-> **Ainda abertos:** P0-4 (conferir limite da função no painel da Vercel), P0-5 (componentes no site do Samuel),
-> P1-8, P2. **Pedir ao Samuel:** `alter table orcamento_itens add column premissa text;`
+> **Depois (~15h40):** P0-5 feito (componentes em `frontend/src/components/orcamento/`, encaixe `<ResultadoItens itens={itens} />`),
+> P1-8 investigado (Leroy sem preço no HTML; kit do mesmo produto agora = SIM), métricas em `scripts/metricas_pitch.py`.
+> **Ainda abertos:** P0-4 (limite da função na Vercel), teste da leitura anon com a chave publishable, P2-10 (arquivo da demo). **Pedir ao Samuel:** `alter table orcamento_itens add column premissa text;`
 
 ### P0 — sem isso a demo não fica boa
 1. **Desempenho com muitos itens (o mais importante).** Medido no aquecimento da Cozinha Graças (24 itens):

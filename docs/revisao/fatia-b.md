@@ -379,3 +379,46 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
   3. `classificacao` no banco é `definido | pendente` (check `itens_classificacao_ck`) → `item_da_linha` mapeia `pendente` → `pendente_especificacao` (antes o genérico era pesquisado como definido, sem pergunta).
   4. `orcamentos.cep` só aceita dígitos; `orcamento_itens.fontes` é NOT NULL sem padrão (a B sempre manda `[]`).
 - **Trava de embalagem (P1-6):** só na direção observada (preço por m² rotulado como caixa). A direção contrária é indistinguível com 3 lojas (testado: corrigia a loja errada) e fica para o filtro de outlier.
+
+## Etapa 3 — prompt: kit/pacote do mesmo produto = SIM (lixa em pacote deixava de ter preço) · 07/11 15:24 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 388 passed, 12 skipped, 16 deselected in 9.76s |
+| coerência com o programa | ✅ | 7 passed in 0.41s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 189 deselected in 11.47s |
+
+## Etapa 8 — componentes da B no site Next.js (frontend/): ResultadoItens com progresso, pendentes no fim e botões na rota; papéis de cor na paleta do site · 07/11 15:24 · ⏸️ pendente (algo não rodou de verdade)
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 388 passed, 12 skipped, 16 deselected in 10.39s |
+| coerência com o programa | ✅ | 7 passed in 0.49s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 8) | ⏸️ | 191 deselected in 1.10s |
+
+### Avaliação manual — componentes no site, Realtime, não encontrados e métricas · 07/11 ~15h40
+- **Site (`frontend/`, Next.js do Samuel):** componentes da B copiados para `frontend/src/components/orcamento/` + `ResultadoItens`
+  (progresso "N de M itens pesquisados" com barra, pendentes no fim, "Responder"/"Pesquisar de novo" na rota
+  `POST /orcamento-itens/{id}/repesquisar`, item volta a "pesquisando" na hora e mensagem em português se falhar).
+  Encaixe para a fatia A: `<ResultadoItens itens={itens} />` com os itens do `useOrcamento(id)`. Nenhum arquivo do Samuel alterado.
+  Cores: papéis ligados à paleta do site em `frontend/src/styles/papeis-de-cor.css` (definido 5,8:1 e pendente 4,85:1 sobre o papel, medidos).
+  **Conferido no navegador** (`/previa-b`, dados reais): carregamento com hachura e cota tracejada, chegada animada, Responder
+  (texto < 3 letras barrado), Pesquisar de novo, 375 px sem rolagem horizontal, `?demo=1` com fonte 18 px; página principal do Samuel
+  sem erro no console. Tipos + 47 testes do Vitest ok; `test_etapa8_ui` garante que a prévia e o site usam os mesmos componentes.
+- **Realtime real:** assinatura em `orcamentos` e `orcamento_itens` recebeu os eventos de UPDATE (1 + 1). **Leitura pública (anon) não
+  testada:** só há a chave secreta no `.env`; falta testar com a chave publishable do site.
+- **P1-8, por que "não encontrado":**
+  1. Leroy Merlin: o anúncio certo vem SEM preço — a página carrega o preço por JavaScript; nem o conteúdo bruto do Tavily
+     (`include_raw_content`) tem "R$". Sem conserto barato na busca; quem compensa é o agente buscando em outra loja.
+  2. Embalagem sem medida ("caixa" sem m², Portinari metrô sem tamanho): não dá para comparar. Honesto ficar sem preço.
+  3. **Corrigido:** kit/pacote do MESMO produto era "PARECIDO" (lixa Norton em pacote de 5 ficava sem preço). Prompt agora:
+     mesmo produto em kit = SIM com a embalagem do kit (o cálculo divide pelo conteúdo). Controle real: kit 2 latas 18 L → SIM, 36 L.
+  4. Featherless degradada à tarde: extração de controle levou 132 s numa rodada e 3,4–5,5 s nas seguintes; Qwen às vezes devolve
+     0 linhas válidas e a reserva Gemma leva ~40 s.
+- **Métricas para o pitch** (`python -m scripts.metricas_pitch <arquivo>`), Cozinha Graças, 24 itens, cache da demo:
+  96% com preço e fonte · 83% definidos · 12% pedem especificação · 4% não encontrados · 8% com busca refeita pelo agente ·
+  1,4 loja por item (ponto fraco: muita confiança baixa) · 1º item em 1,3 s · completo em 69 s · US$ 0,0057 por orçamento.
