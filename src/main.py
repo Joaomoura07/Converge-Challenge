@@ -34,6 +34,10 @@ app = FastAPI(title="Converge Agents API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(resultado_router)
 
+from .rotas_revisao import router as revisao_router  # noqa: E402  (Fatia A: revisor E1)
+
+app.include_router(revisao_router)
+
 
 class RunRequest(BaseModel):
     task: str
