@@ -1,55 +1,20 @@
 "use client";
 
-// Resultado da Fatia C no site: subtotal, "cabe ou não", onde comprar, ganho de tempo e Exportar.
-// Referência: Figma, tela 08 (cabeçalho "Subtotal estimado" + "Prévia do documento"). Estilos: classes `sh-*` do site + `rs-*`.
-// Os dados vêm do hook useOrcamento (orcamento.logistica / viabilidade / ganho); aqui só se desenha.
+// "Cabe no orçamento?", onde comprar (menor preço por item) e ganho de tempo. Só desenha o que a API já calculou
+// (orcamento.viabilidade / logistica / ganho). Estilos: classes `sh-*` do site + `rs-*`.
 
-import { useState } from "react";
 import { reais } from "../orcamento/formato";
-import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
-import { DocumentoOrcamento } from "./DocumentoOrcamento";
-import { faixa, foraDoSubtotal, linhasDocumento, resumoParaTela, subtotal, urlExportar, veredito } from "./resultado";
+import type { Orcamento } from "@/lib/orcamento/tipos";
+import { faixa, resumoParaTela, veredito } from "./resultado";
 import "./resultado.css";
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
-export function PainelResultado({ orcamento, itens }: { orcamento: Orcamento; itens: ItemLinha[] }) {
-  const [documento, setDocumento] = useState(false);
+export function BlocoViabilidade({ orcamento }: { orcamento: Orcamento }) {
   const { viabilidade, logistica, ganho } = orcamento;
-  const linhas = linhasDocumento(itens);
-  const fora = foraDoSubtotal(itens);
-  const excel = urlExportar(orcamento.id);
   const ver = viabilidade ? veredito(viabilidade) : null;
-
   return (
-    <div className="rs-painel">
-      <div className="rs-topo">
-        <div>
-          <p className="sh-etiqueta" style={{ margin: 0 }}>
-            Subtotal estimado
-          </p>
-          <span className="rs-valor">{reais(subtotal(linhas))}</span>
-          <p className="sh-apoio" style={{ margin: "2px 0 0" }}>
-            {plural(linhas.length, "material", "materiais")} · frete ainda não incluído
-            {fora.total > 0 && ` · ${plural(fora.total, "item fora", "itens fora")} do subtotal`}
-          </p>
-        </div>
-        <div className="rs-botoes">
-          <button type="button" className="sh-botao" onClick={() => setDocumento(true)}>
-            Prévia do documento <span aria-hidden="true">↗</span>
-          </button>
-          {excel ? (
-            <a className="sh-botao claro" href={excel} download="plano-de-compra.xlsx">
-              Baixar plano em Excel
-            </a>
-          ) : (
-            <span className="sh-botao claro" aria-disabled="true" title="Defina NEXT_PUBLIC_API_URL para baixar o Excel">
-              Baixar plano em Excel
-            </span>
-          )}
-        </div>
-      </div>
-
+    <>
       {viabilidade && ver && (
         <section className="rs-bloco" aria-labelledby="rs-cabe">
           <p className="sh-etiqueta" id="rs-cabe" style={{ margin: 0 }}>
@@ -101,8 +66,6 @@ export function PainelResultado({ orcamento, itens }: { orcamento: Orcamento; it
           <p className="rs-texto rs-ganho">{ganho.resumo}</p>
         </section>
       )}
-
-      {documento && <DocumentoOrcamento orcamento={orcamento} itens={itens} onFechar={() => setDocumento(false)} />}
-    </div>
+    </>
   );
 }

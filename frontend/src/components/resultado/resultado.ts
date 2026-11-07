@@ -2,7 +2,7 @@
 // Entrada: as linhas de `orcamento_itens` e a linha de `orcamentos` (logistica, viabilidade, ganho) que o
 // useOrcamento entrega. Referência visual: Figma, tela 08 · Documento de orçamento.
 
-import { embalagens, reais } from "../orcamento/formato";
+import { embalagens, quantidade as formatarQtd, reais, unidade as formatarUnidade } from "../orcamento/formato";
 import type { ItemLinha, Viabilidade } from "@/lib/orcamento/tipos";
 
 export interface LinhaDocumento {
@@ -102,4 +102,119 @@ export const faixa = (v: Viabilidade) =>
 export function dataCurta(iso: string | Date = new Date()): string {
   const d = typeof iso === "string" ? new Date(iso) : iso;
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Lista "Materiais" / "Fontes" / "Referência selecionada" (Figma, telas 05 e 06) a partir das linhas reais.
+
+const hmm = (url?: string | null) => (typeof url === "string" && /^https?:\/\//i.test(url) ? url : null);
+
+export interface FonteTela {
+  loja: string;
+  dominio: string;
+  url: string | null;
+  /** "R$ 489,90 / lata 18 L" */
+  preco: string;
+  data: string | null;
+}
+
+export type SituacaoItem = "precificado" | "pendente" | "sem-preco" | "buscando";
+
+export interface ItemTela {
+  id: string;
+  nome: string;
+  /** especificação: "Acetinado, 60 × 60 cm" ou a embalagem */
+  detalhe: string;
+  /** "Casa Forma · Revestimentos" (loja de menor preço + categoria) */
+  loja: string;
+  /** o que a obra precisa: "60 m²" */
+  quantidade: string;
+  /** "33 caixas 1,62 m²" */
+  compra: string;
+  total: number | null;
+  /** "R$ 89,90 / m²" */
+  unitario: string;
+  situacao: SituacaoItem;
+  /** texto quando não há preço: pergunta ao arquiteto, motivo ou "Buscando…" */
+  aviso: string;
+  imagem: string | null;
+  fontes: FonteTela[];
+}
+
+const dataFonte = (iso?: string | null) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase().replace(/\./g, "");
+};
+
+/** Linha de orcamento_itens -> o que a tela de estimativa desenha. Sem preço nunca vira número. */
+export function itemParaTela(i: ItemLinha): ItemTela {
+  const linha = linhasDocumento([i])[0];
+  const fontes: FonteTela[] = (i.fontes ?? [])
+    .slice()
+    .sort((a, b) => a.preco_embalagem - b.preco_embalagem)
+    .map((f) => ({
+      loja: f.loja,
+      dominio: f.dominio,
+      url: hmm(f.url),
+      preco: `${reais(f.preco_embalagem)}${f.embalagem || i.embalagem ? ` / ${f.embalagem || i.embalagem}` : ""}`,
+      data: dataFonte(i.preco_data),
+    }));
+  const melhorLoja = fontes[0]?.loja;
+  const nome = i.produto_normalizado || i.descricao;
+  const unitario =
+    i.preco_un_med != null && i.unidade_preco
+      ? `${reais(i.preco_un_med)} / ${formatarUnidade(i.unidade_preco)}`
+      : i.preco_emb_med != null
+        ? `${reais(i.preco_emb_med)}${i.embalagem ? ` / ${i.embalagem}` : ""}`
+        : "";
+
+  let situacao: SituacaoItem;
+  let aviso = "";
+  if (linha) situacao = "precificado";
+  else if (i.status === "buscando") (situacao = "buscando"), (aviso = "Buscando…");
+  else if (i.status === "pendente_especificacao") (situacao = "pendente"), (aviso = i.pergunta || "Complete a especificação para ter preço.");
+  else (situacao = "sem-preco"), (aviso = i.motivo || "Sem preço encontrado.");
+
+  return {
+    id: i.id,
+    nome,
+    detalhe: i.produto_normalizado && i.produto_normalizado !== i.descricao ? i.descricao : i.embalagem || "",
+    loja: [melhorLoja, i.categoria].filter(Boolean).join(" · ") || (situacao === "precificado" ? "" : "Sem preço · excluído do subtotal"),
+    quantidade: formatarQtd(i.quantidade, i.unidade),
+    compra: i.qtd_embalagens && i.embalagem ? embalagens(i.qtd_embalagens, i.embalagem) : "",
+    total: linha ? linha.total : null,
+    unitario: linha ? unitario : "",
+    situacao,
+    aviso,
+    imagem: hmm(i.imagem_url),
+    fontes,
+  };
+}
+
+/** Itens da lista: pendentes e sem preço no fim, na ordem em que o arquiteto os escreveu (Figma, tela 05). */
+export function itensParaTela(itens: ItemLinha[]): ItemTela[] {
+  const ordem = (t: ItemTela) => (t.situacao === "precificado" || t.situacao === "buscando" ? 0 : t.situacao === "sem-preco" ? 1 : 2);
+  return itens
+    .filter(entraNaConta)
+    .map(itemParaTela)
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => ordem(a.t) - ordem(b.t) || a.i - b.i)
+    .map(({ t }) => t);
+}
+
+/** "03 itens precificados" / "01 item pendente": dois dígitos, singular e plural (como no Figma). */
+export const contagem = (n: number, um: string, varios: string) => `${String(n).padStart(2, "0")} ${n === 1 ? um : varios}`;
+
+/** Título editorial: a última palavra vai em itálico com ponto ("Cozinha Planejada" + "Graças."). */
+export function tituloEditorial(nome: string): { titulo: string; destaque: string } {
+  const partes = nome.trim().split(/\s+/);
+  const destaque = partes.pop() ?? "";
+  return { titulo: partes.join(" "), destaque: `${destaque.replace(/[.]+$/, "")}.` };
+}
+
+export function mesAno(iso?: string | null): string {
+  const d = iso ? new Date(iso) : new Date();
+  const base = Number.isNaN(d.getTime()) ? new Date() : d;
+  return base.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 }

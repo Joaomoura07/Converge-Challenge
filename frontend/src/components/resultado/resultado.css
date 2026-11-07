@@ -89,3 +89,7 @@
   .rs-documento { box-shadow: none; border: 0; max-height: none; width: 100%; }
   .rs-acoes { display: none; }
 }
+
+/* Fotos reais (imagem_url) nas miniaturas e no painel de referência */
+.rs-foto { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rs-lateral-viab { margin-top: 18px; }
