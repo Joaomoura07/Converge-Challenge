@@ -27,8 +27,8 @@ type Situacao =
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
 export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props) {
-  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit";
-  const aceita = modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : ".csv,text/csv";
+  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit" || modo === "pdf";
+  const aceita = modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
@@ -52,12 +52,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       setSituacao({ tipo: "erro", nome, mensagem: `O arquivo passa de ${LIMITE_BYTES / 1024 / 1024} MB. Divida a lista em partes.` });
       return;
     }
-    avaliar(nome, bytes, null);
+    await avaliar(nome, bytes, null);
   }
 
   /** Lê os bytes com o leitor da extensão. Planilha com várias abas pede a escolha antes de mexer na lista. */
-  function avaliar(nome: string, bytes: Uint8Array, aba: string | null) {
-    const resultado = lerArquivo({ nome, bytes, aba });
+  async function avaliar(nome: string, bytes: Uint8Array, aba: string | null) {
+    const resultado = await lerArquivo({ nome, bytes, aba });
     if (!aba && !ehErro(resultado)) {
       const abas = abasEscolhaveis(resultado);
       if (abas.length > 1) {
@@ -94,7 +94,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
 
   function importarAba() {
     if (!escolhaAba) return;
-    avaliar(escolhaAba.nome, escolhaAba.bytes, escolhaAba.selecionada);
+    void avaliar(escolhaAba.nome, escolhaAba.bytes, escolhaAba.selecionada);
   }
 
   function escolher(como: "acrescentar" | "substituir") {
@@ -140,7 +140,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
               aria-describedby={idAviso}
             />
             <button type="button" className="botao-primario" onClick={() => entrada.current?.click()}>
-              {modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : "Escolher arquivo CSV"}
+              {modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
             </button>
           </>
         )}
@@ -171,7 +171,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       <p id={idAviso} className="nota" role="status" aria-live="polite">
         {situacao.tipo === "livre" &&
           (mostrarArquivo
-            ? modo === "revit"
+            ? modo === "pdf"
+              ? "Aceita PDF com texto selecionável (pedido de cotação ou quadro de acabamentos) de até 20 MB e 30 páginas. PDF escaneado não tem texto para ler. A lista só muda depois da leitura."
+              : modo === "revit"
               ? "Aceita a tabela exportada do Revit em .txt (colunas separadas por tabulação), de até 20 MB. A lista só muda depois da leitura."
               : modo === "excel"
               ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Macros nunca são executadas. A lista só muda depois da leitura."
@@ -260,6 +262,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
 }
 
 function montarResumo(r: Importacao): string {
+  if (r.origem.formato === "pdf") {
+    return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · texto do PDF`;
+  }
   if (r.origem.formato !== "csv" && r.origem.aba) {
     return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · aba "${r.origem.aba}"`;
   }
