@@ -38,6 +38,10 @@ from .rotas_revisao import router as revisao_router  # noqa: E402  (Fatia A: rev
 
 app.include_router(revisao_router)
 
+from .rotas_orcamentos import router as orcamentos_router  # noqa: E402  (Fatia A: POST /orcamentos)
+
+app.include_router(orcamentos_router)
+
 
 class RunRequest(BaseModel):
     task: str
