@@ -183,7 +183,7 @@ html .oa-marca {
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
-html .oa-marca svg { width: 26px; height: 26px; flex: none; }
+html .oa-marca img { width: 34px; height: 34px; flex: none; margin: -4px 0; }
 html .oa-marca b { font-weight: 530; color: var(--tinta-suave); }
 html .oa-links {
   display: flex;

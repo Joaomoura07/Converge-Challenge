@@ -1,19 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/** Marca da OrçaAI: uma linha de cota (traço, marcas nas pontas e ponto médio) dentro de um círculo. */
-export function MarcaOrcaAI() {
-  return (
-    <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <circle cx="16" cy="16" r="14.2" />
-      <path d="M7.5 16h17" />
-      <path d="M6.2 18.4l2.6-4.8M23.2 18.4l2.6-4.8" />
-      <circle cx="16" cy="16" r="2.4" fill="currentColor" stroke="none" />
-    </svg>
-  );
+/** Marca da OrçaAI: a orca (logo do time), traço marfim sobre o fundo escuro. */
+export function MarcaOrcaAI({ tamanho = 34 }: { tamanho?: number }) {
+  return <Image src="/marca/orca.png" alt="" aria-hidden="true" width={tamanho} height={tamanho} priority unoptimized />;
 }
 
 const LINKS = [
