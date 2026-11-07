@@ -13,6 +13,7 @@ from types import SimpleNamespace as NS
 import pytest
 
 import src.orcamento as o
+import src.pesquisa as p
 from src.modelos import ItemEntrada, ResultadoItem, Fonte
 
 
@@ -40,7 +41,12 @@ class BancoFalso:
     async def item(self, item_id): return self.itens.get(item_id)
     async def gravar_item(self, r): self.gravados.append(r)
     async def marcar_item(self, item_id, campos): self.marcados.append((item_id, campos))
-    async def concluir(self, orcamento_id, erro=None): self.conclusao = ("falhou", erro) if erro else ("concluida", None)
+    async def concluir(self, orcamento_id, erro=None, custo_usd=None):
+        self.conclusao = ("falhou", erro) if erro else ("concluida", None)
+        self.custo = custo_usd
+
+    async def orcamento_do_item(self, item_id): return "orc-do-item"
+    async def somar_custo(self, orcamento_id, usd): self.somado = (orcamento_id, usd)
 
 
 @pytest.fixture
@@ -49,7 +55,11 @@ def pesquisa_falsa(monkeypatch):
     async def pesquisar_item(item, **kw):
         chamadas.append((item, kw))
         return resultado(item.id, "nao_encontrado" if "xyz" in item.descricao else "definido")
+    async def fase_rapida(item, usar_agente, usar_cache):   # pesquisar_itens (2 fases) usa a fase 1 direto
+        r = await pesquisar_item(item, usar_agente=usar_agente, usar_cache=usar_cache)
+        return p.Rascunho(item, r)
     monkeypatch.setattr("src.pesquisa.pesquisar_item", pesquisar_item)
+    monkeypatch.setattr("src.pesquisa._fase_rapida", fase_rapida)
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     return chamadas
 
@@ -82,21 +92,54 @@ def test_erro_geral_marca_falhou_para_liberar_novo_clique(pesquisa_falsa):
 
 def test_chama_a_fatia_c_no_fim_quando_ela_existe(pesquisa_falsa, monkeypatch):
     chamados = []
-    mod = types.ModuleType("src.logistica")
-    async def calcular_logistica(orcamento_id): chamados.append(("logistica", orcamento_id))
-    mod.calcular_logistica = calcular_logistica
-    monkeypatch.setitem(sys.modules, "src.logistica", mod)
+    mod = types.ModuleType("src.rotas_resultado")
+    def resultado_c(orcamento_id): chamados.append(("resultado", orcamento_id))   # síncrona, como a da fatia C
+    mod.resultado = resultado_c
+    monkeypatch.setitem(sys.modules, "src.rotas_resultado", mod)
     r = asyncio.run(o.pesquisar_orcamento("orc-9", banco=BancoFalso(ITENS)))
-    assert chamados == [("logistica", "orc-9")] and r["fatia_c"] == ["calcular_logistica"]
+    assert chamados == [("resultado", "orc-9")] and r["fatia_c"] == ["resultado"]
 
 
 def test_falha_da_fatia_c_nao_derruba_a_pesquisa(pesquisa_falsa, monkeypatch):
-    mod = types.ModuleType("src.viabilidade")
-    def calcular_viabilidade(orcamento_id): raise ValueError("bug da C")
-    mod.calcular_viabilidade = calcular_viabilidade
-    monkeypatch.setitem(sys.modules, "src.viabilidade", mod)
+    mod = types.ModuleType("src.rotas_resultado")
+    def resultado_c(orcamento_id): raise ValueError("bug da C")
+    mod.resultado = resultado_c
+    monkeypatch.setitem(sys.modules, "src.rotas_resultado", mod)
     r = asyncio.run(o.pesquisar_orcamento("orc-9", banco=BancoFalso(ITENS)))
-    assert r["status"] == "concluida" and "calcular_viabilidade" not in r["fatia_c"]
+    assert r["status"] == "concluida" and r["fatia_c"] == []
+
+
+def test_custo_do_llm_e_somado_e_gravado_ao_concluir(monkeypatch):
+    from src import custo
+    async def pesquisar_itens(itens, ao_terminar=None, **kw):   # não usa a rede
+        custo.registrar(0.01)       # extração
+        custo.registrar("0.005")    # agente (a Featherless devolve número ou texto)
+        custo.registrar(None)       # sem custo informado
+        return [resultado(i.id) for i in itens]
+    monkeypatch.setattr(o, "pesquisar_itens", pesquisar_itens)
+    banco = BancoFalso(ITENS[:1])
+    asyncio.run(o.pesquisar_orcamento("orc-1", banco=banco))
+    assert banco.custo == pytest.approx(0.015)
+
+
+def test_repesquisar_soma_custo_e_recalcula_o_resultado(monkeypatch):
+    from src import custo
+    chamados = []
+    mod = types.ModuleType("src.rotas_resultado")
+    mod.resultado = lambda oid: chamados.append(oid)
+    monkeypatch.setitem(sys.modules, "src.rotas_resultado", mod)
+    async def pesquisar_item(item, **kw):
+        custo.registrar(0.02)
+        return resultado(item.id)
+    monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
+    banco = BancoFalso(ITENS[:1])
+    asyncio.run(o.repesquisar_item("a", banco=banco))
+    assert banco.somado == ("orc-do-item", pytest.approx(0.02)) and chamados == ["orc-do-item"]
+
+
+def test_registrar_fora_de_um_orcamento_nao_faz_nada():
+    from src import custo
+    custo.registrar(1.0)   # sem acumulador ativo: não levanta nem acumula
 
 
 def test_repesquisar_com_a_resposta_do_arquiteto(pesquisa_falsa):
@@ -109,6 +152,36 @@ def test_repesquisar_com_a_resposta_do_arquiteto(pesquisa_falsa):
 
 
 # ---------------------------------------------------------------- serialização e SQL do Supabase
+def _cliente_api(monkeypatch, repesquisar, supabase=True):
+    from fastapi.testclient import TestClient
+    import src.main as m
+    monkeypatch.setattr(o, "repesquisar_item", repesquisar)
+    monkeypatch.setattr(type(m.settings), "supabase_configured", property(lambda self: supabase))
+    return TestClient(m.app)
+
+
+def test_rota_repesquisar_com_e_sem_resposta_do_arquiteto(monkeypatch):
+    chamadas = []
+    async def repesquisar(item_id, nova_descricao=None, **kw):
+        chamadas.append((item_id, nova_descricao))
+        return resultado(item_id) if item_id != "nao-existe" else None
+    api = _cliente_api(monkeypatch, repesquisar)
+
+    r = api.post("/orcamento-itens/a/repesquisar")                       # "Pesquisar de novo" (sem corpo)
+    assert r.status_code == 200 and r.json()["status"] == "definido" and r.json()["fontes"]
+    r = api.post("/orcamento-itens/a/repesquisar", json={"nova_descricao": "Tinta Suvinil fosco vermelho 3,6L"})
+    assert r.status_code == 200 and chamadas[-1] == ("a", "Tinta Suvinil fosco vermelho 3,6L")
+    assert api.post("/orcamento-itens/nao-existe/repesquisar").status_code == 404
+    assert api.post("/orcamento-itens/a/repesquisar", json={"nova_descricao": "x"}).status_code == 422
+    assert api.post("/orcamento-itens/a/repesquisar", json={"outra": 1}).status_code == 200   # campo extra ignorado
+
+
+def test_rota_repesquisar_sem_supabase_responde_503(monkeypatch):
+    async def repesquisar(*a, **k): raise AssertionError("não deveria pesquisar")
+    api = _cliente_api(monkeypatch, repesquisar, supabase=False)
+    assert api.post("/orcamento-itens/a/repesquisar").status_code == 503
+
+
 def test_linha_do_resultado_e_json_valido_para_o_banco():
     linha = o.linha_do_resultado(resultado("a"))
     json.dumps(linha)   # jsonb/timestamptz: tudo serializável

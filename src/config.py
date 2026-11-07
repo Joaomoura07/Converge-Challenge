@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
     pesquisa_max_refazer: int = 2           # buscas extras que o agente pode fazer por item
     pesquisa_timeout_agente_s: float = 40   # o agente não segura o orçamento inteiro (medido: ~20 s por rodada com GLM-5.2)
+    # Fase 2 (agente depois do caminho rápido de todos os itens). Medido na etapa 9: com o agente disputando
+    # as mesmas vagas das extrações, o 1º item chegava em 33 s e 12 agentes estouravam o tempo sem vaga.
+    pesquisa_concorrencia_agente: int = 1   # cota PRÓPRIA de chamadas simultâneas ao GLM do agente
+    pesquisa_agentes_simultaneos: int = 2   # itens com agente ao mesmo tempo (um pensa enquanto o outro busca)
+    pesquisa_prazo_agentes_s: float = 60    # prazo total da fase 2; item que não coube fica com o resultado da fase 1
 
     @property
     def langfuse_url(self) -> str:

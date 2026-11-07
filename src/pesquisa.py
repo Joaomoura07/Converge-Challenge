@@ -8,7 +8,9 @@
 - Item genérico → faixa estimada + pergunta ao arquiteto (sem agente: perguntar é melhor que chutar).
 - Nenhum preço sem fonte; falha total → cache vencido ("preço de dd/mm") ou "não encontrado".
 
-A gravação no Supabase (orcamento_itens) entra na etapa 7, pelo `ao_terminar` de `pesquisar_itens`.
+Orçamento inteiro (`pesquisar_itens`) em duas fases: 1ª o caminho rápido de todos os itens, gravando cada um
+(Realtime); 2ª o agente só nos itens com poucas lojas, com cota própria de LLM e prazo total.
+A gravação no Supabase (orcamento_itens) é feita pelo `ao_terminar` (src/orcamento.py).
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ import logging
 import random
 import re
 import unicodedata
+import weakref
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
@@ -27,18 +30,20 @@ from langfuse import observe
 from pydantic import Field
 
 from . import cache
+from . import custo as _custo
 from .agent import Agent
 from .busca import buscar, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
-from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, _porteiro,
-                     conferir_resposta, extrair_e_conferir)
+from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, conferir_resposta,
+                     extrair_e_conferir, semaforo_do_loop)
 from .tools import ToolArgs, ToolRegistry
 
 logger = logging.getLogger(__name__)
 
 MODELO_RESERVA_AGENTE = "Qwen/Qwen3-32B"
+MIN_TEMPO_AGENTE_S = 8   # com menos que isso não dá nem uma chamada ao GLM (9–13 s medidos): nem começa
 
 # Pergunta ao arquiteto por tipo de material (regras, sem LLM). A primeira que casar vale.
 PERGUNTAS = [
@@ -97,14 +102,17 @@ def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta) -> dict:
 
 
 # ------------------------------------------------------------------ limites
-_semaforos_busca: dict[int, asyncio.Semaphore] = {}
+_semaforos_busca: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
+_semaforos_agente: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
 
 
 def _porteiro_busca() -> asyncio.Semaphore:
-    loop = id(asyncio.get_running_loop())
-    if loop not in _semaforos_busca:
-        _semaforos_busca[loop] = asyncio.Semaphore(get_settings().pesquisa_concorrencia_busca)
-    return _semaforos_busca[loop]
+    return semaforo_do_loop(_semaforos_busca, get_settings().pesquisa_concorrencia_busca)
+
+
+def _porteiro_agente() -> asyncio.Semaphore:
+    """Cota própria do GLM do agente: não disputa vaga com as extrações (achado da etapa 9)."""
+    return semaforo_do_loop(_semaforos_agente, get_settings().pesquisa_concorrencia_agente)
 
 
 async def buscar_e_extrair(consulta: str, produto: str):
@@ -155,11 +163,13 @@ def criar_agente(cliente=None) -> Agent:
 
 
 async def _chamar_agente(agente: Agent, mensagens: list[dict]):
-    """O GLM do agente divide a mesma cota de chamadas simultâneas da Featherless com as extrações
-    (antes ficava de fora e sobrecarregava a conta), e resposta vazia ganha uma nova tentativa."""
+    """O GLM do agente tem cota própria de chamadas simultâneas (pesquisa_concorrencia_agente).
+    Histórico: fora de qualquer limite sobrecarregava a conta; dentro do mesmo limite das extrações,
+    o agente esperava vaga até estourar o tempo (etapa 9). Resposta vazia ganha uma nova tentativa."""
     for tentativa in range(TENTATIVAS_RESPOSTA_VAZIA):
-        async with _porteiro():
+        async with _porteiro_agente():
             r = await asyncio.to_thread(agente._complete, mensagens)
+        _custo.registrar(getattr(getattr(r, "usage", None), "cost", 0))
         try:
             conferir_resposta(r)
             return r
@@ -197,11 +207,13 @@ async def _loop_react(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente
     return "parou: limite de passos"
 
 
-async def refazer_com_agente(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente=None) -> str:
-    """Devolve como o agente terminou. Nunca passa do tempo limite: segue com o que já achou."""
+async def refazer_com_agente(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente=None,
+                             timeout: float | None = None) -> str:
+    """Devolve como o agente terminou. Nunca passa do tempo limite: segue com o que já achou
+    (a coleta é preenchida durante o loop, então o que veio antes do tempo esgotar não se perde)."""
     try:
         return await asyncio.wait_for(_loop_react(item, coleta, primeira, cliente),
-                                      timeout=get_settings().pesquisa_timeout_agente_s)
+                                      timeout=timeout or get_settings().pesquisa_timeout_agente_s)
     except asyncio.TimeoutError:
         logger.warning("Agente passou do tempo em '%s': seguindo com o que achou", item.descricao)
         return "parou: tempo esgotado"
@@ -227,28 +239,41 @@ def _precisa_refazer(calc: Calculo) -> bool:
     return not calc.tem_preco or len(calc.fontes) < get_settings().pesquisa_min_lojas
 
 
+@dataclass
+class Rascunho:
+    """Fim da fase 1 (caminho rápido) de um item.
+    `primeira` preenchida = faltam lojas e o agente deve refazer a busca na fase 2."""
+    item: ItemEntrada
+    resultado: ResultadoItem
+    coleta: Coleta | None = None
+    anterior: cache.EntradaCache | None = None
+    erro_busca: str | None = None
+    primeira: dict | None = None
+
+    @property
+    def precisa_agente(self) -> bool:
+        return self.primeira is not None
+
+
+def _erro(item: ItemEntrada, exc: Exception) -> ResultadoItem:
+    logger.exception("Pesquisa do item %s falhou (%s)", item.id, type(exc).__name__)
+    return ResultadoItem(item_id=item.id, status="erro", motivo=f"falha interna na pesquisa ({type(exc).__name__})")
+
+
 @observe(name="pesquisa.item")
-async def pesquisar_item(item: ItemEntrada, *, usar_agente: bool = True, usar_cache: bool = True,
-                         cliente_llm=None) -> ResultadoItem:
-    """Nunca levanta exceção: qualquer falha vira status 'erro' com motivo (o orçamento continua)."""
-    try:
-        return await _pesquisar(item, usar_agente, usar_cache, cliente_llm)
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("Pesquisa do item %s falhou", item.id)
-        return ResultadoItem(item_id=item.id, status="erro", motivo=f"falha interna na pesquisa ({type(exc).__name__})")
-
-
-async def _pesquisar(item: ItemEntrada, usar_agente: bool, usar_cache: bool, cliente_llm) -> ResultadoItem:
+async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -> Rascunho:
+    """① cache → ② busca → ③ extração → ⑤ cálculo, SEM agente. Se faltar loja, devolve um resultado
+    provisório e marca o item para a fase 2 (o cache só é gravado no resultado final)."""
     generico = item.classificacao == "pendente_especificacao"
-    agora = datetime.now(timezone.utc)
 
     # ① cache válido
     anterior = await cache.ler(item.descricao, aceitar_vencido=True) if usar_cache else None
     if anterior and not anterior.vencido:
         calc = calcular(item, anterior.extracao, generico)
         if calc.tem_preco:
-            return _resultado(item, calc, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
-                              anterior.atualizado_em, 0, pergunta=pergunta_para(item.descricao) if generico else None)
+            return Rascunho(item, _resultado(
+                item, calc, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
+                anterior.atualizado_em, anterior.iteracoes, pergunta=pergunta_para(item.descricao) if generico else None))
 
     # ② busca + ③ extração
     consulta = montar_consulta(item)
@@ -257,15 +282,24 @@ async def _pesquisar(item: ItemEntrada, usar_agente: bool, usar_cache: bool, cli
     coleta.juntar(ext.ofertas)
     calc = calcular(item, coleta.extracao(), generico)
 
-    # ④ agente refaz a busca quando faltam lojas com o mesmo produto
-    if usar_agente and not generico and _precisa_refazer(calc) and get_settings().llm_configured:
-        await refazer_com_agente(item, coleta, resumo_para_agente(ext.ofertas, coleta), cliente_llm)
-        calc = calcular(item, coleta.extracao(), generico)
+    precisa = usar_agente and not generico and _precisa_refazer(calc) and get_settings().llm_configured
+    resultado = await _concluir(item, coleta, anterior, b.erro, gravar_cache=not precisa)
+    return Rascunho(item, resultado, coleta, anterior, b.erro,
+                    primeira=resumo_para_agente(ext.ofertas, coleta) if precisa else None)
+
+
+async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCache | None, erro_busca: str | None,
+                    gravar_cache: bool = True) -> ResultadoItem:
+    """⑤ Resultado a partir de tudo que a coleta juntou (1ª busca + as do agente)."""
+    generico = item.classificacao == "pendente_especificacao"
+    agora = datetime.now(timezone.utc)
+    calc = calcular(item, coleta.extracao(), generico)
     iteracoes = coleta.buscas_agente
 
-    # ⑤ resultado
     if calc.tem_preco:
-        await cache.gravar(item.descricao, coleta.extracao(), coleta.imagem, coleta.provedor, anterior=anterior)
+        if gravar_cache:
+            await cache.gravar(item.descricao, coleta.extracao(), coleta.imagem, coleta.provedor, anterior=anterior,
+                               iteracoes=iteracoes)
         imagem = anterior.imagem_url if anterior and anterior.imagem_url else coleta.imagem
         if generico:
             return _resultado(item, calc, "pendente_especificacao", imagem, agora, iteracoes,
@@ -292,22 +326,82 @@ async def _pesquisar(item: ItemEntrada, usar_agente: bool, usar_cache: bool, cli
         return ResultadoItem(item_id=item.id, status="pendente_especificacao", imagem_url=coleta.imagem,
                              pergunta=pergunta_para(item.descricao), iteracoes=iteracoes,
                              motivo="item genérico e sem preço de referência na busca")
-    motivo = b.erro or calc.motivo or "nenhuma loja com preço para este produto"
+    motivo = erro_busca or calc.motivo or "nenhuma loja com preço para este produto"
     return ResultadoItem(item_id=item.id, status="nao_encontrado", imagem_url=coleta.imagem, iteracoes=iteracoes,
                          motivo=f"{motivo} (consultas: {' | '.join(coleta.consultas)})")
 
 
+async def _fase_agente(r: Rascunho, cliente_llm=None, timeout: float | None = None) -> ResultadoItem:
+    """Fase 2 de um item: o agente refaz a busca e o resultado é refeito com tudo que juntou."""
+    if timeout is None or timeout > 0:
+        await refazer_com_agente(r.item, r.coleta, r.primeira, cliente_llm, timeout=timeout)
+    else:
+        logger.warning("Sem tempo para o agente em '%s': fica com a 1ª busca", r.item.descricao)
+    return await _concluir(r.item, r.coleta, r.anterior, r.erro_busca)
+
+
+async def pesquisar_item(item: ItemEntrada, *, usar_agente: bool = True, usar_cache: bool = True,
+                         cliente_llm=None) -> ResultadoItem:
+    """Um item só, do começo ao fim (usado por repesquisar_item). Nunca levanta exceção:
+    qualquer falha vira status 'erro' com motivo (o orçamento continua)."""
+    try:
+        r = await _fase_rapida(item, usar_agente, usar_cache)
+        return await _fase_agente(r, cliente_llm) if r.precisa_agente else r.resultado
+    except Exception as exc:  # noqa: BLE001
+        return _erro(item, exc)
+
+
 @observe(name="pesquisa.itens")
 async def pesquisar_itens(itens: list[ItemEntrada], ao_terminar: Callable[[ResultadoItem], Awaitable[None]] | None = None,
-                          **opcoes) -> list[ResultadoItem]:
-    """Todos os itens em paralelo (os porteiros limitam busca e LLM). `ao_terminar` é chamado assim que
-    CADA item fica pronto — é por aí que a etapa 7 grava no Supabase e o Realtime atualiza a tela."""
-    async def um(item: ItemEntrada) -> ResultadoItem:
-        r = await pesquisar_item(item, **opcoes)
+                          *, usar_agente: bool = True, usar_cache: bool = True, cliente_llm=None) -> list[ResultadoItem]:
+    """Orçamento inteiro em DUAS FASES (achado da etapa 9: agente e extrações disputando as mesmas vagas
+    atrasavam o 1º item para 33 s e estouravam o tempo do agente):
+
+    Fase 1 — caminho rápido de TODOS os itens em paralelo, sem agente. Cada item é avisado em `ao_terminar`
+             assim que fica pronto (é por aí que a etapa 7 grava no Supabase e o Realtime atualiza a tela).
+             Item que vai para o agente mas já tem preço é avisado com o resultado provisório; sem preço,
+             continua "buscando" na tela até a fase 2.
+    Fase 2 — agente só nos itens com < pesquisa_min_lojas, depois da fase 1, com cota própria de LLM,
+             no máximo `pesquisa_agentes_simultaneos` por vez e prazo total `pesquisa_prazo_agentes_s`.
+             Os sem preço vão primeiro. Item que não coube no prazo fica com o resultado da fase 1.
+    """
+    s = get_settings()
+
+    async def avisar(r: ResultadoItem) -> None:
         if ao_terminar:
             try:
                 await ao_terminar(r)
             except Exception:  # noqa: BLE001 — falha ao gravar um item não derruba os outros
-                logger.exception("ao_terminar falhou para o item %s", item.id)
+                logger.exception("ao_terminar falhou para o item %s", r.item_id)
+
+    async def fase1(item: ItemEntrada) -> Rascunho:
+        try:
+            r = await _fase_rapida(item, usar_agente, usar_cache)
+        except Exception as exc:  # noqa: BLE001
+            r = Rascunho(item, _erro(item, exc))
+        if not r.precisa_agente or r.resultado.preco_emb_med is not None:
+            await avisar(r.resultado)
         return r
-    return list(await asyncio.gather(*(um(i) for i in itens)))
+
+    rascunhos = list(await asyncio.gather(*(fase1(i) for i in itens)))
+    finais = {r.item.id: r.resultado for r in rascunhos}
+
+    pendentes = sorted((r for r in rascunhos if r.precisa_agente), key=lambda r: r.resultado.preco_emb_med is not None)
+    if pendentes:
+        loop = asyncio.get_running_loop()
+        prazo = loop.time() + s.pesquisa_prazo_agentes_s
+        vagas = asyncio.Semaphore(max(1, s.pesquisa_agentes_simultaneos))
+
+        async def fase2(r: Rascunho) -> None:
+            async with vagas:
+                restante = prazo - loop.time()
+                timeout = min(s.pesquisa_timeout_agente_s, restante) if restante >= MIN_TEMPO_AGENTE_S else 0
+                try:
+                    final = await _fase_agente(r, cliente_llm, timeout=timeout)
+                except Exception as exc:  # noqa: BLE001
+                    final = r.resultado if r.resultado.status != "erro" else _erro(r.item, exc)
+            finais[r.item.id] = final
+            await avisar(final)
+
+        await asyncio.gather(*(fase2(r) for r in pendentes))
+    return [finais[i.id] for i in itens]

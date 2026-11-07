@@ -50,6 +50,7 @@ class EntradaCache:
     provedor: str | None
     atualizado_em: datetime
     vencido: bool
+    iteracoes: int = 0   # buscas extras do agente quando o produto foi pesquisado (sql/003)
 
     @property
     def data_preco(self) -> str:
@@ -76,13 +77,14 @@ def _para_entrada(linha: dict, dias: int, agora: datetime) -> EntradaCache | Non
     try:
         atualizado = datetime.fromisoformat(str(linha["atualizado_em"]).replace("Z", "+00:00"))
         ofertas = [Oferta(**o) for o in (linha.get("ofertas") or [])]
+        iteracoes = max(0, int(linha.get("iteracoes") or 0))
     except Exception:  # noqa: BLE001 — linha corrompida não pode quebrar a pesquisa
         logger.warning("Linha do cache ilegível (%s): ignorada", linha.get("chave"))
         return None
     return EntradaCache(chave=linha["chave"], descricao=linha.get("descricao") or "",
                         extracao=ResultadoExtracao(ofertas=ofertas, modelo=linha.get("modelo") or "cache"),
                         imagem_url=linha.get("imagem_url"), provedor=linha.get("provedor"),
-                        atualizado_em=atualizado, vencido=agora - atualizado > timedelta(days=dias))
+                        atualizado_em=atualizado, vencido=agora - atualizado > timedelta(days=dias), iteracoes=iteracoes)
 
 
 def _ler_sync(chave: str, cliente) -> dict | None:
@@ -123,13 +125,31 @@ async def apagar(descricao: str, cliente=None) -> bool:
         return False
 
 
+_sem_coluna_iteracoes = False
+
+
+def _falta_coluna_iteracoes(exc: Exception) -> bool:
+    """PostgREST: PGRST204 = coluna não existe (sql/003 ainda não rodado)."""
+    return "iteracoes" in str(exc) and ("PGRST204" in str(exc) or "column" in str(exc).lower())
+
+
 def _gravar_sync(linha: dict, cliente) -> None:
-    cliente.table(TABELA).upsert(linha, on_conflict="chave").execute()
+    global _sem_coluna_iteracoes
+    if _sem_coluna_iteracoes:
+        linha = {k: v for k, v in linha.items() if k != "iteracoes"}
+    try:
+        cliente.table(TABELA).upsert(linha, on_conflict="chave").execute()
+    except Exception as exc:  # noqa: BLE001
+        if "iteracoes" not in linha or not _falta_coluna_iteracoes(exc):
+            raise
+        logger.warning("Coluna cache_precos.iteracoes não existe (rode sql/003_cache_precos_iteracoes.sql): gravando sem ela")
+        _sem_coluna_iteracoes = True
+        cliente.table(TABELA).upsert({k: v for k, v in linha.items() if k != "iteracoes"}, on_conflict="chave").execute()
 
 
 @observe(name="cache.gravar")
 async def gravar(descricao: str, extracao: ResultadoExtracao, imagem_url: str | None, provedor: str | None = None,
-                 anterior: EntradaCache | None = None, cliente=None) -> bool:
+                 anterior: EntradaCache | None = None, cliente=None, iteracoes: int = 0) -> bool:
     """Grava/atualiza o cache. Só grava pesquisa útil (alguma oferta com preço).
     Imagem estável: se já havia uma imagem para este produto, ela é mantida."""
     chave = chave_cache(descricao)
@@ -141,6 +161,7 @@ async def gravar(descricao: str, extracao: ResultadoExtracao, imagem_url: str | 
         "imagem_url": (anterior.imagem_url if anterior and anterior.imagem_url else None) or imagem_url,
         "modelo": extracao.modelo or None, "provedor": provedor,
         "atualizado_em": datetime.now(timezone.utc).isoformat(),
+        "iteracoes": iteracoes,
     }
     try:
         await asyncio.to_thread(_gravar_sync, linha, cliente or _cliente())
