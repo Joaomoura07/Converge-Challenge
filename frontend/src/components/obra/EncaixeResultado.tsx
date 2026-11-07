@@ -28,16 +28,31 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
         </p>
       ) : (
         <>
-          <p className="obra-bloco__texto">
-            Subtotal estimado <strong>{reais(subtotal(linhas))}</strong> · {foraDoSubtotal(itens).total} fora do subtotal
+          <dl className="obra-resumo">
+            <div>
+              <dt>Subtotal estimado</dt>
+              <dd className="obra-resumo__valor">{reais(subtotal(linhas))}</dd>
+              <dd className="obra-resumo__nota">
+                {foraDoSubtotal(itens).total === 0
+                  ? "Todos os itens com preço"
+                  : `${foraDoSubtotal(itens).total} ${foraDoSubtotal(itens).total === 1 ? "item fora" : "itens fora"} do subtotal`}
+              </dd>
+            </div>
             {ver && (
-              <>
-                {" · "}
-                <span aria-hidden="true">{ver.icone}</span> {ver.titulo}
-              </>
+              <div data-tom={ver.tom}>
+                <dt>Orçamento do cliente {reais(viabilidade?.orcamento_cliente ?? orcamento.orcamento_cliente)}</dt>
+                <dd className="obra-resumo__veredito">
+                  <span aria-hidden="true">{ver.icone}</span> {ver.titulo}
+                </dd>
+              </div>
             )}
-            {ganho?.resumo && <> · {ganho.resumo}</>}
-          </p>
+            {ganho?.resumo && (
+              <div>
+                <dt>Ganho de tempo</dt>
+                <dd className="obra-resumo__nota">{ganho.resumo}</dd>
+              </div>
+            )}
+          </dl>
           <Link href={`/estimativa/${orcamento.id}`} className="sh-botao">
             Ver estimativa completa <span aria-hidden="true">↗</span>
           </Link>
