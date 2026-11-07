@@ -199,17 +199,34 @@ body { font-size: var(--text-body); line-height: var(--leading-body); }
   padding: 0;
 }
 .oa-links a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 40px;
   padding: 0 16px;
-  border-radius: var(--raio-pilula);
   color: var(--tinta);
   text-decoration: none;
   font-size: var(--text-body);
 }
-.oa-links a:hover { background: rgba(237, 237, 243, 0.06); }
-.oa-links a[aria-current="page"] { background: var(--obsidiana); }
+/* Sublinhado que cresce do centro (efeito 09 da vitrine "Não Codei", adaptado às cores do tema) */
+.oa-links a::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--tinta);
+  transform: scaleX(0);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.oa-links a:hover::after,
+.oa-links a:focus-visible::after,
+.oa-links a[aria-current="page"]::after { transform: scaleX(1); }
+.oa-links a:not([aria-current="page"]) { color: var(--tinta-suave); }
+.oa-links a:hover { color: var(--tinta); }
+@media (prefers-reduced-motion: reduce) { .oa-links a::after { transition: none; } }
 .oa-direita { display: flex; align-items: center; gap: 10px; }
 .oa-escritorio {
   display: inline-flex;
@@ -442,7 +459,9 @@ input[aria-invalid="true"] { border-color: var(--erro); background: var(--erro-f
   .oa-nav__dentro { flex-wrap: wrap; padding: 10px 16px; gap: 8px 12px; }
   .oa-direita { margin-left: auto; }
   .oa-links { order: 3; width: 100%; margin: 0; overflow-x: auto; scrollbar-width: none; }
-  .oa-links a { min-height: 36px; padding: 0 14px; font-size: var(--text-body-sm); white-space: nowrap; }
+  .oa-links { justify-content: space-between; }
+  .oa-links a { min-height: 36px; padding: 0 4px; font-size: var(--text-body-sm); white-space: nowrap; }
+  .oa-links a::after { left: 4px; right: 4px; bottom: 3px; }
   .oa-direita .oa-botao--fantasma { display: none; }
   .oa-nav[data-modo="site"]:not([data-rolou="true"]) { background: linear-gradient(to bottom, rgba(23, 23, 33, 0.85), rgba(23, 23, 33, 0)); }
   .oa-escritorio { display: none; }

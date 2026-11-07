@@ -17,6 +17,7 @@ export function MarcaOrcaAI() {
 }
 
 const LINKS = [
+  { href: "/", rotulo: "Início" },
   { href: "/projetos", rotulo: "Projetos" },
   { href: "/nova", rotulo: "Nova estimativa" },
   { href: "/#como-funciona", rotulo: "Como funciona" },
@@ -38,7 +39,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, [site]);
 
   const atual = (href: string) =>
-    href === "/projetos"
+    href === "/"
+      ? caminho === "/"
+      : href === "/projetos"
       ? caminho.startsWith("/projetos") || caminho.startsWith("/obra") || caminho.startsWith("/estimativa")
       : href === "/nova"
         ? caminho.startsWith("/nova") || caminho.startsWith("/revisar") || caminho.startsWith("/pesquisa")
