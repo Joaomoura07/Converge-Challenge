@@ -108,7 +108,16 @@ function pareceBinario(bytes: Uint8Array): boolean {
 
 // ------------------------------------------------------------------ leitura do texto
 
-type Registro = { linha: number; celulas: string[]; malformado: boolean };
+/** Célula com erro (Excel: #DIV/0!, #REF!, fórmula sem resultado). */
+export type CelulaErro = { erroCelula: string };
+/** CSV só tem texto; Excel traz número, texto ou erro. */
+export type Celula = string | number | CelulaErro | null;
+
+export type Registro = { linha: number; celulas: Celula[]; malformado: boolean };
+
+const ehErroCelula = (c: Celula | undefined): c is CelulaErro => typeof c === "object" && c !== null && "erroCelula" in c;
+/** Texto da célula para as regras de cabeçalho, categoria, unidade etc. */
+const aTexto = (c: Celula | undefined): string => (c === null || c === undefined ? "" : ehErroCelula(c) ? c.erroCelula : String(c));
 
 const SEPARADORES = [";", "\t", ",", "|"] as const;
 
@@ -324,13 +333,42 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
     return erro("CSV_MALFORMADO", `Aspas não fechadas na linha ${ruim.linha}.`, { linha: ruim.linha });
   }
 
-  const naoVazios = registros.filter((r) => r.celulas.some((c) => !vazio(c)));
+  return mapearRegistros({ registros, avisos, nome, formato: "csv", aba: null, delimitador, codificacao: dec.codificacao });
+}
+
+export type EntradaMapa = {
+  registros: Registro[];
+  avisos: AvisoImportacao[];
+  nome: string;
+  formato: "csv" | "xlsx" | "xls" | "xlsm";
+  aba: string | null;
+  delimitador: string | null;
+  codificacao: string | null;
+};
+
+/** Núcleo compartilhado por CSV e Excel: acha o cabeçalho, mapeia colunas, lê números e unidades, monta o contrato. */
+export function mapearRegistros({ registros, avisos, nome, formato, aba, delimitador, codificacao }: EntradaMapa): ResultadoImportacao {
+  type RegistroTexto = { linha: number; celulas: string[]; brutas: Celula[] };
+  const naoVazios: RegistroTexto[] = registros
+    .map((r) => ({ linha: r.linha, celulas: r.celulas.map(aTexto), brutas: r.celulas }))
+    .filter((r) => r.celulas.some((c) => !vazio(c)));
 
   // Cabeçalho: primeira linha com pelo menos dois papéis reconhecidos.
   let idxCab = -1;
   for (let i = 0; i < Math.min(naoVazios.length, 60); i++) {
     const papeis = new Set(naoVazios[i].celulas.map((c) => papelDe(c)?.papel).filter(Boolean));
     if (papeis.size >= 2) { idxCab = i; break; }
+  }
+  // Mesclagem vertical (Excel) repete os nomes das colunas na linha de baixo: o cabeçalho de verdade é a linha de
+  // baixo, e a de cima vira linha de grupo (ex.: "Dimensões" sobre Largura/Altura).
+  const papeisDe = (r: { celulas: string[] }) => new Set(r.celulas.map((c) => papelDe(c)?.papel).filter(Boolean));
+  while (
+    idxCab >= 0 &&
+    idxCab + 1 < naoVazios.length &&
+    naoVazios[idxCab + 1].linha === naoVazios[idxCab].linha + 1 &&
+    [...papeisDe(naoVazios[idxCab])].every((p) => papeisDe(naoVazios[idxCab + 1]).has(p))
+  ) {
+    idxCab++;
   }
   if (idxCab < 0) {
     const primeira = naoVazios[0];
@@ -415,6 +453,7 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const valoresQtd: string[] = [];
   if (cQtd) {
     for (const r of dados) {
+      if (typeof r.brutas[cQtd.indice] === "number") continue; // número de verdade (Excel) não indica estilo
       const c = (r.celulas[cQtd.indice] ?? "").trim();
       const j = separarValorUnidade(c);
       valoresQtd.push(j ? j.numero : c);
@@ -466,14 +505,24 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
     if (unidade === "") unidade = null;
     let quantidade: number | null = null;
     if (cQtd) {
+      const original = r.brutas[cQtd.indice];
       let bruto = cel[cQtd.indice];
       if (bruto === undefined) bruto = "";
-      const junto = separarValorUnidade(bruto);
+      const junto = typeof original === "number" ? null : separarValorUnidade(bruto);
       if (junto) {
         bruto = junto.numero;
         if (!unidade) unidade = junto.unidade;
       }
-      if (bruto === "") {
+      if (ehErroCelula(original)) {
+        avisos.push({ linha: r.linha, codigo: "ERRO_FORMULA", mensagem: `A quantidade da linha ${r.linha} é uma fórmula com erro (${original.erroCelula}).` });
+      } else if (typeof original === "number") {
+        if (Number.isFinite(original)) {
+          quantidade = original;
+          if (original < 0) avisos.push({ linha: r.linha, codigo: "VALOR_NEGATIVO", mensagem: `Quantidade negativa na linha ${r.linha}: ${original}.` });
+        } else {
+          avisos.push({ linha: r.linha, codigo: "VALOR_NAO_NUMERICO", mensagem: `A quantidade da linha ${r.linha} não é um número válido.` });
+        }
+      } else if (bruto === "") {
         avisos.push({ linha: r.linha, codigo: "QUANTIDADE_AUSENTE", mensagem: `A linha ${r.linha} está sem quantidade.` });
       } else {
         const n = lerNumero(bruto, estilo);
@@ -498,6 +547,11 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
       if (c.papel) continue;
       const v = cel[c.indice];
       if (v === undefined) continue;
+      const original = r.brutas[c.indice];
+      if (typeof original === "number") {
+        extras[c.nome] = original; // Excel: o valor bruto, não o texto formatado
+        continue;
+      }
       const moeda = lerMoeda(v);
       extras[c.nome] = moeda !== null ? moeda : (cortar(v) ?? v);
       if (/^\d+(\.\d+)?\s*["']$/.test(v)) imperial = true;
@@ -537,11 +591,11 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   return {
     origem: {
       arquivo: nome,
-      formato: "csv",
+      formato,
       software,
-      aba: null,
+      aba,
       delimitador,
-      codificacao: dec.codificacao,
+      codificacao,
       linhas_lidas: lidas,
       linhas_descartadas: descartadas,
     },

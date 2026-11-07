@@ -1,0 +1,140 @@
+{
+ "entrada": [
+  {
+   "id": "joao-1",
+   "descricao": "Porcelanato 90x90 acetinado",
+   "quantidade": "48",
+   "unidade": "m2",
+   "categoria": "Revestimentos",
+   "linhaOrigem": 1
+  },
+  {
+   "id": "joao-2",
+   "descricao": "Tinta acrilica fosca branca",
+   "quantidade": "120",
+   "unidade": "m2",
+   "categoria": "Pintura",
+   "linhaOrigem": 2
+  }
+ ],
+ "resposta": {
+  "revisao_id": "73bce5133f4ebebd",
+  "erros": [],
+  "complementos": [
+   {
+    "id": "ae41ac3bc49f",
+    "regra": "porcelanato",
+    "descricao": "Argamassa colante AC-III 20 kg (saco)",
+    "quantidade": 15.0,
+    "unidade": "un",
+    "categoria": "Revestimentos e argamassas",
+    "motivo": "Para 48 m² de piso/revestimento costumam faltar argamassa, rejunte e niveladores.",
+    "origem_linhas": [
+     1
+    ],
+    "origem_item_ids": [
+     "joao-1"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "fd36540220d4",
+    "regra": "porcelanato",
+    "descricao": "Rejunte 5 kg (saco)",
+    "quantidade": 5.0,
+    "unidade": "un",
+    "categoria": "Revestimentos e argamassas",
+    "motivo": "Para 48 m² de piso/revestimento costumam faltar argamassa, rejunte e niveladores.",
+    "origem_linhas": [
+     1
+    ],
+    "origem_item_ids": [
+     "joao-1"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "8fe556943bd1",
+    "regra": "porcelanato",
+    "descricao": "Espaçador/nivelador de piso (pacote 100 un)",
+    "quantidade": 3.0,
+    "unidade": "un",
+    "categoria": "Revestimentos e argamassas",
+    "motivo": "Para 48 m² de piso/revestimento costumam faltar argamassa, rejunte e niveladores.",
+    "origem_linhas": [
+     1
+    ],
+    "origem_item_ids": [
+     "joao-1"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "1e3b264da2fa",
+    "regra": "pintura",
+    "descricao": "Selador acrílico 18 L (lata)",
+    "quantidade": 2.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 120 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     2
+    ],
+    "origem_item_ids": [
+     "joao-2"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "8795019a8e31",
+    "regra": "pintura",
+    "descricao": "Massa corrida 25 kg (lata)",
+    "quantidade": 3.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 120 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     2
+    ],
+    "origem_item_ids": [
+     "joao-2"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "ec975b9ba489",
+    "regra": "pintura",
+    "descricao": "Fita crepe 48 mm x 50 m (rolo)",
+    "quantidade": 8.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 120 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     2
+    ],
+    "origem_item_ids": [
+     "joao-2"
+    ],
+    "estimativa_consumo": true
+   },
+   {
+    "id": "aedc906cbcbc",
+    "regra": "pintura",
+    "descricao": "Lixa para massa grão 150 (folha)",
+    "quantidade": 60.0,
+    "unidade": "un",
+    "categoria": "Pintura",
+    "motivo": "Para 120 m² de pintura costumam faltar selador, massa corrida, fita crepe e lixa.",
+    "origem_linhas": [
+     2
+    ],
+    "origem_item_ids": [
+     "joao-2"
+    ],
+    "estimativa_consumo": true
+   }
+  ],
+  "complementos_disponiveis": true,
+  "complementos_erro": null
+ }
+}

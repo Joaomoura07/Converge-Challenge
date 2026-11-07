@@ -10,8 +10,10 @@ import {
   type Linha,
   type ModoEntrada,
 } from "@/lib/lista";
+import { useSugestoes } from "@/lib/revisao/useSugestoes";
 import { formatarCep, gerarUuid } from "@/lib/validacao";
 import { CabecalhoPagina } from "./shell/CabecalhoPagina";
+import { PainelSugestoes } from "./PainelSugestoes";
 import { NovaObra, type Obra, type RascunhoObra } from "./NovaObra";
 import { Importador } from "./Importador";
 import { TabelaMateriais, idCampo } from "./TabelaMateriais";
@@ -19,7 +21,7 @@ import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "manual", rotulo: "Cadastro manual", etapa: null },
   { id: "csv", rotulo: "CSV", etapa: null },
-  { id: "excel", rotulo: "Excel", etapa: "09" },
+  { id: "excel", rotulo: "Excel", etapa: null },
   { id: "revit", rotulo: "TXT do Revit", etapa: "10" },
   { id: "pdf", rotulo: "PDF com texto", etapa: "11" },
 ];
@@ -33,6 +35,7 @@ export function Caderno() {
   const [rascunho, setRascunho] = useState<RascunhoObra>({ nome: "", cep: "", orcamento: "" });
   const [lista, despachar] = useReducer(reduzir, estadoInicial);
 
+  const { estado: revisor, repetir: repetirRevisao } = useSugestoes(lista.linhas);
   const erros = useMemo(() => errosPorId(lista.linhas), [lista.linhas]);
   const totalErros = contarErros(erros);
   const semItens = lista.linhas.length === 0;
@@ -145,7 +148,7 @@ export function Caderno() {
                 <p className="apoio">Digite os materiais um a um. Quantidade aceita vírgula decimal (12,5) e a unidade aceita m².</p>
               )}
               <Importador
-                mostrarArquivo={lista.modo === "csv"}
+                modo={lista.modo}
                 linhasExistentes={itensPreenchidos}
                 novoId={gerarUuid}
                 onAplicar={aplicarImportacao}
@@ -156,20 +159,7 @@ export function Caderno() {
           </section>
 
           <section className="duas-colunas" aria-label="Sugestões da revisão">
-            <div className="folha reservada-area" aria-labelledby="titulo-e1">
-              <p className="secao-etiqueta">Avisos E1</p>
-              <h2 id="titulo-e1" className="titulo-menor">
-                Possíveis erros na lista
-              </h2>
-              <p className="apoio">Nenhum aviso por enquanto. As correções propostas aparecem aqui na etapa 05, com um clique para aceitar.</p>
-            </div>
-            <div className="folha reservada-area" aria-labelledby="titulo-e2">
-              <p className="secao-etiqueta">Complementos E2</p>
-              <h2 id="titulo-e2" className="titulo-menor">
-                Itens que costumam faltar
-              </h2>
-              <p className="apoio">Complementos como argamassa e rejunte aparecem aqui na etapa 06, sempre como proposta.</p>
-            </div>
+            <PainelSugestoes lista={lista} despachar={despachar} revisor={revisor} repetir={repetirRevisao} novoId={gerarUuid} />
           </section>
 
           <section className="envio" aria-label="Envio">
