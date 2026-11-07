@@ -135,8 +135,10 @@ REGRAS: tuple[_Regra, ...] = (
     _Regra(
         id="vaso",
         gatilhos=("vaso sanitario", "bacia sanitaria", "bacia", "vaso"),
-        exclui=("assento", "tampa", "caixa acoplada", "valvula", "engate", "anel", "parafuso",
-                "sifao", "flexivel"),
+        # "vaso com caixa acoplada" é o próprio vaso; só a caixa vendida À PARTE ("caixa acoplada
+        # para vaso...") é acessório e não conta.
+        exclui=("assento", "tampa", "caixa acoplada para", "caixa acoplada p/", "caixa de descarga",
+                "valvula", "engate", "anel", "parafuso", "sifao", "flexivel"),
         medida="un",
         motivo="Para {m} vaso(s) sanitário(s) costumam faltar assento, engate flexível e anel de vedação.",
         complementos=(

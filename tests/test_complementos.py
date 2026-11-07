@@ -61,6 +61,18 @@ def test_vaso_sanitario_por_unidade():
     assert _por_desc(res, "Assento")[0].quantidade == 2
 
 
+def test_vaso_com_caixa_acoplada_continua_sendo_vaso():
+    res = sugerir_complementos([{"linha": 1, "descricao": "Vaso sanitario com caixa acoplada",
+                                 "quantidade": 2, "unidade": "un"}])
+    assert _por_desc(res, "Assento")[0].quantidade == 2
+
+
+def test_caixa_acoplada_avulsa_nao_conta_como_vaso():
+    res = sugerir_complementos([{"linha": 1, "descricao": "Caixa acoplada para vaso sanitario",
+                                 "quantidade": 2, "unidade": "un"}])
+    assert res == []
+
+
 def test_drywall():
     res = sugerir_complementos([{"linha": 1, "descricao": "Placa de drywall ST 12,5 mm",
                                  "quantidade": 100, "unidade": "m2"}])
