@@ -54,3 +54,9 @@
 .obra-conexao--sem-configuracao .obra-conexao__ponto {
   background: #a3261f;
 }
+.obra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
