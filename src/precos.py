@@ -29,7 +29,9 @@ from .modelos import Fonte
 
 logger = logging.getLogger(__name__)
 
-MODELO_RESERVA_EXTRACAO = "google/gemma-4-31B-it"   # 5/5 na avaliação; usado se o principal falhar
+# Reserva: medido em 07/11 no caso de controle (3 rodadas + 2): Mistral Small 3.2 acertou todas em 2,7–3,4 s (uma de
+# 12 s); a Gemma 4 31B (reserva anterior) acertou em 4,6–19,8 s. Qwen3-8B devolveu resposta vazia.
+MODELO_RESERVA_EXTRACAO = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 LIMITE_TRECHO = 500
 # Palavras inteiras no prompt: com letras soltas (S/P/N) os modelos copiavam o NOME do campo ("M")
 # em vez do valor (medido na revisão da etapa 3). Valor desconhecido = linha rejeitada, nunca "nao" silencioso.
@@ -229,37 +231,83 @@ def modelos_extracao() -> list[str]:
     return [m for m in todos if _disponivel(m)] or todos
 
 
+@dataclass
+class _Tentativa:
+    modelo: str
+    ofertas: list[Oferta] = field(default_factory=list)
+    alucinadas: int = 0
+    usage: object | None = None
+    erro: str | None = None
+    texto: str = ""
+
+
+async def _tentar(cliente, modelo: str, produto: str, anuncios: str, resultados: list[ResultadoWeb]) -> _Tentativa:
+    """Uma tentativa com um modelo. Nunca levanta exceção (só cancelamento): o erro vira dado."""
+    t = time.perf_counter()
+    try:
+        r = await _chamar(cliente, modelo, produto, anuncios)
+    except APIStatusError as exc:
+        logger.warning("Extração com %s falhou (HTTP %s); tentando reserva", modelo, exc.status_code)
+        if exc.status_code == 400:
+            _marcar_indisponivel(modelo)
+        erro = f"{modelo}: HTTP {exc.status_code}"
+        return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
+    except Exception as exc:  # noqa: BLE001 — timeout/rede/resposta vazia
+        logger.warning("Extração com %s falhou (%s: %s); tentando reserva", modelo, type(exc).__name__, str(exc)[:100])
+        erro = f"{modelo}: {type(exc).__name__}"
+        return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
+    ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
+    return _Tentativa(modelo, ofertas, alucinadas, r.usage, None if ofertas else f"{modelo}: resposta sem linhas válidas",
+                      f"{modelo}: {time.perf_counter() - t:.1f}s, {len(ofertas)} linhas válidas")
+
+
 async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> ResultadoExtracao:
+    """Principal primeiro. Se ele FALHAR, a reserva entra na hora; se só DEMORAR mais que `pesquisa_hedge_s`,
+    a reserva é disparada EM PARALELO (outra chave do rodízio) e vale a primeira resposta com linhas válidas;
+    a outra é cancelada. Medido em 07/11: a mesma extração levou 3,4 s numa rodada e 132 s na seguinte."""
     anuncios = montar_anuncios(resultados)
     t0 = time.perf_counter()
     res = ResultadoExtracao()
-    for modelo in modelos_extracao():
-        t_modelo = time.perf_counter()
-        try:
-            r = await _chamar(cliente, modelo, produto, anuncios)
-        except APIStatusError as exc:
-            res.erro = f"{modelo}: HTTP {exc.status_code}"
-            res.tentativas.append(f"{res.erro} ({time.perf_counter() - t_modelo:.1f}s)")
-            logger.warning("Extração com %s falhou (HTTP %s); tentando reserva", modelo, exc.status_code)
-            if exc.status_code == 400:
-                _marcar_indisponivel(modelo)
-            continue
-        except Exception as exc:  # noqa: BLE001 — timeout/rede/resposta vazia
-            res.erro = f"{modelo}: {type(exc).__name__}"
-            res.tentativas.append(f"{res.erro} ({time.perf_counter() - t_modelo:.1f}s)")
-            logger.warning("Extração com %s falhou (%s: %s); tentando reserva", modelo, type(exc).__name__, str(exc)[:100])
-            continue
-        if r.usage:
-            res.tokens_entrada += r.usage.prompt_tokens or 0
-            res.tokens_saida += r.usage.completion_tokens or 0
-            res.custo_usd += float(getattr(r.usage, "cost", 0) or 0)
-            _custo.registrar(getattr(r.usage, "cost", 0))
-        ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
-        res.descartadas_alucinacao += alucinadas
-        res.tentativas.append(f"{modelo}: {time.perf_counter() - t_modelo:.1f}s, {len(ofertas)} linhas válidas")
-        if ofertas:
-            res.ofertas, res.modelo, res.erro = ofertas, modelo, None
-            break
-        res.erro = f"{modelo}: resposta sem linhas válidas"
+    fila = modelos_extracao()
+    ativas: dict[asyncio.Task, str] = {}
+
+    def lancar() -> None:
+        if fila:
+            modelo = fila.pop(0)
+            ativas[asyncio.create_task(_tentar(cliente, modelo, produto, anuncios, resultados))] = modelo
+
+    lancar()
+    try:
+        while ativas:
+            prazo = get_settings().pesquisa_hedge_s if fila else None
+            feitas, _ = await asyncio.wait(ativas, timeout=prazo, return_when=asyncio.FIRST_COMPLETED)
+            if not feitas:   # principal demorando: reserva em paralelo
+                logger.info("Extração lenta (> %.0f s): reserva em paralelo", prazo)
+                res.tentativas.append(f"{next(iter(ativas.values()))}: lento, reserva em paralelo")
+                lancar()
+                continue
+            for tarefa in feitas:
+                ativas.pop(tarefa)
+                t = tarefa.result()
+                res.tentativas.append(t.texto)
+                res.descartadas_alucinacao += t.alucinadas
+                if t.usage:
+                    res.tokens_entrada += t.usage.prompt_tokens or 0
+                    res.tokens_saida += t.usage.completion_tokens or 0
+                    res.custo_usd += float(getattr(t.usage, "cost", 0) or 0)
+                    _custo.registrar(getattr(t.usage, "cost", 0))
+                if t.ofertas and not res.ofertas:
+                    res.ofertas, res.modelo, res.erro = t.ofertas, t.modelo, None
+                elif not res.ofertas:
+                    res.erro = t.erro
+            if res.ofertas:
+                break
+            if not ativas:   # falhou rápido: próxima da fila
+                lancar()
+    finally:
+        for tarefa in ativas:   # a outra (mais lenta) é cancelada e devolve a vaga da chave
+            tarefa.cancel()
+        if ativas:
+            await asyncio.gather(*ativas, return_exceptions=True)
     res.ms = int((time.perf_counter() - t0) * 1000)
     return res

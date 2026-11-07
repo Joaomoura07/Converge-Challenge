@@ -459,3 +459,25 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 - **Etapa 6 real reprovada (não é o rodízio):** o agente usou a chave própria e reformulou para "misturador monocomando
   Deca Link cozinha", mas Amazon e Loja Dexco vieram com o produto certo **sem preço no anúncio**; o tempo de 40 s
   acabou antes da 2ª busca. Ataque previsto: priorizar anúncios com preço e busca aberta (passo 5 do plano).
+
+## Etapa 3 — reserva em paralelo após 8 s e reserva trocada para Mistral Small 3.2 (medida) · 07/11 16:49 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 582 passed, 12 skipped, 16 deselected, 2 warnings in 16.59s |
+| coerência com o programa | ✅ | 7 passed in 0.42s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 3) | ✅ | 2 passed, 202 deselected in 21.68s |
+
+### Reserva em paralelo + reserva mais rápida · 07/11 ~16h50
+- Extração: se o principal (Qwen3-32B) não responder em 8 s (`pesquisa_hedge_s`), a reserva sai **em paralelo** em
+  outra chave; vale a 1ª resposta com linhas válidas e a outra é cancelada (devolve a vaga). Falha rápida continua
+  indo direto para a reserva.
+- Reserva medida no caso de controle (resposta conhecida; kit do mesmo produto = SIM pela regra atual):
+  | Modelo | Acertos | Tempo |
+  |---|---|---|
+  | **Mistral Small 3.2 24B (nova reserva)** | 5/5 | 2,7–3,4 s (uma de 12 s) |
+  | Gemma 4 31B (reserva anterior) | 5/5 | 4,6–19,8 s |
+  | Qwen3-14B | 3/3 | 3,0–8,7 s |
+  | Qwen3-8B | 0/2 | resposta vazia (43–61 s) |

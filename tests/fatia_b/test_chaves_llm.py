@@ -120,3 +120,38 @@ def test_429_esfria_a_chave(clientes_por_chave):
     primeira = clientes_por_chave.chamadas[0]
     assert ch._esfria_ate.get(primeira), "chave com 429 fica um tempo fora"
     assert r.conferidas and clientes_por_chave.chamadas[1] != primeira
+
+
+# ---------------------------------------------------------------- reserva em paralelo quando o principal demora
+class _ClienteLento:
+    """Principal (Qwen3-32B) não responde nunca; a reserva responde na hora."""
+    cancelado = False
+
+    def __init__(self, chave):
+        self.chave = chave
+
+    @property
+    def chat(self):
+        return NS(completions=NS(create=self._create))
+
+    async def _create(self, model, **kw):
+        if "Qwen3-32B" in model:
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                _ClienteLento.cancelado = True
+                raise
+        return NS(choices=[NS(message=NS(content="0|739.90|lata 18 L|SIM"))], usage=NS(prompt_tokens=1, completion_tokens=1, cost=0))
+
+    async def close(self):
+        pass
+
+
+def test_principal_lento_dispara_a_reserva_em_paralelo_e_cancela_o_lento(monkeypatch, tres_chaves):
+    monkeypatch.setattr(p, "_cliente", lambda chave=None: _ClienteLento(chave))
+    monkeypatch.setattr(p, "get_settings", lambda: NS(pesquisa_hedge_s=0.05, pesquisa_modelo_extracao="Qwen/Qwen3-32B"))
+    monkeypatch.setattr(p, "_indisponivel_ate", {})
+    _ClienteLento.cancelado = False
+    r = asyncio.run(asyncio.wait_for(p.extrair_e_conferir("Tinta Suvinil 18L", ANUNCIOS), timeout=3))
+    assert r.modelo == p.MODELO_RESERVA_EXTRACAO and r.conferidas
+    assert any("reserva em paralelo" in t for t in r.tentativas) and _ClienteLento.cancelado
