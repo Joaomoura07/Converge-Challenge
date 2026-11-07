@@ -65,8 +65,37 @@ def check_langfuse() -> bool:
         print(f"{FAIL} Langfuse: {type(exc).__name__}. Chave errada ou região errada "
               f"(LANGFUSE_HOST EU=cloud.langfuse.com / US=us.cloud.langfuse.com)")
         return False
-    print(f"{OK if ok else FAIL} Langfuse auth ({get_settings().langfuse_host})")
+    print(f"{OK if ok else FAIL} Langfuse auth ({get_settings().langfuse_url})")
     return ok
+
+
+def check_tavily() -> bool:
+    chaves = get_settings().tavily_keys
+    if not chaves:
+        print(f"{WARN} Tavily: TAVILY_API_KEYS ausente (busca só pelo DuckDuckGo)")
+        return False
+    from tavily import TavilyClient
+    todas_ok = True
+    for i, chave in enumerate(chaves, 1):
+        try:
+            r = TavilyClient(api_key=chave).search("porcelanato Portobello 90x90 preço", max_results=2, include_images=True)
+            print(f"{OK} Tavily chave {i}/{len(chaves)}: {len(r.get('results', []))} resultados, "
+                  f"{len(r.get('images', []))} imagens (1 crédito)")
+        except Exception as exc:  # noqa: BLE001
+            todas_ok = False
+            print(f"{FAIL} Tavily chave {i}/{len(chaves)}: {type(exc).__name__}: {str(exc)[:120]}")
+    return todas_ok
+
+
+def check_duckduckgo() -> bool:
+    try:
+        from ddgs import DDGS
+        r = DDGS().text("argamassa Quartzolit AC-III preço", region="br-pt", max_results=3)
+        print(f"{OK} DuckDuckGo (reserva, sem chave): {len(r)} resultados")
+        return bool(r)
+    except Exception as exc:  # noqa: BLE001
+        print(f"{WARN} DuckDuckGo: {type(exc).__name__}: {str(exc)[:120]} (limite de uso? tente de novo depois)")
+        return False
 
 
 def check_supabase() -> bool:
@@ -90,8 +119,9 @@ def main() -> int:
     if not get_settings().llm_configured:
         print(f"{FAIL} FEATHERLESS_API_KEY ausente no .env")
         return 1
-    results = [check_featherless(args.model), check_langfuse(), check_supabase()]
-    print(json.dumps({"featherless": results[0], "langfuse": results[1], "supabase": results[2]}))
+    nomes = ["featherless", "langfuse", "supabase", "tavily", "duckduckgo"]
+    results = [check_featherless(args.model), check_langfuse(), check_supabase(), check_tavily(), check_duckduckgo()]
+    print(json.dumps(dict(zip(nomes, results))))
     return 0 if all(results) else 1
 
 

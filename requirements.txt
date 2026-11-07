@@ -15,6 +15,10 @@ openai>=1.40
 # --- Observabilidade ---
 langfuse>=3.0
 
+# --- Busca de preços (Fatia B) ---
+tavily-python>=0.7    # busca principal (preço + imagem)
+ddgs>=9.0             # DuckDuckGo, reserva sem chave
+
 # --- Persistência ---
 supabase>=2.6
 

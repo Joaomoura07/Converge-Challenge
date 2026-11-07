@@ -98,7 +98,8 @@ class Agent:
         usage = response.usage
         cost = getattr(usage, "cost", None) if usage else None  # Featherless devolve usage.cost (USD)
         lf.update_current_generation(
-            output=response.choices[0].message.model_dump(exclude_none=True),
+            # a Featherless sobrecarregada pode devolver 200 sem `choices`: quem chama decide o que fazer
+            output=response.choices[0].message.model_dump(exclude_none=True) if response.choices else None,
             usage_details={"input": usage.prompt_tokens, "output": usage.completion_tokens} if usage else None,
             cost_details={"total": float(cost)} if cost is not None else None,
         )
