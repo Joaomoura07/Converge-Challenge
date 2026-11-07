@@ -31,7 +31,15 @@ from src.busca import local_do_cep, na_regiao
 from src.modelos import ItemEntrada, ResultadoItem
 from src.pesquisa import pesquisar_itens
 
-COLUNAS_DESCRICAO = ("descricao", "produto", "material", "item", "nome")
+COLUNAS_DESCRICAO = ("descricao", "produto", "material", "item", "nome", "description", "product", "name")
+# Sinônimos em inglês: o exemplo do escritório no site (frontend/public/exemplos) vem com Category,Description,Unit,Qty
+COLUNAS_QUANTIDADE = ("quantidade", "qtd", "qtde", "qty", "quantity")
+COLUNAS_UNIDADE = ("unidade", "un", "unit")
+COLUNAS_CATEGORIA = ("categoria", "category")
+
+
+def _primeira(b: dict, colunas: tuple[str, ...]):
+    return next((b[c] for c in colunas if b.get(c)), None)
 
 
 def _sem_acento(s: str) -> str:
@@ -65,11 +73,11 @@ def ler_itens(caminho: Path) -> list[ItemEntrada]:
 
     itens = []
     for n, b in enumerate(brutos, start=1):
-        desc = next((b[c] for c in COLUNAS_DESCRICAO if b.get(c)), None)
+        desc = _primeira(b, COLUNAS_DESCRICAO)
         if not desc or not str(desc).strip():
             continue
-        itens.append(ItemEntrada(id=str(n), descricao=str(desc).strip(), quantidade=_numero(b.get("quantidade")),
-                                 unidade=(b.get("unidade") or None), categoria=b.get("categoria") or None))
+        itens.append(ItemEntrada(id=str(n), descricao=str(desc).strip(), quantidade=_numero(_primeira(b, COLUNAS_QUANTIDADE)),
+                                 unidade=_primeira(b, COLUNAS_UNIDADE), categoria=_primeira(b, COLUNAS_CATEGORIA)))
     return itens
 
 

@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # as mesmas vagas das extrações, o 1º item chegava em 33 s e 12 agentes estouravam o tempo sem vaga.
     pesquisa_concorrencia_agente: int = 1   # cota PRÓPRIA de chamadas simultâneas ao GLM do agente
     pesquisa_agentes_simultaneos: int = 2   # itens com agente ao mesmo tempo (um pensa enquanto o outro busca)
-    pesquisa_prazo_agentes_s: float = 60    # prazo total da fase 2; item que não coube fica com o resultado da fase 1
+    pesquisa_prazo_agentes_s: float = 90    # prazo total da fase 2 (era 60: muitos itens ficavam "sem tempo"; a função tem 300 s)
 
     @property
     def langfuse_url(self) -> str:
