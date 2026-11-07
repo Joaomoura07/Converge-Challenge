@@ -18,6 +18,9 @@ langfuse>=3.0
 # --- Persistência ---
 supabase>=2.6
 
+# --- Exportação (E11: plano de compra em Excel) ---
+openpyxl>=3.1
+
 # --- Utilitários ---
 tzdata>=2024.1        # fusos horários no Windows (zoneinfo)
 
