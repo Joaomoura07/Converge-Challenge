@@ -1,0 +1,468 @@
+/* =====================================================================================
+   Tema OrçaAI — PROTÓTIPO (07/11/2026), referência visual: Mercury ("banco alpino na hora azul").
+   Carregado por último em app/layout.tsx: sobrescreve os tokens de globals.css, papeis-de-cor.css
+   e shell.css sem reescrever os arquivos do time. Para desligar o protótipo: remover o import.
+   Regras: fundo ônix, cartões grafite um tom acima (sem sombra), texto marfim, UM azul só para
+   a ação principal, controles em pílula, títulos largos (Archivo Expanded) em peso 480.
+   ===================================================================================== */
+
+/* --- Tokens da referência (Downloads/variables.css, tokens.json, Css.css), com os nomes originais.
+       Fontes "arcadia" são pagas: apontam para Inter (texto) e Archivo Expanded (títulos). --- */
+:root {
+  --color-onyx-canvas: #171721;
+  --color-graphite-card: #1e1e2a;
+  --color-obsidian-button: #272735;
+  --color-slate-border: #70707d;
+  --color-mist-border: #e2e3ed;
+  --color-ash-text: #c3c3cc;
+  --color-ivory-text: #ededf3;
+  --color-cobalt: #5266eb;
+  --color-pure-white: #ffffff;
+
+  --font-arcadia: var(--fonte-texto), "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-arcadiadisplay: var(--fonte-titulo), "Archivo", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --text-caption: 12px;     --leading-caption: 1;      --tracking-caption: 0.12px;
+  --text-body-sm: 14px;     --leading-body-sm: 1;      --tracking-body-sm: 0.07px;
+  --text-body: 16px;        --leading-body: 1.5;
+  --text-body-lg: 18px;     --leading-body-lg: 1.35;
+  --text-subheading: 21px;  --leading-subheading: 1.35;
+  --text-heading-sm: 28px;  --leading-heading-sm: 1.2;  --tracking-heading-sm: 0.42px;
+  --text-heading: 32px;     --leading-heading: 1.15;    --tracking-heading: 0.48px;
+  --text-heading-lg: 42px;  --leading-heading-lg: 1.15; --tracking-heading-lg: 0.42px;
+  --text-display: 65px;     --leading-display: 1.1;
+
+  --font-weight-w360: 360;
+  --font-weight-regular: 400;
+  --font-weight-w420: 420;
+  --font-weight-w480: 480;
+  --font-weight-w530: 530;
+
+  --spacing-unit: 4px;
+  --spacing-4: 4px; --spacing-8: 8px; --spacing-12: 12px; --spacing-16: 16px; --spacing-20: 20px;
+  --spacing-24: 24px; --spacing-32: 32px; --spacing-40: 40px; --spacing-56: 56px; --spacing-72: 72px;
+  --spacing-112: 112px; --spacing-128: 128px;
+
+  --page-max-width: 1200px;
+  --section-gap: 72px;
+  --card-padding: 32px;
+  --element-gap: 12px;
+
+  --radius-md: 4px; --radius-lg: 8px; --radius-xl: 12px; --radius-3xl: 32px; --radius-3xl-2: 40px;
+  --radius-nav: 40px; --radius-tags: 40px; --radius-cards: 12px; --radius-inputs: 32px; --radius-buttons: 32px; --radius-default: 4px;
+
+  --surface-onyx-canvas: #171721;
+  --surface-graphite-card: #1e1e2a;
+  --surface-obsidian-button: #272735;
+}
+
+/* --- Tema do site ligado aos tokens acima --- */
+:root {
+  /* Superfícies (nível 0, 1, 2) */
+  --papel: var(--surface-onyx-canvas);         /* ônix: fundo */
+  --papel-2: var(--surface-graphite-card);     /* grafite: cartões e painéis */
+  --obsidiana: var(--surface-obsidian-button); /* superfície interativa */
+  --vidro: rgba(23, 23, 33, 0.72);
+
+  /* Texto e linhas */
+  --tinta: var(--color-ivory-text);        /* 15,6:1 sobre o ônix */
+  --tinta-suave: var(--color-ash-text);    /* 10,4:1 */
+  --tinta-fraca: #8e8e9c;                  /* legendas pequenas: 5,6:1 (extra, não está na referência) */
+  --linha: #2e2e3d;                        /* divisórias finas (extra) */
+  --linha-forte: var(--color-slate-border);
+  --contorno: var(--color-mist-border);
+
+  /* A única cor */
+  --cobalto: var(--color-cobalt);
+  --cobalto-escuro: #6577f2; /* hover: no escuro o azul clareia */
+  --foco: #8f9cff;
+
+  /* Estados (exceção consciente ao Mercury: o produto precisa de status; sempre com ícone + texto) */
+  --erro: #ff8b80;
+  --erro-fundo: #2a1d24;
+
+  /* Papéis da skill (skills/04-ui-design.md) */
+  --cor-fundo: var(--papel);
+  --cor-superficie: var(--papel-2);
+  --cor-texto: var(--tinta);
+  --cor-texto-2: var(--tinta-suave);
+  --cor-linha: var(--linha);
+  --cor-acao: var(--cobalto);
+  --cor-erro: var(--erro);
+  --cor-definido: #6fd39b;
+  --cor-pendente: #f0b35a;
+
+  /* Tipografia */
+  --sans: var(--font-arcadia);
+  --serif: var(--font-arcadiadisplay); /* nome antigo; agora é o título largo */
+  --mono: var(--font-arcadia);         /* skill: sem monoespaçada para dados */
+
+  /* Forma */
+  --raio-pilula: var(--radius-3xl-2);
+  --raio-cartao: var(--radius-cards);
+  --raio-campo: 10px;
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+::selection { background: rgba(82, 102, 235, 0.45); color: #fff; }
+a { color: var(--tinta); }
+:focus-visible { outline: 2px solid var(--foco); outline-offset: 3px; }
+
+/* ---------- Títulos: largos, peso 480, sem itálico nem palavra em outra cor ---------- */
+.marca, .titulo-secao, .titulo-menor, .titulo-obra, .vazio-titulo, .sugestao-tipo,
+.sh-titulo, .sh-lateral h2, .sh-projeto .nome, .sh-vazio-chamada h2, .sh-nota .n,
+.sh-subtotal .valor, .sh-ref h3, .sh-modal h2, .sh-modal .total strong,
+.rs-valor, .rs-ganho, .rs-veredito, .obra-bloco__titulo, .orc-resultado__titulo {
+  font-family: var(--serif);
+  font-stretch: 118%;
+  font-weight: 480;
+  letter-spacing: 0.01em;
+}
+.sh-titulo em, .sh-vazio-chamada h2 em { font-style: normal; }
+/* Escala da referência: heading-lg 42, heading 32, heading-sm 28, 2xl 24, xl-2 21 */
+.sh-titulo { font-size: clamp(32px, 4.4vw, var(--text-heading-lg)); line-height: var(--leading-heading-lg); letter-spacing: 0.01em; margin: 10px 0 12px; }
+.titulo-secao, .sh-vazio-chamada h2 { font-size: var(--text-heading); line-height: var(--leading-heading); letter-spacing: 0.015em; }
+.titulo-obra, .sh-subtotal .valor, .rs-valor { font-size: var(--text-heading); line-height: var(--leading-heading); }
+.sh-lateral h2, .sh-modal h2 { font-size: var(--text-heading-sm); line-height: var(--leading-heading-sm); letter-spacing: 0.015em; }
+.titulo-menor, .vazio-titulo, .sh-projeto .nome, .sh-ref h3, .rs-veredito, .obra-bloco__titulo, .orc-resultado__titulo {
+  font-size: var(--text-subheading); line-height: 1.2; letter-spacing: 0.02em;
+}
+body { font-size: var(--text-body); line-height: var(--leading-body); }
+
+/* Rótulos: sem CAIXA ALTA espaçada (skill, seção 7) */
+.secao-etiqueta, .lema, .dados dt, .cabecalho, .sh-trilha, .sh-etiqueta, .sh-grade th,
+.sh-ref dt, .sh-painel-escuro h3 {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+.sh-trilha { font-size: var(--text-body-sm); color: var(--tinta-fraca); }
+.sh-trilha a { color: var(--tinta-suave); }
+.sh-trilha b { color: var(--tinta); font-weight: 480; }
+.sh-etiqueta, .secao-etiqueta { font-size: var(--text-body-sm); color: var(--tinta-suave); font-weight: 480; }
+.sh-apoio, .apoio { font-size: 16px; line-height: 1.5; color: var(--tinta-suave); }
+.sh-grade th, .sh-ref dt { font-size: var(--text-caption); color: var(--tinta-fraca); }
+.sh-projeto .num, .sh-passos .num, .col-n { font-size: var(--text-body-sm); color: var(--tinta-fraca); }
+
+/* ---------- Barra de navegação no topo (substitui o trilho lateral) ---------- */
+.sh-app { display: block; min-height: 100vh; }
+.oa-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  transition: background-color 200ms ease, border-color 200ms ease;
+  border-bottom: 1px solid transparent;
+}
+.oa-nav[data-rolou="true"], .oa-nav[data-modo="app"] {
+  background: var(--vidro);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom-color: var(--linha);
+}
+.oa-nav[data-modo="site"] { position: fixed; left: 0; right: 0; }
+.oa-nav__dentro {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.oa-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tinta);
+  text-decoration: none;
+  font-family: var(--serif);
+  font-stretch: 118%;
+  font-weight: 530;
+  font-size: 19px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.oa-marca svg { width: 26px; height: 26px; flex: none; }
+.oa-marca b { font-weight: 530; color: var(--tinta-suave); }
+.oa-links {
+  display: flex;
+  gap: 2px;
+  margin: 0 auto;
+  list-style: none;
+  padding: 0;
+}
+.oa-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--raio-pilula);
+  color: var(--tinta);
+  text-decoration: none;
+  font-size: var(--text-body);
+}
+.oa-links a:hover { background: rgba(237, 237, 243, 0.06); }
+.oa-links a[aria-current="page"] { background: var(--obsidiana); }
+.oa-direita { display: flex; align-items: center; gap: 10px; }
+.oa-escritorio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-body-sm);
+  color: var(--tinta-suave);
+  white-space: nowrap;
+}
+.oa-escritorio .iniciais {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--obsidiana);
+  color: var(--tinta);
+  font-size: var(--text-caption);
+  font-weight: 480;
+}
+.oa-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-pilula);
+  font-size: var(--text-caption);
+  color: var(--tinta-suave);
+  white-space: nowrap;
+}
+.oa-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--tinta-suave); }
+
+/* Botões em pílula (padrão Mercury) */
+.oa-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: var(--raio-pilula);
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.oa-botao--principal { background: var(--cobalto); color: #fff; }
+.oa-botao--principal:hover { background: var(--cobalto-escuro); }
+.oa-botao--fantasma { background: transparent; color: var(--tinta); border-color: var(--contorno); }
+.oa-botao--fantasma:hover { background: rgba(237, 237, 243, 0.06); }
+.oa-botao--solido { background: var(--obsidiana); color: var(--tinta); }
+.oa-botao--solido:hover { background: #31313f; }
+.oa-botao--pequeno { min-height: 38px; padding: 0 18px; font-size: var(--text-body); }
+
+.sh-principal { min-width: 0; }
+.sh-barra { display: none; } /* a barra do escritório foi para a navegação do topo */
+.sh-conteudo { max-width: 1200px; padding: 40px 24px 112px; }
+
+/* ---------- Botões antigos remapeados para pílula ---------- */
+.sh-botao, .botao-primario, .botao-secundario, .orc-botao {
+  border-radius: var(--raio-pilula);
+  min-height: 44px;
+  padding: 0 22px;
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+.sh-botao, .botao-primario { background: var(--cobalto); border-color: var(--cobalto); color: #fff; }
+.sh-botao:hover, .botao-primario:hover:not(:disabled) { background: var(--cobalto-escuro); }
+.botao-primario.grande { min-height: 52px; padding: 0 30px; font-size: 17px; }
+.sh-botao.claro, .botao-secundario {
+  background: transparent;
+  color: var(--tinta);
+  border-color: var(--contorno);
+}
+.sh-botao.claro:hover, .botao-secundario:hover:not(:disabled) { background: rgba(237, 237, 243, 0.06); }
+.orc-botao { min-height: 38px; padding: 0 16px; font-size: var(--text-body-sm); background: var(--obsidiana); border-color: transparent; color: var(--tinta); }
+.orc-botao--principal { background: var(--cobalto); border-color: var(--cobalto); color: #fff; }
+.botao-link, .sh-link { color: var(--tinta); text-underline-offset: 3px; text-decoration: underline; text-decoration-color: var(--linha-forte); }
+.botao-remover { color: var(--erro); }
+button:disabled { opacity: 0.4; }
+
+/* ---------- Campos: pílula escura ---------- */
+input, select, textarea {
+  color: var(--tinta);
+  background: var(--papel-2);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-campo);
+}
+.campos-obra input, .campo input { border-radius: var(--raio-pilula); padding: 10px 18px; }
+input::placeholder { color: var(--tinta-fraca); }
+input:hover { border-color: #8d8d9a; }
+input:focus { border-color: var(--contorno); outline: none; }
+input:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+input[aria-invalid="true"] { border-color: var(--erro); background: var(--erro-fundo); }
+.campo label { font-weight: 480; color: var(--tinta); }
+.sh-grade input { background: transparent; border-radius: 0; border: 0; border-bottom: 1px solid var(--linha); }
+.sh-grade input:focus { border-bottom-color: var(--cobalto); }
+.sh-grade input.pendente { border-bottom-color: var(--cor-pendente); }
+.importador-aba select, .orc-item__resposta input { background: var(--papel-2); border-color: var(--linha-forte); border-radius: var(--raio-campo); }
+
+/* ---------- Cartões grafite: separação por tom, sem sombra ---------- */
+.obra-bloco, .sugestao, .aviso-erro, .aviso-ok, .aviso-decisao, .aviso-falha, .exemplos, .reservada,
+.lendo, .vazio, .sh-lateral, .sh-painel-escuro, .orc-item__pergunta, .orc-item__falha, .orc-resultado__erro {
+  background: var(--papel-2);
+  border: 0;
+  border-radius: var(--raio-cartao);
+  box-shadow: none;
+}
+.obra-bloco { padding: 32px; }
+.obra-bloco[data-encaixe] { border: 1px dashed var(--linha-forte); }
+.obra-bloco__aviso { background: var(--erro-fundo); color: var(--tinta); border-left-color: var(--cor-pendente); border-radius: 8px; }
+.sugestao { border-left: 3px solid var(--cobalto); padding: 20px 24px; }
+.sugestao.complemento { border-left: 3px dashed var(--tinta-suave); }
+.aviso-erro, .aviso-falha { background: var(--erro-fundo); color: var(--tinta); box-shadow: inset 3px 0 0 var(--erro); }
+.aviso-decisao { box-shadow: inset 3px 0 0 var(--cobalto); }
+.exemplos, .reservada, .lendo { padding: 16px; background-image: none; }
+.vazio { padding: 48px 24px; background-image: none; border: 1px dashed var(--linha-forte); }
+.exemplo { background: var(--obsidiana); border: 1px solid transparent; border-radius: 10px; }
+.exemplo:hover { border-color: var(--linha-forte); }
+.exemplo-nome { color: var(--tinta); font-weight: 480; }
+.orc-item__pergunta { border-left: 3px solid var(--cor-pendente); }
+.orc-item__falha { border-left: 3px solid var(--cor-erro); }
+.selo-consumo { color: var(--tinta); border-color: var(--tinta-suave); border-radius: var(--raio-pilula); background: repeating-linear-gradient(45deg, transparent 0 5px, rgba(237, 237, 243, 0.08) 5px 6px); }
+.selo-sugerido { background: var(--obsidiana); border-color: var(--obsidiana); color: var(--tinta); border-radius: var(--raio-pilula); }
+.contagem { color: var(--tinta-suave); }
+.proposta summary { color: var(--tinta); }
+
+/* Lateral e painéis da estimativa */
+.sh-duas { gap: 32px; grid-template-columns: minmax(0, 1fr) 320px; }
+.sh-lateral { padding: 32px; border-left: 0; align-self: start; position: sticky; top: 88px; }
+
+.sh-painel-escuro { background: var(--obsidiana); color: var(--tinta-suave); padding: 24px; }
+.sh-painel-escuro h3 { border-bottom-color: var(--linha); font-size: var(--text-body-sm); color: var(--tinta); }
+
+/* Divisórias de cabeçalho: finas e discretas */
+.sh-cabecalho { border-bottom: 1px solid var(--linha); padding-bottom: 32px; margin-bottom: 40px; align-items: flex-end; }
+.sh-rodape-acoes, .envio { border-top-color: var(--linha); }
+.cabecalho { border-bottom-color: var(--linha-forte); }
+.folha { border-top-color: var(--linha); }
+.folha::before { border-color: var(--linha-forte); }
+.topo { border-bottom-color: var(--linha); }
+
+/* Abas e modos: pílulas */
+.modos { border-bottom: 0; gap: 6px; padding: 4px; background: var(--papel-2); border-radius: var(--raio-pilula); width: fit-content; max-width: 100%; }
+.modo { border: 0; border-radius: var(--raio-pilula); color: var(--tinta-suave); padding: 0 16px; min-height: 40px; }
+.modo.ativo { background: var(--obsidiana); color: var(--tinta); border: 0; font-weight: 480; }
+.sh-abas { border-bottom-color: var(--linha); gap: 24px; }
+.sh-aba { font-size: var(--text-body); padding: 10px 0; }
+.sh-aba[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+
+/* 01 · Projetos */
+.sh-lista-projetos { border-top: 0; display: grid; gap: 8px; }
+.sh-projeto {
+  padding: 22px 24px;
+  border: 0;
+  border-radius: var(--raio-cartao);
+  background: var(--papel-2);
+  grid-template-columns: 40px 1.4fr 1fr 1fr 150px;
+}
+.sh-projeto:hover { background: var(--obsidiana); }
+
+.sh-projeto small { font-size: var(--text-body-sm); color: var(--tinta-fraca); margin-top: 2px; }
+.sh-projeto .valor { font-size: var(--text-body); }
+.sh-aviso, .sh-nota .n, .sh-resumo .pend { color: var(--cor-pendente); }
+.sh-resumo .ok { color: var(--cor-definido); }
+.sh-vazio-chamada { margin-top: 72px; padding: 56px 40px; border-radius: var(--raio-cartao); background: var(--papel-2); }
+
+
+/* 05/06 · Estimativa e lista ao vivo */
+.sh-item { border-bottom-color: var(--linha); font-size: var(--text-body); }
+.sh-item .nome { font-size: var(--text-body); }
+.sh-item small { font-size: var(--text-caption); }
+.sh-item .preco { font-size: var(--text-body); font-weight: 480; }
+.sh-item[aria-pressed="true"] { box-shadow: inset 2px 0 0 var(--tinta); }
+.sh-item .nome.sel { color: var(--tinta); font-weight: 480; }
+.sh-item .foto, .orc-item__imagem { border-radius: 8px; background: var(--obsidiana); overflow: hidden; border: 0; }
+.sh-ref .imagem { border: 0; border-radius: var(--raio-cartao); background: repeating-linear-gradient(45deg, var(--obsidiana) 0 6px, var(--papel-2) 6px 12px); overflow: hidden; }
+
+.sh-resumo { font-size: var(--text-body-sm); }
+.sh-ref dl, .sh-fonte small { font-size: var(--text-body-sm); }
+.sh-fonte { font-size: var(--text-body); }
+.orc-status { border-radius: var(--raio-pilula); padding: 4px 10px; }
+.orc-item__lojas a { color: var(--tinta); text-decoration-color: var(--linha-forte); }
+.orc-item__agente::before { color: var(--tinta-suave); }
+.orc-cota__ponto { background: var(--cobalto); box-shadow: 0 0 0 3px var(--papel); }
+.rs-sim span:first-child { color: var(--cor-definido); }
+.rs-talvez span:first-child { color: var(--cor-pendente); }
+
+/* 08 · Documento (modal): grafite na tela, branco na impressão */
+.sh-fundo-modal { background: rgba(10, 10, 16, 0.7); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.sh-modal { background: var(--papel-2); border: 1px solid var(--linha); border-radius: var(--raio-cartao); box-shadow: none; padding: 32px; }
+.sh-modal .total { border-top-color: var(--linha-forte); }
+
+/* Conexão ao vivo */
+.obra-conexao__ponto { background: var(--tinta-fraca); }
+.obra-conexao--ao-vivo .obra-conexao__ponto { background: var(--cor-definido); }
+.obra-conexao--reconectando .obra-conexao__ponto,
+.obra-conexao--conectando .obra-conexao__ponto { background: var(--cor-pendente); }
+.obra-conexao--erro-leitura .obra-conexao__ponto,
+.obra-conexao--sem-configuracao .obra-conexao__ponto { background: var(--erro); }
+
+/* ---------- Rodapé ---------- */
+.oa-rodape { border-top: 1px solid var(--linha); }
+.oa-rodape__dentro {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  font-size: var(--text-caption);
+  letter-spacing: 0.01em;
+  color: var(--tinta-fraca);
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 960px) {
+  .oa-escritorio span:not(.iniciais), .oa-tag { display: none; }
+}
+@media (max-width: 860px) {
+  .sh-lateral { position: static; padding: 24px; }
+  .sh-projeto { grid-template-columns: 1fr auto; padding: 18px 20px; }
+}
+@media (max-width: 720px) {
+  .oa-nav__dentro { flex-wrap: wrap; padding: 10px 16px; gap: 8px 12px; }
+  .oa-direita { margin-left: auto; }
+  .oa-links { order: 3; width: 100%; margin: 0; overflow-x: auto; scrollbar-width: none; }
+  .oa-links a { min-height: 36px; padding: 0 14px; font-size: var(--text-body-sm); white-space: nowrap; }
+  .oa-direita .oa-botao--fantasma { display: none; }
+  .oa-nav[data-modo="site"]:not([data-rolou="true"]) { background: linear-gradient(to bottom, rgba(23, 23, 33, 0.85), rgba(23, 23, 33, 0)); }
+  .oa-escritorio { display: none; }
+  .sh-conteudo { padding: 28px 16px 72px; }
+  .sh-cabecalho { padding-bottom: 24px; margin-bottom: 28px; }
+  .obra-bloco { padding: 20px; }
+  .sh-vazio-chamada { padding: 32px 20px; margin-top: 48px; }
+  .oa-rodape__dentro { padding: 24px 16px 32px; }
+}
+
+/* ---------- Impressão: volta ao papel branco ---------- */
+@media print {
+  :root {
+    --papel: #fff; --papel-2: #fff; --obsidiana: #f2f2f5; --tinta: #111; --tinta-suave: #444; --tinta-fraca: #555;
+    --linha: #ccc; --linha-forte: #999; color-scheme: light;
+  }
+  .oa-nav, .oa-rodape { display: none; }
+  .sh-modal { border: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oa-nav { transition: none; }
+}

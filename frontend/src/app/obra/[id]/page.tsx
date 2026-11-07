@@ -29,7 +29,7 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
   if (!valido) {
     return (
       <>
-        <CabecalhoPagina trilha={[{ rotulo: "Projetos", href: "/" }, { rotulo: "Resultado" }]} titulo="Código de orçamento" destaque="inválido." />
+        <CabecalhoPagina trilha={[{ rotulo: "Projetos", href: "/projetos" }, { rotulo: "Resultado" }]} titulo="Código de orçamento" destaque="inválido." />
         <p className="obra-bloco__texto" role="alert">
           O endereço não traz um código de orçamento válido. Volte e inicie a obra de novo.
         </p>
@@ -45,7 +45,7 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <CabecalhoPagina
-        trilha={[{ rotulo: "Projetos", href: "/" }, { rotulo: orcamento?.nome ?? "Orçamento" }, { rotulo: "Resultado" }]}
+        trilha={[{ rotulo: "Projetos", href: "/projetos" }, { rotulo: orcamento?.nome ?? "Orçamento" }, { rotulo: "Resultado" }]}
         etiqueta="Resultado"
         titulo={orcamento ? "Orçamento de" : "Orçamento"}
         destaque={orcamento?.nome ?? "em preparo."}

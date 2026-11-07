@@ -37,7 +37,7 @@ export default function PreviaB() {
   return (
     <main className="pagina">
       <header className="topo">
-        <p className="marca">Orça</p>
+        <p className="marca">OrçaAI</p>
         <p className="lema">Prévia dos preços</p>
       </header>
       <p>

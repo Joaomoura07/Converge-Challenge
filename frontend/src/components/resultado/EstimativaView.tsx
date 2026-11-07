@@ -33,7 +33,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
   return (
     <>
       <CabecalhoPagina
-        trilha={[{ rotulo: "Estimativas", href: "/" }, { rotulo: orcamento.nome }, { rotulo: "Atual" }]}
+        trilha={[{ rotulo: "Estimativas", href: "/projetos" }, { rotulo: orcamento.nome }, { rotulo: "Atual" }]}
         etiqueta={`Caderno de materiais · ${mesAno(orcamento.created_at)}`}
         titulo={titulo}
         destaque={destaque}

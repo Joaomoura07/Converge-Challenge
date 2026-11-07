@@ -109,7 +109,7 @@ export function Caderno() {
   return (
     <main className="pagina">
       <CabecalhoPagina
-        trilha={[{ rotulo: "Projetos", href: "/" }, { rotulo: "Nova estimativa" }, { rotulo: "01 de 03" }]}
+        trilha={[{ rotulo: "Projetos", href: "/projetos" }, { rotulo: "Nova estimativa" }, { rotulo: "01 de 03" }]}
         etiqueta="Preparação / lista de materiais"
         titulo={mostrandoFormulario ? "Do desenho ao" : undefined}
         destaque={mostrandoFormulario ? "quantitativo." : undefined}

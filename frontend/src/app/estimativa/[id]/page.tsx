@@ -18,7 +18,7 @@ export default function EstimativaObra({ params }: { params: Promise<{ id: strin
   if (!valido) {
     return (
       <>
-        <CabecalhoPagina trilha={[{ rotulo: "Estimativas", href: "/" }, { rotulo: "Estimativa" }]} titulo="Código de orçamento" destaque="inválido." />
+        <CabecalhoPagina trilha={[{ rotulo: "Estimativas", href: "/projetos" }, { rotulo: "Estimativa" }]} titulo="Código de orçamento" destaque="inválido." />
         <p role="alert">O endereço não traz um código de orçamento válido.</p>
         <Link href="/nova" className="sh-link">← Nova estimativa</Link>
       </>
@@ -28,7 +28,7 @@ export default function EstimativaObra({ params }: { params: Promise<{ id: strin
   if (!orcamento) {
     return (
       <>
-        <CabecalhoPagina trilha={[{ rotulo: "Estimativas", href: "/" }, { rotulo: "Estimativa" }]} titulo="Estimativa" destaque="em preparo." />
+        <CabecalhoPagina trilha={[{ rotulo: "Estimativas", href: "/projetos" }, { rotulo: "Estimativa" }]} titulo="Estimativa" destaque="em preparo." />
         {conexao === "sem-configuracao" && (
           <p role="alert">
             Falta configurar o banco: defina <code>NEXT_PUBLIC_SUPABASE_URL</code> e <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> e recarregue.

@@ -24,7 +24,7 @@ export default function Estimativa() {
   return (
     <>
       <CabecalhoPagina
-        trilha={[{ rotulo: "Estimativas", href: "/" }, { rotulo: "Residência Aurora" }, { rotulo: "Atual" }]}
+        trilha={[{ rotulo: "Estimativas", href: "/projetos" }, { rotulo: "Residência Aurora" }, { rotulo: "Atual" }]}
         etiqueta="Caderno de materiais · novembro 2026"
         titulo="Residência"
         destaque="Aurora."
