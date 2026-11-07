@@ -54,3 +54,34 @@ def test_pendentes_e_sem_preco_nao_inventam_valor():
 def test_lista_vazia():
     r = calcular_viabilidade([], 500)
     assert r.total_med == 0 and r.cabe and r.sugestoes == []
+
+
+def test_cabe_nao_e_afirmado_quando_ha_itens_sem_preco():
+    """15 de 20 itens sem preço + orçamento folgado: não pode dizer 'Cabe ... sobram'."""
+    itens = [it(1, 200, 200, 200)] * 5 + [{"status": "nao_encontrado", "qtd_embalagens": 1}] * 15
+    r = calcular_viabilidade(itens, 5000)
+    assert r.cabe and not r.completo and len(r.itens_sem_preco) == 15
+    assert r.resumo.startswith("Ainda não dá para afirmar: 15 itens ainda sem preço ficaram fora do total")
+    assert "Até agora cabe:" in r.resumo and "Cabe:" not in r.resumo
+
+
+def test_um_item_sem_preco_usa_singular():
+    r = calcular_viabilidade([it(1, 10, 10, 10), {"status": "erro"}], 1000)
+    assert "1 item ainda sem preço ficou fora do total" in r.resumo
+
+
+def test_nao_cabe_com_itens_sem_preco_avisa_que_pode_ser_pior():
+    r = calcular_viabilidade([it(10, 90, 100, 110), {"status": "nao_encontrado"}], 500)
+    assert not r.cabe and not r.completo
+    assert r.resumo.startswith("Não cabe") and "tende a ser maior" in r.resumo
+
+
+def test_cabe_so_no_minimo_com_itens_sem_preco_tambem_avisa():
+    r = calcular_viabilidade([it(10, 90, 100, 110), {"status": "buscando"}], 950)
+    assert r.cabe_no_minimo and not r.cabe
+    assert "Até agora cabe só no menor preço" in r.resumo and r.resumo.startswith("Ainda não dá")
+
+
+def test_lista_completa_nao_muda_o_texto():
+    r = calcular_viabilidade([it(10, 90, 100, 110)], 2000)
+    assert r.completo and r.resumo.startswith("Cabe:") and "ainda sem preço" not in r.resumo

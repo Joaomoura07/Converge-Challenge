@@ -35,6 +35,7 @@ class Viabilidade(BaseModel):
     diferenca: float                   # med - orçamento (positivo = falta; negativo = sobra)
     resumo: str
     inclui_estimativas: bool
+    completo: bool                     # False se há itens sem preço: o total é só um piso
     itens_sem_preco: list[int]
     sugestoes: list[Sugestao]
 
@@ -70,6 +71,8 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
 
     dif = round(md - orcamento_cliente, 2)
     cabe, cabe_min = md <= orcamento_cliente, mn <= orcamento_cliente
+    n_sem = len(sem_preco)
+    completo = n_sem == 0
     if cabe:
         resumo = f"Cabe: total estimado {_brl(md)} para orçamento de {_brl(orcamento_cliente)} (sobram {_brl(-dif)})."
     elif cabe_min:
@@ -77,6 +80,14 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
                   f"mas o total mínimo {_brl(mn)} cabe.")
     else:
         resumo = f"Não cabe: faltam {_brl(dif)} (média {_brl(md)} para orçamento de {_brl(orcamento_cliente)})."
+    if not completo:
+        # itens sem preço ficam fora da soma: o total real é MAIOR que o mostrado
+        plural = "item ainda sem preço ficou" if n_sem == 1 else "itens ainda sem preço ficaram"
+        if cabe or cabe_min:
+            resumo = (f"Ainda não dá para afirmar: {n_sem} {plural} fora do total. "
+                      + resumo.replace("Cabe:", "Até agora cabe:", 1).replace("Cabe só", "Até agora cabe só", 1))
+        else:
+            resumo += f" E {n_sem} {plural} fora desse total, então a diferença tende a ser maior."
 
     sug: list[Sugestao] = []
     for i, it in enumerate(itens):                     # T2: similar técnico mais barato
@@ -107,4 +118,4 @@ def calcular_viabilidade(itens: list[dict[str, Any]], orcamento_cliente: float,
 
     return Viabilidade(orcamento_cliente=orcamento_cliente, total_min=mn, total_med=md, total_max=mx,
                        frete=frete, cabe=cabe, cabe_no_minimo=cabe_min, diferenca=dif, resumo=resumo,
-                       inclui_estimativas=estim, itens_sem_preco=sem_preco, sugestoes=sug)
+                       inclui_estimativas=estim, completo=completo, itens_sem_preco=sem_preco, sugestoes=sug)
