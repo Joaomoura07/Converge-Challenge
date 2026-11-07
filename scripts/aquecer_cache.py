@@ -76,7 +76,8 @@ def ler_itens(caminho: Path) -> list[ItemEntrada]:
 class Medida:
     item: ItemEntrada
     resultado: ResultadoItem
-    segundos: float
+    segundos: float                 # resultado final (depois do agente, se houve)
+    na_tela: float | None = None    # 1º aviso: quando o item apareceu na tela (provisório da fase 1)
 
 
 def escolher_para_apagar(medidas: list[Medida], manter: float) -> list[Medida]:
@@ -89,15 +90,17 @@ def escolher_para_apagar(medidas: list[Medida], manter: float) -> list[Medida]:
 async def aquecer(itens: list[ItemEntrada], manter: float, usar_agente: bool = True) -> tuple[list[Medida], list[Medida], float]:
     t0 = time.perf_counter()
     prontos: dict[str, float] = {}
+    na_tela: dict[str, float] = {}
 
     async def ao_terminar(r: ResultadoItem):
         prontos[r.item_id] = time.perf_counter() - t0
+        na_tela.setdefault(r.item_id, prontos[r.item_id])
         print(f"  [{prontos[r.item_id]:5.1f}s] item {r.item_id:>3}: {r.status}", flush=True)
 
     # usar_cache=False: pesquisa de verdade e regrava (preço e imagem do dia)
     resultados = await pesquisar_itens(itens, ao_terminar=ao_terminar, usar_agente=usar_agente, usar_cache=False)
     total = time.perf_counter() - t0
-    medidas = [Medida(i, r, prontos.get(i.id, total)) for i, r in zip(itens, resultados)]
+    medidas = [Medida(i, r, prontos.get(i.id, total), na_tela.get(i.id)) for i, r in zip(itens, resultados)]
     apagar = escolher_para_apagar(medidas, manter)
     for m in apagar:
         await cache.apagar(m.item.descricao)
@@ -118,12 +121,17 @@ def main() -> int:
     medidas, apagados, total = asyncio.run(aquecer(itens, a.manter, usar_agente=not a.sem_agente))
     fora = {m.item.id for m in apagados}
 
-    print(f"\nPronto em {total:.1f} s.\n")
-    print(f"{'item':>4}  {'tempo':>6}  {'status':22} {'agente':>6}  {'na demo':10} descrição")
-    for m in sorted(medidas, key=lambda m: m.segundos):
+    tela = sorted(m.na_tela for m in medidas if m.na_tela is not None)
+    print(f"\nPronto em {total:.1f} s.")
+    if tela:
+        print(f"Na tela: 1º item em {tela[0]:.1f} s · metade em {tela[len(tela) // 2]:.1f} s · "
+              f"{len(tela)} de {len(medidas)} antes do agente terminar\n")
+    print(f"{'item':>4}  {'tela':>6}  {'final':>6}  {'status':22} {'agente':>6}  {'na demo':10} descrição")
+    for m in sorted(medidas, key=lambda m: (m.na_tela if m.na_tela is not None else m.segundos)):
         r = m.resultado
         demo = "ao vivo" if m.item.id in fora else ("cache" if r.preco_emb_med is not None else "ao vivo*")
-        print(f"{m.item.id:>4}  {m.segundos:5.1f}s  {r.status:22} {r.iteracoes:>6}  {demo:10} {m.item.descricao[:60]}")
+        tela_s = f"{m.na_tela:5.1f}s" if m.na_tela is not None else "    — "
+        print(f"{m.item.id:>4}  {tela_s}  {m.segundos:5.1f}s  {r.status:22} {r.iteracoes:>6}  {demo:10} {m.item.descricao[:60]}")
     por_status: dict[str, int] = {}
     for m in medidas:
         por_status[m.resultado.status] = por_status.get(m.resultado.status, 0) + 1

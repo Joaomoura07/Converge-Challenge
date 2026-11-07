@@ -61,13 +61,20 @@ Falha total → cache vencido ("preço de dd/mm") ou `nao_encontrado` com as con
 | `src/calculo.py` | Normalização, outliers, mediana, confiança, embalagem de menor custo | 4 ✅ |
 | `src/cache.py` + `sql/002_cache_precos.sql` | Cache no Supabase (tabela **já criada**), imagem estável por produto | 5 ✅ |
 | `src/pesquisa.py` + `prompts/pesquisador_precos.md` | Orquestra o item + agente ReAct + pergunta ao arquiteto | 6 ✅ |
-| `src/orcamento.py` | `pesquisar_orcamento(id)` (reserva atômica, grava item a item, chama a C) e `repesquisar_item` | 7 ⏸️ PENDENTE |
+| `src/orcamento.py` | `pesquisar_orcamento(id)` (reserva atômica, grava item a item, chama a C) e `repesquisar_item` | 7 ✅ (banco real, 07/11 14:37) |
 | `ui-fatia-b/` | Componentes React: `ItemRow`, `PriceDimension` (cota de preço), `StatusBadge` + prévia Vite | 8 ✅ |
 | `scripts/aquecer_cache.py` | Pré-aquece o cache da demo e deixa metade "ao vivo" | 9 ✅ (com achado grave, ver P0-1) |
 | `scripts/revisar.py`, `pytest.ini`, `tests/fatia_b/` | Revisão por etapa e testes (offline + `real`) | — |
 | `docs/revisao/fatia-b.md` | **Diário de tudo que foi medido e corrigido** (leia antes de mudar algo) | — |
 
 ## 5. O que falta, em ordem de prioridade
+
+> **Atualização 07/11 ~14h45 (continuação):** feitos P0-1 (duas fases: 1º item em 5,6 s; com metade em cache, 1,6 s),
+> P0-2 (etapa 7 aprovada no banco real), P0-3 (rota `POST /orcamento-itens/{item_id}/repesquisar`, corpo opcional
+> `{"nova_descricao": "..."}`), P1-6, P1-7 e P1-9, mais disjuntor de modelo fora do ar e adaptação ao SQL da fatia A
+> (cache em `resultado` jsonb, `classificacao = pendente`). Números e achados em `docs/revisao/fatia-b.md`.
+> **Ainda abertos:** P0-4 (conferir limite da função no painel da Vercel), P0-5 (componentes no site do Samuel),
+> P1-8, P2. **Pedir ao Samuel:** `alter table orcamento_itens add column premissa text;`
 
 ### P0 — sem isso a demo não fica boa
 1. **Desempenho com muitos itens (o mais importante).** Medido no aquecimento da Cozinha Graças (24 itens):
