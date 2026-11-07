@@ -21,6 +21,7 @@ from typing import Protocol
 
 from langfuse import observe, propagate_attributes
 
+from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
 from .pesquisa import pesquisar_item, pesquisar_itens
 
@@ -30,8 +31,9 @@ ORCAMENTOS, ITENS = "orcamentos", "orcamento_itens"
 COLUNAS_LIDAS = ["id", "orcamento_id", "descricao", "quantidade", "unidade", "categoria", "classificacao", "status"]
 COLUNAS_GRAVADAS = [c for c in ResultadoItem.model_fields if c != "item_id"] + ["atualizado_em"]
 JANELA_TRAVADO = timedelta(minutes=3)   # execução morta pela Vercel no meio libera o orçamento depois disso
-# Ganchos da fatia C, chamados no fim: (módulo, função). Ausentes = só registra no log.
-GANCHOS_FIM = [("src.logistica", "calcular_logistica"), ("src.viabilidade", "calcular_viabilidade")]
+# Gancho da fatia C, chamado no fim: (módulo, função). Uma chamada só faz frete + viabilidade + ganho e grava em
+# `orcamentos`. Ausente (branch da C ainda não juntada) = só registra no log.
+GANCHOS_FIM = [("src.rotas_resultado", "resultado")]
 
 
 def _agora() -> datetime:
@@ -61,7 +63,9 @@ class Banco(Protocol):
     async def item(self, item_id: str) -> ItemEntrada | None: ...
     async def gravar_item(self, resultado: ResultadoItem) -> None: ...
     async def marcar_item(self, item_id: str, campos: dict) -> None: ...
-    async def concluir(self, orcamento_id: str, erro: str | None = None) -> None: ...
+    async def concluir(self, orcamento_id: str, erro: str | None = None, custo_usd: float | None = None) -> None: ...
+    async def orcamento_do_item(self, item_id: str) -> str | None: ...
+    async def somar_custo(self, orcamento_id: str, usd: float) -> None: ...
 
 
 class BancoSupabase:
@@ -86,7 +90,31 @@ class BancoSupabase:
                               .or_(f"status_pesquisa.in.(pendente,falhou),"
                                    f"and(status_pesquisa.eq.pesquisando,pesquisa_iniciada_em.lt.{limite})")
                               .execute())
-        return bool(r.data)
+        return bool(r.data)   # o tempo do "ganho" a Fatia C lê de pesquisa_iniciada_em / pesquisa_concluida_em
+
+    async def _extras(self, orcamento_id: str, campos: dict) -> None:
+        """Grava colunas da Fatia C em `orcamentos` sem nunca derrubar a pesquisa."""
+        try:
+            await self._rodar(lambda: self.sb.table(ORCAMENTOS).update(campos).eq("id", orcamento_id).execute())
+        except Exception:  # noqa: BLE001
+            logger.warning("Não gravei %s em orcamentos (coluna existe?)", sorted(campos), exc_info=True)
+
+    async def orcamento_do_item(self, item_id: str) -> str | None:
+        r = await self._rodar(lambda: self.sb.table(ITENS).select("orcamento_id").eq("id", item_id).limit(1).execute())
+        return str(r.data[0]["orcamento_id"]) if r.data else None
+
+    async def somar_custo(self, orcamento_id: str, usd: float) -> None:
+        """Soma o custo de uma nova pesquisa (ex.: 'Pesquisar de novo') ao total do orçamento."""
+        if not usd:
+            return
+        try:
+            r = await self._rodar(lambda: self.sb.table(ORCAMENTOS).select("custo_usd").eq("id", orcamento_id)
+                                  .limit(1).execute())
+            atual = float((r.data[0].get("custo_usd") if r.data else 0) or 0)
+        except Exception:  # noqa: BLE001
+            logger.warning("Não li custo_usd do orçamento %s", orcamento_id, exc_info=True)
+            return
+        await self._extras(orcamento_id, {"custo_usd": round(atual + usd, 6)})
 
     async def itens_para_pesquisar(self, orcamento_id: str) -> list[ItemEntrada]:
         r = await self._rodar(lambda: self.sb.table(ITENS).select(",".join(COLUNAS_LIDAS))
@@ -106,10 +134,12 @@ class BancoSupabase:
         await self._rodar(lambda: self.sb.table(ITENS).update({**campos, "atualizado_em": _agora().isoformat()})
                           .eq("id", item_id).execute())
 
-    async def concluir(self, orcamento_id: str, erro: str | None = None) -> None:
+    async def concluir(self, orcamento_id: str, erro: str | None = None, custo_usd: float | None = None) -> None:
         await self._rodar(lambda: self.sb.table(ORCAMENTOS).update({
             "status_pesquisa": "falhou" if erro else "concluida", "pesquisa_erro": erro,
             "pesquisa_concluida_em": _agora().isoformat()}).eq("id", orcamento_id).execute())
+        if custo_usd is not None:
+            await self._extras(orcamento_id, {"custo_usd": round(custo_usd, 6)})
 
 
 # ------------------------------------------------------------------ fluxo
@@ -123,9 +153,12 @@ async def _chamar_fatia_c(orcamento_id: str) -> list[str]:
             logger.info("Fatia C: %s.%s ainda não existe; pulando", modulo, nome)
             continue
         try:
-            r = fn(orcamento_id)
-            if inspect.isawaitable(r):
-                await r
+            if inspect.iscoroutinefunction(fn):
+                await fn(orcamento_id)
+            else:   # função síncrona (consulta de CEP, banco): numa thread para não travar o event loop
+                r = await asyncio.to_thread(fn, orcamento_id)
+                if inspect.isawaitable(r):
+                    await r
             feitos.append(nome)
         except Exception:  # noqa: BLE001
             logger.exception("Fatia C: %s falhou para o orçamento %s", nome, orcamento_id)
@@ -136,14 +169,15 @@ async def _chamar_fatia_c(orcamento_id: str) -> list[str]:
 async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) -> dict:
     if not await banco.reservar(orcamento_id):
         return {"orcamento_id": orcamento_id, "status": "ja_em_andamento_ou_concluido", "itens": 0}
-    try:
-        itens = await banco.itens_para_pesquisar(orcamento_id)
-        resultados = await pesquisar_itens(itens, ao_terminar=banco.gravar_item, **opcoes)
-    except Exception as exc:  # noqa: BLE001 — erro geral (banco fora, etc.): marca falhou e libera novo clique
-        logger.exception("Pesquisa do orçamento %s falhou", orcamento_id)
-        await banco.concluir(orcamento_id, erro=f"{type(exc).__name__}: {exc}"[:500])
-        return {"orcamento_id": orcamento_id, "status": "falhou", "itens": 0}
-    await banco.concluir(orcamento_id)
+    with acumular_custo() as custo:
+        try:
+            itens = await banco.itens_para_pesquisar(orcamento_id)
+            resultados = await pesquisar_itens(itens, ao_terminar=banco.gravar_item, **opcoes)
+        except Exception as exc:  # noqa: BLE001 — erro geral (banco fora, etc.): marca falhou e libera novo clique
+            logger.exception("Pesquisa do orçamento %s falhou", orcamento_id)
+            await banco.concluir(orcamento_id, erro=f"{type(exc).__name__}: {exc}"[:500], custo_usd=custo.usd)
+            return {"orcamento_id": orcamento_id, "status": "falhou", "itens": 0}
+    await banco.concluir(orcamento_id, custo_usd=custo.usd)   # antes da C: o "ganho" lê custo_usd
     fatia_c = await _chamar_fatia_c(orcamento_id)
     contagem: dict[str, int] = {}
     for r in resultados:
@@ -174,6 +208,12 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
         item = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
         campos |= {"descricao": nova_descricao, "classificacao": "definido"}
     await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
-    resultado = await pesquisar_item(item, usar_cache=False, **opcoes)
+    with acumular_custo() as custo:
+        resultado = await pesquisar_item(item, usar_cache=False, **opcoes)
     await banco.gravar_item(resultado)
+    # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
+    orcamento_id = await banco.orcamento_do_item(item_id)
+    if orcamento_id:
+        await banco.somar_custo(orcamento_id, custo.usd)
+        await _chamar_fatia_c(orcamento_id)
     return resultado

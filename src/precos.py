@@ -13,6 +13,7 @@ import logging
 import random
 import re
 import time
+import weakref
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -20,6 +21,7 @@ from langfuse import get_client, observe
 from openai import APIStatusError, AsyncOpenAI
 from pydantic import BaseModel
 
+from . import custo as _custo
 from .busca import ResultadoWeb
 from .config import get_settings, load_prompt
 from .modelos import Fonte
@@ -122,15 +124,22 @@ def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Ofert
 
 
 # ------------------------------------------------------------------ chamada ao LLM
-_semaforos: dict[int, asyncio.Semaphore] = {}
+def semaforo_do_loop(registro: weakref.WeakKeyDictionary, vagas: int) -> asyncio.Semaphore:
+    """Um semáforo por event loop, guardado pelo PRÓPRIO loop (referência fraca), não por id(loop):
+    o Python reaproveita o id de um loop já fechado, e o loop novo herdava um semáforo com vagas
+    presas (travou a suíte de testes; em produção, um `asyncio.run` por requisição teria o mesmo risco)."""
+    loop = asyncio.get_running_loop()
+    if loop not in registro:
+        registro[loop] = asyncio.Semaphore(vagas)
+    return registro[loop]
+
+
+_semaforos: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
 
 
 def _porteiro() -> asyncio.Semaphore:
     """No máximo N chamadas simultâneas à Featherless (evita erro 429). Um por event loop."""
-    loop = id(asyncio.get_running_loop())
-    if loop not in _semaforos:
-        _semaforos[loop] = asyncio.Semaphore(get_settings().pesquisa_concorrencia_llm)
-    return _semaforos[loop]
+    return semaforo_do_loop(_semaforos, get_settings().pesquisa_concorrencia_llm)
 
 
 def _cliente() -> AsyncOpenAI:
@@ -194,11 +203,33 @@ async def extrair_e_conferir(produto: str, resultados: list[ResultadoWeb], clien
             await cliente.close()   # sem isso o httpx reclama "Event loop is closed" ao sair
 
 
+# Disjuntor: modelo que a Featherless recusa com 400 ("not available for inference" / frio carregando)
+# fica fora por um tempo. Medido em 07/11 14h: o Qwen3-32B saiu do ar e CADA extração gastava até 19 s
+# numa chamada perdida antes da reserva — o agente estourava os 40 s por isso.
+PAUSA_MODELO_INDISPONIVEL_S = 600
+_indisponivel_ate: dict[str, float] = {}
+
+
+def _disponivel(modelo: str) -> bool:
+    return _indisponivel_ate.get(modelo, 0) <= time.monotonic()
+
+
+def _marcar_indisponivel(modelo: str) -> None:
+    _indisponivel_ate[modelo] = time.monotonic() + PAUSA_MODELO_INDISPONIVEL_S
+    logger.warning("Modelo %s indisponível na Featherless: pulado por %d min", modelo, PAUSA_MODELO_INDISPONIVEL_S // 60)
+
+
+def modelos_extracao() -> list[str]:
+    """Principal e reserva, sem os que estão no disjuntor. Se todos estiverem, tenta todos (melhor que nada)."""
+    todos = list(dict.fromkeys([get_settings().pesquisa_modelo_extracao, MODELO_RESERVA_EXTRACAO]))
+    return [m for m in todos if _disponivel(m)] or todos
+
+
 async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> ResultadoExtracao:
     anuncios = montar_anuncios(resultados)
     t0 = time.perf_counter()
     res = ResultadoExtracao()
-    for modelo in (get_settings().pesquisa_modelo_extracao, MODELO_RESERVA_EXTRACAO):
+    for modelo in modelos_extracao():
         t_modelo = time.perf_counter()
         try:
             r = await _chamar(cliente, modelo, produto, anuncios)
@@ -206,6 +237,8 @@ async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> Res
             res.erro = f"{modelo}: HTTP {exc.status_code}"
             res.tentativas.append(f"{res.erro} ({time.perf_counter() - t_modelo:.1f}s)")
             logger.warning("Extração com %s falhou (HTTP %s); tentando reserva", modelo, exc.status_code)
+            if exc.status_code == 400:
+                _marcar_indisponivel(modelo)
             continue
         except Exception as exc:  # noqa: BLE001 — timeout/rede/resposta vazia
             res.erro = f"{modelo}: {type(exc).__name__}"
@@ -216,6 +249,7 @@ async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> Res
             res.tokens_entrada += r.usage.prompt_tokens or 0
             res.tokens_saida += r.usage.completion_tokens or 0
             res.custo_usd += float(getattr(r.usage, "cost", 0) or 0)
+            _custo.registrar(getattr(r.usage, "cost", 0))
         ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
         res.descartadas_alucinacao += alucinadas
         res.tentativas.append(f"{modelo}: {time.perf_counter() - t_modelo:.1f}s, {len(ofertas)} linhas válidas")

@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langfuse import get_client
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .agent import Agent, AgentResult
 from .config import get_settings
@@ -56,6 +56,24 @@ def health() -> dict:
         "model": settings.featherless_model,
         "tools": registry.names(),
     }
+
+
+class RepesquisarRequest(BaseModel):
+    """Corpo opcional: vazio = "Pesquisar de novo"; com texto = resposta do arquiteto à pergunta do item."""
+    nova_descricao: str | None = Field(default=None, min_length=3, max_length=300)
+
+
+@app.post("/orcamento-itens/{item_id}/repesquisar")
+async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> dict:
+    """Fatia B: botões "Pesquisar de novo" e "Responder" do ItemRow. Roda na mesma requisição (a Vercel encerra
+    o que roda depois da resposta) e grava o item em orcamento_itens: o Realtime atualiza a tela sozinho."""
+    if not settings.supabase_configured:
+        raise HTTPException(status_code=503, detail="Supabase não configurado")
+    from .orcamento import repesquisar_item   # import tardio: /health não depende da pesquisa
+    resultado = await repesquisar_item(item_id, req.nova_descricao if req else None)
+    if resultado is None:
+        raise HTTPException(status_code=404, detail="item não encontrado")
+    return resultado.model_dump(mode="json")
 
 
 @app.post("/agent/run", response_model=RunResponse)

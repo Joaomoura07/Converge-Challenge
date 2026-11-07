@@ -60,6 +60,34 @@ def test_porcelanato_com_preco_por_m2_e_por_caixa_fica_comparavel():
     assert len(c.fontes) == 3 and all(f.embalagem == "caixa 1,8m²" for f in c.fontes)   # parecido fica de fora
 
 
+def test_preco_por_m2_rotulado_como_caixa_e_corrigido():
+    """Achado real (etapa 8): Ferreira Costa R$ 88,90 POR m² veio do LLM como 'caixa 1,8 m²' e virou o mínimo."""
+    ext = ResultadoExtracao(ofertas=[of("Leroy Merlin", 97.9, "m²"), of("Telhanorte", 122.22, "caixa 1,8m²"),
+                                     of("Ferreira Costa", 88.9, "caixa 1,8 m²")])
+    c = calcular(ItemEntrada(id="1", descricao="Porcelanato Eliane Munari Cimento acetinado 60x60", quantidade=48, unidade="m2"), ext)
+    assert c.preco_un_min == 67.9, "o mínimo não pode ser o R$ 49,39/m² do rótulo errado"
+    assert c.preco_un_med == 88.9 and c.descartadas.get("embalagem corrigida (preço avulso × embalagem)") == 1
+    assert len(c.fontes) == 3
+
+
+@pytest.mark.parametrize("preco_fc", [60.0, 120.0, 115.0])
+def test_caixa_barata_que_nao_encaixa_como_preco_avulso_nao_e_corrigida(preco_fc):
+    """60: lida como R$/m² ainda fica longe das outras (vira outlier, não correção).
+    120 e 115: caixa ~30% mais barata é promoção plausível, não é suspeita (regressão do 1º desenho da trava)."""
+    ext = ResultadoExtracao(ofertas=[of("Leroy Merlin", 97.9, "m²"), of("Magazine Luiza", 88.9, "m²"),
+                                     of("Ferreira Costa", preco_fc, "caixa 1,8 m²")])
+    c = calcular(ItemEntrada(id="1", descricao="Porcelanato Eliane Munari 60x60", quantidade=48, unidade="m2"), ext)
+    assert "embalagem corrigida (preço avulso × embalagem)" not in c.descartadas
+
+
+def test_preco_por_m2_que_parece_alto_nao_e_mexido():
+    """A direção contrária é ambígua com 3 lojas: a Leroy em R$/m² não pode virar 'preço da caixa'."""
+    ext = ResultadoExtracao(ofertas=[of("Leroy Merlin", 97.9, "m²"), of("Telhanorte", 122.22, "caixa 1,8m²"),
+                                     of("Ferreira Costa", 88.9, "caixa 1,8 m²")])
+    c = calcular(ItemEntrada(id="1", descricao="Porcelanato Eliane Munari 60x60", quantidade=48, unidade="m2"), ext)
+    assert c.preco_un_max == 97.9
+
+
 def test_tinta_usa_a_lata_do_item_e_nao_mistura_parecidos():
     ext = ResultadoExtracao(ofertas=[of("Telhanorte", 739.9, "lata 18 L"), of("Magazine Luiza", 849.0, "lata 18 L"),
                                      of("Mercado Livre", 189.0, "galão 3,6 L", "parecido"), of("Amazon", 1599.0, "kit 2 latas 18 L", "parecido")])

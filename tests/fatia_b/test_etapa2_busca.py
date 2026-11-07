@@ -38,6 +38,22 @@ def test_filtro_so_lojas_da_lista_sem_repetir_e_com_limite():
     assert [x.loja for x in r] == ["Leroy Merlin", "C&C"]
 
 
+@pytest.mark.parametrize("url,busca", [
+    ("https://www.magazineluiza.com.br/busca/porcelanato+portobello/", True),   # caso da passagem
+    ("https://www.amazon.com.br/s?k=argamassa+ac3", True),
+    ("https://lista.mercadolivre.com.br/cuba-tramontina-morgana", True),
+    ("https://www.telhanorte.com.br/busca?ft=tinta%20suvinil", True),
+    ("https://www.leroymerlin.com.br/search?term=misturador", True),
+    ("https://www.leroymerlin.com.br/porcelanato-cimento-90x90-portobello_89393833", False),
+    ("https://produto.mercadolivre.com.br/MLB-123-cuba-tramontina-morgana-56x34-_JM", False),
+    ("https://www.amazon.com.br/Argamassa-Quartzolit/dp/B07XYZ", False),
+    ("https://www.telhanorte.com.br/tinta-suvinil-toque-de-seda-18l/p?skuId=1", False),
+])
+def test_descarta_pagina_de_busca_da_loja(url, busca):
+    assert b.eh_pagina_de_busca(url) is busca
+    assert (b._filtra([("X", url, "R$ 10")], limite=5) == []) is busca
+
+
 def test_no_maximo_2_resultados_por_loja():
     brutos = [(f"ML {i}", f"https://www.mercadolivre.com.br/{i}", "R$ 1") for i in range(5)]
     brutos.append(("Leroy", "https://www.leroymerlin.com.br/x", "R$ 2"))

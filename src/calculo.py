@@ -81,6 +81,38 @@ def _referencia(validas: list[_Normalizada], item: ItemEntrada) -> Conteudo:
     return max(contagem, key=lambda c: (contagem[c], c.quantidade))
 
 
+# Trava da embalagem (P1 da passagem): a embalagem vem do LLM e pode errar. Avaliação real (etapa 8): o preço
+# POR m² da Ferreira Costa (R$ 88,90) veio rotulado "caixa 1,8 m²" → R$ 49,39/m², virou o mínimo da faixa.
+SUSPEITO_ABAIXO = 0.65          # R$/unidade abaixo de 65% da mediana das OUTRAS lojas: desconfia da embalagem
+RELEITURA_ACEITA = (0.85, 1.18)  # lido como preço avulso, precisa cair perto das outras lojas
+MIN_OUTRAS_LOJAS = 2
+
+
+def _corrigir_embalagens(mesma: list[_Normalizada]) -> tuple[list[_Normalizada], int]:
+    """Oferta de embalagem (ex.: caixa 1,8 m²) com R$/unidade muito abaixo das outras lojas e que, lida como
+    preço AVULSO (R$/m²), encaixa nas outras: o LLM rotulou o preço por m² como preço da caixa.
+
+    Só nessa direção (a do erro observado). A contrária ("preço da caixa rotulado como m²") é numericamente
+    indistinguível de ser a OUTRA loja a errada com 3 lojas (testado), então fica para o filtro de outlier.
+    Decide com os valores originais de todas as lojas. Python puro, sem nova chamada ao LLM."""
+    saida, corrigidas = [], 0
+    for n in mesma:
+        outras = [o for o in mesma if o.oferta.loja != n.oferta.loja]
+        if n.conteudo.quantidade == 1.0 or len({o.oferta.loja for o in outras}) < MIN_OUTRAS_LOJAS:
+            saida.append(n)
+            continue
+        ref = statistics.median(o.unitario for o in outras)
+        avulso = n.oferta.preco / ref
+        if n.unitario / ref < SUSPEITO_ABAIXO and RELEITURA_ACEITA[0] <= avulso <= RELEITURA_ACEITA[1]:
+            c = Conteudo(1.0, n.conteudo.unidade)
+            oferta = n.oferta.model_copy(update={"embalagem": c.unidade.replace("m2", "m²").replace("m3", "m³")})
+            saida.append(_Normalizada(oferta, c, n.oferta.preco))
+            corrigidas += 1
+        else:
+            saida.append(n)
+    return saida, corrigidas
+
+
 def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | None = None) -> Calculo:
     generico = item.classificacao == "pendente_especificacao" if generico is None else generico
     descartadas: Counter = Counter()
@@ -116,6 +148,8 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         if n.conteudo.unidade != unidade_base:
             descartadas[f"unidade diferente ({n.conteudo.unidade})"] += 1
     mesma = [n for n in normalizadas if n.conteudo.unidade == unidade_base]
+    mesma, corrigidas = _corrigir_embalagens(mesma)
+    descartadas["embalagem corrigida (preço avulso × embalagem)"] += corrigidas
     mediana = statistics.median(n.unitario for n in mesma)
     validas = [n for n in mesma if OUTLIER_MIN * mediana <= n.unitario <= OUTLIER_MAX * mediana]
     descartadas["preço fora da faixa (outlier)"] += len(mesma) - len(validas)

@@ -45,8 +45,9 @@ class Mundo:
         e = self.cache_linha
         return e if e and (aceitar_vencido or not e.vencido) else None
 
-    async def gravar(self, descricao, extracao, imagem_url, provedor=None, anterior=None, cliente=None):
+    async def gravar(self, descricao, extracao, imagem_url, provedor=None, anterior=None, cliente=None, iteracoes=0):
         self.gravados.append((descricao, len(extracao.ofertas), imagem_url))
+        self.iteracoes_gravadas = iteracoes
         return True
 
 
@@ -193,6 +194,81 @@ def test_varios_itens_avisam_cada_um_ao_terminar(mundo):
     itens = [TINTA.model_copy(update={"id": x}) for x in "abc"]
     rs = asyncio.run(p.pesquisar_itens(itens, ao_terminar=ao_terminar, cliente_llm=LLMFalso([])))
     assert sorted(prontos) == ["a", "b", "c"] and all(r.status == "definido" for r in rs)
+
+
+# ---------------------------------------------------------------- duas fases (achado da etapa 9)
+CUBA = ItemEntrada(id="cuba", descricao="Cuba inox modelo raro", quantidade=1, unidade="un")
+
+
+def _mundo_duas_fases(mundo):
+    return mundo({"suvinil": [of("Telhanorte", 739.9), of("Magazine Luiza", 849.0), of("Sertão", 749.9)],
+                  "deca link 1875": [of("Leroy Merlin", 1799.0, "unidade"), of("Loja Dexco", 1850.0, "unidade")],
+                  "deca": [of("Magazine Luiza", 1878.78, "unidade")],
+                  "cuba": []})
+
+
+def test_fase1_avisa_todos_antes_do_agente_e_sem_preco_vai_primeiro(mundo, monkeypatch):
+    """Itens rápidos aparecem antes de qualquer agente; com 1 loja aparece o provisório e depois o final;
+    sem preço fica 'buscando' (não é avisado) até o agente terminar, e é o primeiro da fila do agente."""
+    monkeypatch.setattr(p.get_settings(), "pesquisa_agentes_simultaneos", 1)
+    _mundo_duas_fases(mundo)
+    llm = LLMFalso([("buscar", "cuba inox outra loja"), ("fim", "FIM: nada"),           # cuba (sem preço) primeiro
+                    ("buscar", "misturador Deca Link 1875 cozinha")])                    # depois o misturador
+    eventos = []
+    async def ao_terminar(r): eventos.append((r.item_id, r.status, r.iteracoes))
+    rs = asyncio.run(p.pesquisar_itens([TINTA, MISTURADOR, CUBA], ao_terminar=ao_terminar, cliente_llm=llm))
+
+    assert {e[0] for e in eventos[:2]} == {"1", "2"}, eventos               # fase 1: tinta + misturador provisório
+    assert ("2", "definido", 0) in eventos[:2]
+    assert eventos[2][0] == "cuba" and eventos[2][1] == "nao_encontrado"  # fase 2: sem preço primeiro
+    assert eventos[3] == ("2", "definido", 1)                              # misturador refeito pelo agente
+    assert [r.item_id for r in rs] == ["1", "2", "cuba"]                   # retorno na ordem de entrada
+    assert rs[1].iteracoes == 1 and len(rs[1].fontes) == 3
+
+
+def test_fase2_sem_prazo_fica_com_resultado_da_fase1(mundo, monkeypatch):
+    monkeypatch.setattr(p.get_settings(), "pesquisa_prazo_agentes_s", 0)
+    m = _mundo_duas_fases(mundo)
+    llm = LLMFalso([])
+    rs = asyncio.run(p.pesquisar_itens([MISTURADOR, CUBA], cliente_llm=llm))
+    assert llm.chamadas == 0, "sem prazo o agente nem começa"
+    assert rs[0].status == "definido" and rs[0].iteracoes == 0 and rs[0].confianca == "baixa"
+    assert rs[1].status == "nao_encontrado"
+    assert any(g[0] == MISTURADOR.descricao for g in m.gravados), "resultado final com preço vai para o cache"
+
+
+def test_agente_usa_cota_propria_e_nao_a_das_extracoes(mundo, monkeypatch):
+    """Com o porteiro das extrações todo ocupado, o agente ainda consegue chamar o LLM."""
+    _mundo_duas_fases(mundo)
+    from src import precos
+
+    async def cenario():
+        porteiro = precos._porteiro()
+        vagas = precos.get_settings().pesquisa_concorrencia_llm
+        for _ in range(vagas):
+            await porteiro.acquire()   # extrações ocupando todas as vagas
+        try:
+            llm = LLMFalso([("buscar", "misturador Deca Link 1875 cozinha")])
+            return await asyncio.wait_for(p.pesquisar_item(MISTURADOR, cliente_llm=llm), timeout=5)
+        finally:
+            for _ in range(vagas):
+                porteiro.release()
+
+    r = asyncio.run(cenario())
+    assert r.iteracoes == 1 and len(r.fontes) == 3
+
+
+def test_cache_guarda_e_devolve_iteracoes_do_agente(mundo):
+    entrada = EntradaCache(chave="x", descricao=MISTURADOR.descricao, imagem_url=None, provedor="tavily",
+                           extracao=ResultadoExtracao(ofertas=[of("Magazine Luiza", 1878.78, "unidade"),
+                                                               of("Leroy Merlin", 1799.0, "unidade")]),
+                           atualizado_em=datetime.now(timezone.utc), vencido=False, iteracoes=2)
+    mundo({}, cache_linha=entrada)
+    assert rodar(MISTURADOR, cliente_llm=LLMFalso([])).iteracoes == 2   # a tela mostra "A IA refez a busca"
+
+    m = _mundo_duas_fases(mundo)
+    rodar(MISTURADOR, usar_cache=False, cliente_llm=LLMFalso([("buscar", "misturador Deca Link 1875 cozinha")]))
+    assert m.iteracoes_gravadas == 1
 
 
 @pytest.mark.parametrize("desc,trecho", [

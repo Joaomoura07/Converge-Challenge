@@ -257,3 +257,13 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
 - **Causa achada:** a Featherless sobrecarregada responde **HTTP 200 sem `choices`** (`failed_generation`); o SDK não tenta de novo. Medido: 6 chamadas simultâneas ao Qwen3-32B → 3 vazias. **Corrigido:** `RespostaVazia` + nova tentativa no mesmo modelo antes da reserva; `agent.py` não quebra mais com resposta vazia.
 - **2ª rodada (LLM: 3 vagas, agente dentro do mesmo limitador):** 127 s; 18 definidos, 2 pendentes, 4 não encontrados. **Piorou o primeiro resultado** (o 1º item só chegou em 33 s) e o agente estourou o tempo em 12 itens sem conseguir vaga (iterações = 0).
 - **Conclusão (pendente, prioridade máxima):** separar em duas fases — fase 1 = caminho rápido de TODOS os itens (só extração, sem agente) gravando cada um; fase 2 = agente só nos itens com < 2 lojas, depois que a fase 1 terminar. E dar ao agente uma cota própria (ex.: 1 vaga), sem disputar com as extrações.
+
+## Etapa 6 — duas fases (agente depois do caminho rápido, cota própria de LLM, prazo total), semáforo por loop, rota repesquisar · 07/11 14:25 · ❌ reprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 373 passed, 12 skipped, 16 deselected in 7.52s |
+| coerência com o programa | ✅ | 7 passed in 0.45s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 6) | ❌ | 1 failed, 1 passed, 174 deselected, 2 warnings in 67.93s (0:01:07) |

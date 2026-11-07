@@ -225,12 +225,23 @@ def montar_consulta(item: ItemEntrada, complemento: str = "") -> str:
     return " ".join(p for p in partes if p)
 
 
+# Página de busca/listagem da loja, não o produto (achado da passagem: "magazineluiza.com.br/busca/...").
+# Ela mostra vários produtos e preços: a fonte não aponta para o item e o preço pode ser de outro produto.
+_PAGINA_DE_BUSCA = re.compile(
+    r"/(busca|search|pesquisa|buscar)(/|\?|$)|/s\?|[?&](q|k|term|termo|text|query|busca|ft)=|//lista\.mercadolivre\.",
+    re.I)
+
+
+def eh_pagina_de_busca(url: str) -> bool:
+    return bool(_PAGINA_DE_BUSCA.search(url or ""))
+
+
 def _filtra(brutos: list[tuple[str, str, str]], limite: int) -> list[ResultadoWeb]:
     vistos, por_loja, saida = set(), {}, []
     for titulo, url, trecho in brutos:
         dom = dominio_de(url)
         loja = loja_de(dom)
-        if not loja or url in vistos or por_loja.get(loja, 0) >= MAX_POR_LOJA:
+        if not loja or url in vistos or por_loja.get(loja, 0) >= MAX_POR_LOJA or eh_pagina_de_busca(url):
             continue
         vistos.add(url)
         por_loja[loja] = por_loja.get(loja, 0) + 1
