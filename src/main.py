@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from .agent import Agent, AgentResult
 from .config import get_settings
 from .database import save_agent_run
+from .limite_corpo import LimiteDeCorpo
 from .rotas_resultado import router as resultado_router   # Fatia C: sugestões, resultado e exportar
 from .tools import registry
 
@@ -31,6 +32,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Converge Agents API", version="0.1.0", lifespan=lifespan)
+app.add_middleware(LimiteDeCorpo)   # Fatia A: corpo acima do limite dá 413 antes de ser lido (CORS fica por fora e acompanha a resposta)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(resultado_router)
 

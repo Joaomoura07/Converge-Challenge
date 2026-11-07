@@ -85,4 +85,7 @@ export function ehErro(r: ResultadoImportacao): r is ErroImportacao {
 
 export const LIMITE_BYTES = 20 * 1024 * 1024; // decisão D6
 export const LIMITE_ITENS = 100_000;
+/** Itens por ORÇAMENTO enviado (igual a LIMITE_ITENS de src/rotas_orcamentos.py). O leitor aceita até 100.000 (LIMITE_ITENS)
+ *  (TC-084, 50 mil linhas), mas a lista da tela e o envio param aqui, para a tela não travar e o servidor não recusar. */
+export const LIMITE_ITENS_ORCAMENTO = 5000;
 export const LIMITE_TEXTO = 2000;

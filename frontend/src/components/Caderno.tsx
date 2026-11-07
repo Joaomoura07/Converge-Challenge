@@ -19,6 +19,7 @@ import { NovaObra, type Obra, type RascunhoObra } from "./NovaObra";
 import { iniciarEnvio } from "@/lib/envio/armazem";
 import { conteudoDoEnvio, montarCorpo } from "@/lib/envio/corpo";
 import { lerRascunho, salvarRascunho } from "@/lib/envio/rascunho";
+import { LIMITE_ITENS_ORCAMENTO } from "@/lib/importar/tipos";
 import { Importador } from "./Importador";
 import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 
@@ -62,7 +63,8 @@ export function Caderno() {
   const erros = useMemo(() => errosPorId(lista.linhas), [lista.linhas]);
   const totalErros = contarErros(erros);
   const semItens = lista.linhas.length === 0;
-  const envioBloqueado = semItens || totalErros > 0;
+  const grandeDemais = lista.linhas.length > LIMITE_ITENS_ORCAMENTO;
+  const envioBloqueado = semItens || totalErros > 0 || grandeDemais;
   const itensPreenchidos = lista.linhas.filter((l) => l.descricao || l.quantidade || l.unidade || l.categoria).length;
 
   function aplicarImportacao(linhas: Linha[], como: "acrescentar" | "substituir") {
@@ -224,6 +226,8 @@ export function Caderno() {
               <p id="motivo-envio" className="nota" role="status">
                 {semItens
                   ? "Adicione ao menos um material para enviar."
+                  : grandeDemais
+                    ? `A lista passa de ${LIMITE_ITENS_ORCAMENTO.toLocaleString("pt-BR")} itens, o máximo de um orçamento. Divida em partes.`
                   : totalErros > 0
                     ? `Corrija ${totalErros} ${totalErros === 1 ? "campo" : "campos"} para liberar o envio.`
                     : "Lista válida. Ao enviar, a pesquisa começa e você acompanha o resultado ao vivo."}

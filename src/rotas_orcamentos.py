@@ -100,7 +100,7 @@ class ItemIn(_Estrito):
 class OrcamentoIn(_Estrito):
     orcamento_id: UUID
     obra: ObraIn
-    origem: dict[str, Any] = Field(default_factory=dict)   # {tipo, arquivo, formato, software}
+    origem: dict[str, Any]   # {tipo, modo, ...}: obrigatória, como no contrato da importação (TC-095)
     itens: list[ItemIn] = Field(min_length=1, max_length=LIMITE_ITENS)
 
     @field_validator("orcamento_id", mode="before")
