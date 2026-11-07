@@ -26,3 +26,7 @@ Thumbs.db
 # Fixtures pesadas (geradas com: python tests/importacao/gerar_fixtures.py --grandes)
 tests/importacao/fixtures/grandes/
 .pytest_cache/
+
+# front-end (prévia da fatia B)
+node_modules/
+ui-fatia-b/dist/
