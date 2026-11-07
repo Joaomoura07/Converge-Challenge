@@ -2,17 +2,18 @@
 
 // ENCAIXE DA FATIA C (João): painel de totais, "cabe ou não", frete e economia, ganho de tempo e botão Exportar.
 // Aqui fica só o esqueleto com os três estados que a tela precisa (calculando, pronto e sem total confiável).
-// João substitui o miolo por componentes de frontend/src/components/resultado/, mantendo estas props.
+// O miolo agora é PainelResultado (frontend/src/components/resultado/). Props: orcamento + itens (opcional).
 // Frete está em pausa: `logistica.frete_total` é sempre 0 por enquanto.
 
-import type { Orcamento } from "@/lib/orcamento/tipos";
+import { PainelResultado } from "@/components/resultado/PainelResultado";
+import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 
-export function EncaixeResultado({ orcamento }: { orcamento: Orcamento }) {
+export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamento; itens?: ItemLinha[] }) {
   const { logistica, viabilidade, ganho } = orcamento;
   const calculando = !logistica && !viabilidade && !ganho;
 
   return (
-    <section className="obra-bloco" aria-labelledby="obra-resultado-c" data-encaixe="fatia-c">
+    <section className="obra-bloco" aria-labelledby="obra-resultado-c">
       <h2 id="obra-resultado-c" className="obra-bloco__titulo">
         Estimativa e plano de compra
       </h2>
@@ -24,19 +25,7 @@ export function EncaixeResultado({ orcamento }: { orcamento: Orcamento }) {
             : "Calculando frete, viabilidade e ganho de tempo quando a pesquisa terminar…"}
         </p>
       ) : (
-        <>
-          {viabilidade && (
-            <>
-              {viabilidade.completo === false && (
-                <p className="obra-bloco__aviso" role="note">
-                  Ainda não dá para afirmar se cabe no orçamento: há itens sem preço e o total é só um piso.
-                </p>
-              )}
-              {viabilidade.resumo && <p className="obra-bloco__texto">{viabilidade.resumo}</p>}
-            </>
-          )}
-          {ganho?.resumo && <p className="obra-bloco__texto">{ganho.resumo}</p>}
-        </>
+        <PainelResultado orcamento={orcamento} itens={itens} />
       )}
     </section>
   );

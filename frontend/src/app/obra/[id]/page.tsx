@@ -105,7 +105,7 @@ export default function Obra({ params }: { params: Promise<{ id: string }> }) {
           <ResultadoItens itens={itens} />
 
           {/* ENCAIXE DA C: totais, "cabe ou não", frete, ganho de tempo e Exportar. */}
-          <EncaixeResultado orcamento={orcamento} />
+          <EncaixeResultado orcamento={orcamento} itens={itens} />
         </>
       )}
     </>
