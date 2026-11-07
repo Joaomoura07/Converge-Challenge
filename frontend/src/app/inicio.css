@@ -45,7 +45,7 @@
   mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 320px), transparent 100%);
 }
 .in-hero__conteudo {
-  max-width: 760px;
+  max-width: 980px; /* cada frase do título numa linha no computador */
   text-align: center;
   display: grid;
   justify-items: center;

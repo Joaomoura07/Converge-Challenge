@@ -90,10 +90,14 @@ export default function Inicio() {
       <section className="in-hero" aria-labelledby="in-titulo">
         <div className="in-hero__conteudo">
           <p className="in-selo">Agente de orçamento para escritórios de arquitetura</p>
-          <h1 id="in-titulo">Do projeto ao orçamento, com fonte em cada preço.</h1>
+          <h1 id="in-titulo">
+            Menos tempo cotando material.
+            <br />
+            Mais tempo projetando.
+          </h1>
           <p className="in-sub">
-            A OrçaAI lê a lista de materiais da obra, aponta o que ficou faltando, pesquisa preços em lojas reais e diz
-            se cabe no orçamento do cliente.
+            A OrçaAI pesquisa os preços da lista de materiais da obra em lojas reais, aponta o que ficou faltando e
+            entrega o plano de compra pronto para o cliente.
           </p>
           <div className="in-acoes">
             <Link href="/nova" className="oa-botao oa-botao--principal" data-planta-foco>
