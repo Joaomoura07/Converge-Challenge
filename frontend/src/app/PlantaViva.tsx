@@ -22,6 +22,8 @@ const EMPURRAO = 46; // px CSS
 const PAREDE = 0, FINO = 1, COTA = 2, PISO = 3, POEIRA = 4;
 const ALFA = [0.62, 0.38, 0.5, 0.16, 0.3];
 const TAMANHO = [2.6, 2.0, 2.0, 1.6, 2.2];
+const OPACIDADE_LINHA = 0.38; // traço fino e discreto entre os pontos
+const OPACIDADE_PONTO = 1.35; // pontilhado da planta mais forte que a linha
 
 type Rotulo = { x: number; y: number; texto: string; cota?: boolean };
 
@@ -286,26 +288,27 @@ export function PlantaViva() {
         }
         ctx.lineCap = "round";
         for (let n = 0; n < NIVEIS; n++) {
-          ctx.globalAlpha = (n + 0.5) / NIVEIS;
-          ctx.lineWidth = (0.7 + n * 0.09) * dpr;
+          ctx.globalAlpha = ((n + 0.5) / NIVEIS) * OPACIDADE_LINHA;
+          ctx.lineWidth = (0.6 + n * 0.07) * dpr;
           ctx.strokeStyle = "rgb(237,237,243)";
           ctx.stroke(caminhos.marfim[n]);
+          ctx.globalAlpha = ((n + 0.5) / NIVEIS) * 0.7; // perto do mouse a linha continua acesa
           ctx.strokeStyle = "rgb(143,156,255)";
           ctx.lineWidth = (1.1 + n * 0.12) * dpr;
           ctx.stroke(caminhos.azul[n]);
         }
       }
 
-      // 3) pontos de luz: poeira, faíscas nas linhas, brilho perto do mouse e as partículas do foco
+      // 3) pontilhado: todos os pontos da planta, poeira, brilho perto do mouse e as partículas do foco
       for (let i = 0; i < P.n; i++) {
         const a0 = AL[i];
         if (a0 < 0.02) continue;
         const k = P.K[i], s = P.S[i], brilho = BR[i];
-        const faisca = k === POEIRA || s > 0.86 || brilho > 0.05 || foco > 0.05;
-        if (!faisca) continue;
-        const pulso = k === POEIRA ? 1 : 0.55 + 0.45 * Math.sin(tempo * 2 + s * 50);
-        const alfa = Math.min(1, (k === POEIRA ? a0 : a0 * 0.8 * pulso) + foco * 0.35);
-        const tam = (TAMANHO[k] * (1.2 + brilho * 2.2 + foco * 1.2)) * dpr;
+        // todo ponto da planta vira pontilhado; alguns (s > 0.86) piscam como faísca
+        const faisca = s > 0.86;
+        const pulso = k === POEIRA || !faisca ? 1 : 0.7 + 0.6 * Math.sin(tempo * 2 + s * 50);
+        const alfa = Math.min(1, (k === POEIRA ? a0 : a0 * OPACIDADE_PONTO * pulso) + foco * 0.35);
+        const tam = (TAMANHO[k] * (1 + (faisca ? 0.35 : 0) + brilho * 2.2 + foco * 1.2)) * dpr;
         ctx.globalAlpha = alfa;
         ctx.drawImage(brilho > 0.12 || (foco > 0.3 && s > 0.55) ? azul : marfim, SX[i] - tam, SY[i] - tam, tam * 2, tam * 2);
       }
