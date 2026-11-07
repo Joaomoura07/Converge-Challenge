@@ -520,3 +520,22 @@ Cada etapa só avança com revisão aprovada. Gerado por `python -m scripts.revi
   33 itens em 18,4 s de requisição (pesquisa completa em 14,7 s), 97% com preço e fonte, 28 definidos, 5 pedindo
   especificação, 0 não encontrados, 1,7 loja por item, US$ 0,0006. Confirma que o site usa o cache.
 - O script de aquecimento passou a ler o cabeçalho em inglês do exemplo do escritório (Description, Qty, Unit).
+
+## Etapa 2 — item com 2+ preços na lista fixa não espera a busca aberta · 07/11 18:47 · ✅ aprovada
+
+| Checagem | Resultado | Detalhe |
+|---|---|---|
+| sintaxe | ✅ | todos os arquivos compilam |
+| testes (offline, tudo) | ✅ | 621 passed, 12 skipped, 16 deselected, 2 warnings in 18.74s |
+| coerência com o programa | ✅ | 7 passed in 0.49s |
+| api /health | ✅ | HTTP 200 · llm=True supabase=True langfuse=True |
+| execução real (etapa 2) | ✅ | 6 passed, 225 deselected in 25.97s |
+
+### 1º item sem cache (Cozinha Graças, 24 itens) · 07/11 ~18h45
+| Versão | 1º item | Com preço | Lojas/item | Completo |
+|---|---|---|---|---|
+| Busca aberta esperada sempre | 20,6 s | 79% | 2,1 | 98 s |
+| + prazo de 5 s para a aberta | 12,3 s | 88% | 1,6 | 133 s |
+| **+ não espera a aberta se a fixa já tem 2 preços** | **8,6 s** | **92%** | 1,4 | 117 s |
+- Escolha: item fácil fica com as 2+ lojas da lista fixa (mais rápido); a aberta completa os difíceis.
+  O total varia com a Featherless (98–133 s nas rodadas de hoje).

@@ -359,6 +359,9 @@ def _filtra_aberto(brutos: list[tuple[str, str, str]], limite: int, local: Local
     return saida[:limite]
 
 
+MIN_COM_PRECO_SEM_ABERTA = 2   # a lista fixa já basta (mesmo número que faz o agente refazer: pesquisa_min_lojas)
+
+
 def consulta_regional(consulta: str, local: Local | None) -> str:
     return f"{consulta} {local.cidade} {local.uf}" if local else consulta
 
@@ -474,11 +477,11 @@ async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, lo
         return RespostaBusca(consulta, "nenhum", erro=f"busca aberta: {type(exc).__name__}")
 
 
-async def _com_prazo(busca, prazo_s: float, consulta: str) -> RespostaBusca:
+async def _com_prazo(fazer_busca, prazo_s: float, consulta: str) -> RespostaBusca:
     """A busca aberta às vezes leva 10 s (medido em 07/11) e o item esperava por ela: 1º item na tela foi de ~6 s
     para 20 s. Passou do prazo, o item segue só com a lista fixa."""
     try:
-        return await asyncio.wait_for(busca, timeout=prazo_s)
+        return await asyncio.wait_for(fazer_busca(), timeout=prazo_s)   # criada aqui: cancelada antes de começar não vira aviso
     except asyncio.TimeoutError:
         logger.info("Busca aberta passou de %.0f s: item segue com a lista fixa", prazo_s)
         return RespostaBusca(consulta, "nenhum", erro="busca aberta: tempo esgotado")
@@ -495,10 +498,18 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
     if not s.pesquisa_busca_aberta:
         resp = await _buscar_fixa(consulta, limite, rodizio)
     else:
-        resp, aberta = await asyncio.gather(
-            _buscar_fixa(consulta, limite, rodizio),
-            _com_prazo(_buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, LOCAL_DA_OBRA.get()),
+        # As duas começam juntas. Se a lista fixa já trouxe 2+ anúncios com preço, o item não espera a aberta
+        # (medido em 07/11: esperar a aberta levava o 1º item na tela de ~6 s para 12–20 s).
+        local = LOCAL_DA_OBRA.get()
+        tarefa_aberta = asyncio.ensure_future(
+            _com_prazo(lambda: _buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, local),
                        s.pesquisa_prazo_aberta_s, consulta))
+        resp = await _buscar_fixa(consulta, limite, rodizio)
+        if sum(tem_preco(r.titulo, r.trecho) for r in resp.resultados) >= MIN_COM_PRECO_SEM_ABERTA:
+            tarefa_aberta.cancel()
+            aberta = RespostaBusca(consulta, "nenhum")
+        else:
+            aberta = await tarefa_aberta
         resp.resultados = (resp.resultados + aberta.resultados)[: s.pesquisa_max_anuncios]
         if resp.resultados:
             resp.erro = None
