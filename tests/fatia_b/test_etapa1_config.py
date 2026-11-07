@@ -32,6 +32,25 @@ def test_langfuse_base_url_tem_prioridade_sobre_host(monkeypatch):
     assert _s(langfuse_host="https://cloud.langfuse.com").langfuse_url == "https://cloud.langfuse.com"
 
 
+@pytest.fixture
+def sem_chaves_no_ambiente(monkeypatch):
+    monkeypatch.delenv("FEATHERLESS_API_KEY", raising=False)
+    monkeypatch.delenv("FEATHERLESS_API_KEYS", raising=False)
+
+
+@pytest.mark.parametrize("keys,key,esperado", [
+    ('fw-a, "fw-b",, \'fw-c\' ,', "", ["fw-a", "fw-b", "fw-c"]),   # nova, limpa como a do Tavily
+    ("", "fw-velha", ["fw-velha"]),                                 # só a antiga: continua funcionando
+    ("fw-a,fw-b", "fw-a", ["fw-a", "fw-b"]),                        # as duas, sem repetir
+    ("", "", []),
+])
+def test_chaves_featherless_nova_e_antiga(sem_chaves_no_ambiente, keys, key, esperado):
+    """O Enzo trocou FEATHERLESS_API_KEY por FEATHERLESS_API_KEYS no .env e na Vercel: nada pode quebrar."""
+    s = _s(featherless_api_keys=keys, featherless_api_key=key)
+    assert s.featherless_keys == esperado
+    assert s.featherless_key == (esperado[0] if esperado else "") and s.llm_configured is bool(esperado)
+
+
 def test_parametros_da_pesquisa_batem_com_o_plano():
     s = _s()
     # 3 LLM simultâneos (era 4): medido na etapa 9, 6 chamadas ao Qwen3-32B ao mesmo tempo → 3 respostas vazias

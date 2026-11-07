@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # LLM (Featherless)
-    featherless_api_key: str = ""
+    featherless_api_key: str = ""          # nome antigo (1 chave); continua aceito
+    featherless_api_keys: str = ""         # várias chaves do time separadas por vírgula (cada uma tem a própria cota)
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_model: str = "zai-org/GLM-5.2"
     featherless_model_fast: str = ""
@@ -44,10 +45,15 @@ class Settings(BaseSettings):
     tavily_api_keys: str = ""
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
-    pesquisa_max_lojas: int = 5
+    pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
+    pesquisa_busca_aberta: bool = True      # 2ª busca em qualquer loja do Brasil, com a cidade/UF da obra
+    pesquisa_max_abertas: int = 4           # anúncios da busca aberta (só os com preço escrito)
+    pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
+    pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
+    pesquisa_hedge_s: float = 8             # extração sem resposta nesse tempo → reserva em paralelo (outra chave)
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
     pesquisa_max_refazer: int = 2           # buscas extras que o agente pode fazer por item
     pesquisa_timeout_agente_s: float = 40   # o agente não segura o orçamento inteiro (medido: ~20 s por rodada com GLM-5.2)
@@ -66,8 +72,22 @@ class Settings(BaseSettings):
         return [k.strip().strip('"').strip("'") for k in self.tavily_api_keys.split(",") if k.strip().strip('"\'')]
 
     @property
+    def featherless_keys(self) -> list[str]:
+        """FEATHERLESS_API_KEYS (vírgula, como o Tavily) + FEATHERLESS_API_KEY (nome antigo), sem repetir e sem aspas.
+        Quem trocou a variável antiga pela nova no .env/Vercel não quebra nada: as duas valem."""
+        brutas = self.featherless_api_keys.split(",") + [self.featherless_api_key]
+        limpas = [k.strip().strip('"').strip("'") for k in brutas]
+        return list(dict.fromkeys(k for k in limpas if k))
+
+    @property
+    def featherless_key(self) -> str:
+        """A primeira chave (usada por quem ainda não reparte a carga entre as chaves)."""
+        chaves = self.featherless_keys
+        return chaves[0] if chaves else ""
+
+    @property
     def llm_configured(self) -> bool:
-        return bool(self.featherless_api_key)
+        return bool(self.featherless_keys)
 
     @property
     def supabase_configured(self) -> bool:

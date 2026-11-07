@@ -73,7 +73,7 @@ curl -X POST http://localhost:8000/agent/run \
 
 | Variável | Descrição |
 |---|---|
-| `FEATHERLESS_API_KEY` | Chave da Featherless (cada integrante usa a sua) |
+| `FEATHERLESS_API_KEYS` | Chaves da Featherless do time, separadas por vírgula (cada uma tem a própria cota). `FEATHERLESS_API_KEY` (uma só) continua aceita |
 | `FEATHERLESS_BASE_URL` | `https://api.featherless.ai/v1` |
 | `FEATHERLESS_MODEL` | Modelo principal (padrão `zai-org/GLM-5.2`) |
 | `FEATHERLESS_MODEL_FAST` | Modelo barato para texto simples (padrão `google/gemma-4-31B-it`) |

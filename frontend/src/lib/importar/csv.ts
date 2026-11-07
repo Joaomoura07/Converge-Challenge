@@ -108,7 +108,16 @@ function pareceBinario(bytes: Uint8Array): boolean {
 
 // ------------------------------------------------------------------ leitura do texto
 
-type Registro = { linha: number; celulas: string[]; malformado: boolean };
+/** Célula com erro (Excel: #DIV/0!, #REF!, fórmula sem resultado). */
+export type CelulaErro = { erroCelula: string };
+/** CSV só tem texto; Excel traz número, texto ou erro. */
+export type Celula = string | number | CelulaErro | null;
+
+export type Registro = { linha: number; celulas: Celula[]; malformado: boolean };
+
+const ehErroCelula = (c: Celula | undefined): c is CelulaErro => typeof c === "object" && c !== null && "erroCelula" in c;
+/** Texto da célula para as regras de cabeçalho, categoria, unidade etc. */
+const aTexto = (c: Celula | undefined): string => (c === null || c === undefined ? "" : ehErroCelula(c) ? c.erroCelula : String(c));
 
 const SEPARADORES = [";", "\t", ",", "|"] as const;
 
@@ -160,12 +169,12 @@ type Papel = "categoria" | "descricao" | "quantidade" | "unidade" | "nivel";
 const SINONIMOS: Record<Papel, string[]> = {
   descricao: [
     "descricao", "descricao do item", "descricao do material", "description", "produto", "material", "item",
-    "nome", "especificacao", "familia e tipo", "family and type", "definition name", "nome da definicao",
+    "nome", "especificacao", "familia e tipo", "family and type", "definition name", "nome da definicao", "material nome", "material name", "material de acabamento",
   ],
-  quantidade: ["quantidade", "qtd", "qtde", "quant", "qty", "quantity", "count", "contagem", "area"],
+  quantidade: ["quantidade", "qtd", "qtde", "quant", "qty", "quantity", "count", "contagem", "area", "material area", "length", "comprimento"],
   unidade: ["unidade", "unidade de medida", "un", "und", "unid", "unit", "units"],
   categoria: ["categoria", "category", "tag", "grupo", "classe"],
-  nivel: ["nivel", "level", "pavimento", "andar"],
+  nivel: ["nivel", "level", "pavimento", "andar", "ambiente", "room"],
 };
 
 function papelDe(nome: string): { papel: Papel; unidade: string | null } | null {
@@ -184,7 +193,7 @@ function papelDe(nome: string): { papel: Papel; unidade: string | null } | null 
   for (const papel of Object.keys(SINONIMOS) as Papel[]) {
     if (SINONIMOS[papel].includes(n)) {
       // Coluna "Área" mede m2; "Count"/"Contagem" conta unidades — quando não há coluna de unidade.
-      const padrao = papel === "quantidade" ? (n === "area" ? "m2" : n === "count" || n === "contagem" ? "un" : null) : null;
+      const padrao = papel === "quantidade" ? (n === "area" || n === "material area" ? "m2" : n === "count" || n === "contagem" ? "un" : null) : null;
       return { papel, unidade: padrao };
     }
   }
@@ -292,9 +301,37 @@ function lerMoeda(s: string): number | null {
 
 // ------------------------------------------------------------------ importação
 
+/** 12' 6" · 12' · 6" (pés e polegadas do Revit em inglês). */
+const ehImperial = (s: string): boolean =>
+  /^\d+(?:\.\d+)?\s*'(?:\s*\d+(?:\.\d+)?\s*")?$|^\d+(?:\.\d+)?\s*"$/.test(s.trim());
+
+/** Número de uma linha de total: "Total geral: 10" ou "Total geral<TAB>10 m²". null se não achar. */
+function valorDoTotal(cel: string[]): number | null {
+  const textos = [cel[0]?.split(":").slice(1).join(":") ?? "", ...cel.slice(1)];
+  for (const t of textos) {
+    const j = separarValorUnidade(t.trim());
+    const bruto = j ? j.numero : t.trim();
+    let n = lerNumero(bruto, "desconhecido");
+    if (n.tipo === "ambiguo") n = lerNumero(bruto, "br");
+    if (n.tipo === "ok") return n.valor;
+  }
+  return null;
+}
+
 const vazio = (c: string | undefined) => c === undefined || c.trim() === "";
 
-export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }): ResultadoImportacao {
+export function importarCsv({
+  nome,
+  bytes,
+  forcarDelimitador,
+  formato = "csv",
+}: {
+  nome: string;
+  bytes: Uint8Array;
+  /** TXT tabulado do Revit: força tabulação (a detecção automática erra com "12,50 m²"). */
+  forcarDelimitador?: string;
+  formato?: "csv" | "txt";
+}): ResultadoImportacao {
   if (bytes.length === 0) return erro("ARQUIVO_VAZIO", "O arquivo está vazio.");
   if (bytes.length > LIMITE_BYTES) {
     return erro("ARQUIVO_GRANDE_DEMAIS", `O arquivo passa do limite de ${LIMITE_BYTES / 1024 / 1024} MB. Divida a lista em partes.`);
@@ -307,7 +344,7 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const texto = dec.texto.replace(/\r\n?/g, "\n");
   if (texto.trim() === "") return erro("ARQUIVO_VAZIO", "O arquivo está vazio.");
 
-  const delimitador = escolherSeparador(texto);
+  const delimitador = forcarDelimitador ?? escolherSeparador(texto);
   const registros = lerRegistros(texto, delimitador);
 
   const avisos: AvisoImportacao[] = [];
@@ -324,13 +361,42 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
     return erro("CSV_MALFORMADO", `Aspas não fechadas na linha ${ruim.linha}.`, { linha: ruim.linha });
   }
 
-  const naoVazios = registros.filter((r) => r.celulas.some((c) => !vazio(c)));
+  return mapearRegistros({ registros, avisos, nome, formato, aba: null, delimitador, codificacao: dec.codificacao });
+}
+
+export type EntradaMapa = {
+  registros: Registro[];
+  avisos: AvisoImportacao[];
+  nome: string;
+  formato: "csv" | "txt" | "xlsx" | "xls" | "xlsm";
+  aba: string | null;
+  delimitador: string | null;
+  codificacao: string | null;
+};
+
+/** Núcleo compartilhado por CSV e Excel: acha o cabeçalho, mapeia colunas, lê números e unidades, monta o contrato. */
+export function mapearRegistros({ registros, avisos, nome, formato, aba, delimitador, codificacao }: EntradaMapa): ResultadoImportacao {
+  type RegistroTexto = { linha: number; celulas: string[]; brutas: Celula[] };
+  const naoVazios: RegistroTexto[] = registros
+    .map((r) => ({ linha: r.linha, celulas: r.celulas.map(aTexto), brutas: r.celulas }))
+    .filter((r) => r.celulas.some((c) => !vazio(c)));
 
   // Cabeçalho: primeira linha com pelo menos dois papéis reconhecidos.
   let idxCab = -1;
   for (let i = 0; i < Math.min(naoVazios.length, 60); i++) {
     const papeis = new Set(naoVazios[i].celulas.map((c) => papelDe(c)?.papel).filter(Boolean));
     if (papeis.size >= 2) { idxCab = i; break; }
+  }
+  // Mesclagem vertical (Excel) repete os nomes das colunas na linha de baixo: o cabeçalho de verdade é a linha de
+  // baixo, e a de cima vira linha de grupo (ex.: "Dimensões" sobre Largura/Altura).
+  const papeisDe = (r: { celulas: string[] }) => new Set(r.celulas.map((c) => papelDe(c)?.papel).filter(Boolean));
+  while (
+    idxCab >= 0 &&
+    idxCab + 1 < naoVazios.length &&
+    naoVazios[idxCab + 1].linha === naoVazios[idxCab].linha + 1 &&
+    [...papeisDe(naoVazios[idxCab])].every((p) => papeisDe(naoVazios[idxCab + 1]).has(p))
+  ) {
+    idxCab++;
   }
   if (idxCab < 0) {
     const primeira = naoVazios[0];
@@ -344,7 +410,8 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
 
   // Cabeçalho em duas linhas: linha de grupo imediatamente acima ("Dimensões" sobre Largura/Altura).
   let nomesCab = cab.celulas.map((c) => c.trim());
-  if (antes && antes.linha === cab.linha - 1 && antes.celulas.some((c) => !vazio(c))) {
+  // Título (só a primeira coluna preenchida, como a 1ª linha das tabelas do Revit) NÃO é linha de grupo.
+  if (antes && antes.linha === cab.linha - 1 && antes.celulas.some((c, i) => i > 0 && !vazio(c))) {
     let grupo = "";
     nomesCab = nomesCab.map((n, i) => {
       const g = (antes.celulas[i] ?? "").trim();
@@ -405,7 +472,7 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const software =
     normaisCab.includes("entity type") || normaisCab.includes("definition name")
       ? "sketchup"
-      : normaisCab.includes("family and type") || normaisCab.includes("familia e tipo")
+      : normaisCab.includes("family and type") || normaisCab.includes("familia e tipo") || normaisCab.some((n) => n.startsWith("material "))
         ? "revit"
         : "desconhecido";
   const iTipo = normaisCab.indexOf("entity type");
@@ -415,6 +482,7 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const valoresQtd: string[] = [];
   if (cQtd) {
     for (const r of dados) {
+      if (typeof r.brutas[cQtd.indice] === "number") continue; // número de verdade (Excel) não indica estilo
       const c = (r.celulas[cQtd.indice] ?? "").trim();
       const j = separarValorUnidade(c);
       valoresQtd.push(j ? j.numero : c);
@@ -425,12 +493,47 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const itens: ItemImportado[] = [];
   let descartadas = descartadasAntes;
   let lidas = descartadasAntes;
+  let nivelAtual: string | null = null; // grupo "Nível: Térreo" das tabelas do Revit agrupadas por nível
+  let somaQuantidades = 0;
   const unidadesPorCategoria = new Map<string, Set<string>>();
 
   for (const r of dados) {
     lidas++;
     const cel = r.celulas.map((c) => c.trim());
-    if (/^(sub)?total( geral)?\b|^grand total\b/i.test(cel[0] ?? "")) { descartadas++; continue; }
+    // Linha de grupo do Revit ("Nível: Térreo", uma célula só): vira o nível dos itens seguintes.
+    const preenchidas = cel.filter((c) => c !== "");
+    const grupo = preenchidas.length === 1 ? cel[0]?.match(/^(?:n[ií]vel|level|pavimento|andar|ambiente|room)\s*:\s*(.+)$/i) : null;
+    if (grupo) {
+      nivelAtual = grupo[1].trim();
+      descartadas++;
+      continue;
+    }
+    // Subtotal do Revit sem rótulo: só a quantidade preenchida (ex.: "<TAB><TAB>42,00 m²") fecha o grupo e não é item.
+    // Só vale para tabelas do Revit (TXT ou cabeçalho do Revit): em CSV comum, uma linha só com quantidade é erro a mostrar.
+    if (
+      (formato === "txt" || software === "revit") &&
+      cQtd &&
+      (cel[cQtd.indice] ?? "") !== "" &&
+      cel.every((c, i) => i === cQtd.indice || c === "")
+    ) {
+      descartadas++;
+      continue;
+    }
+    // Totais: nunca são itens. O "Total geral" é conferido com a soma das quantidades lidas.
+    if (/^(sub)?total( geral)?\b|^grand total\b/i.test(cel[0] ?? "")) {
+      descartadas++;
+      if (!/^subtotal/i.test(cel[0] ?? "")) {
+        const informado = valorDoTotal(cel);
+        if (informado !== null && Math.abs(informado - somaQuantidades) > 0.01) {
+          avisos.push({
+            linha: r.linha,
+            codigo: "TOTAL_DIVERGENTE",
+            mensagem: `O total informado (${informado}) difere da soma das quantidades lidas (${Number(somaQuantidades.toFixed(4))}).`,
+          });
+        }
+      }
+      continue;
+    }
     if (iTipo >= 0 && normalizarNome(cel[iTipo] ?? "") === "group") { descartadas++; continue; }
 
     if (cel.length < nomesCab.length && colunas.some((c) => c.indice >= cel.length)) {
@@ -460,20 +563,42 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
 
     const descricao = cDesc ? cortar(cel[cDesc.indice]) : null;
     const categoria = cCat ? cortar(cel[cCat.indice]) : null;
-    const nivel = cNiv ? cortar(cel[cNiv.indice]) : null;
+    const nivelDaCelula = cNiv ? cortar(cel[cNiv.indice]) : null;
+    const nivel = nivelDaCelula ? nivelDaCelula : (nivelAtual ?? nivelDaCelula);
 
     let unidade: string | null = cUn ? (cel[cUn.indice] ?? null) : null;
     if (unidade === "") unidade = null;
     let quantidade: number | null = null;
+    let imperialNaQuantidade = false;
     if (cQtd) {
+      const original = r.brutas[cQtd.indice];
       let bruto = cel[cQtd.indice];
       if (bruto === undefined) bruto = "";
-      const junto = separarValorUnidade(bruto);
+      const junto = typeof original === "number" ? null : separarValorUnidade(bruto);
       if (junto) {
         bruto = junto.numero;
         if (!unidade) unidade = junto.unidade;
       }
-      if (bruto === "") {
+      if (typeof original !== "number" && !ehErroCelula(original) && ehImperial(bruto)) {
+        // 12' 6" (pés e polegadas): não converte; guarda o valor original e avisa.
+        unidade = "ft-in";
+        extras.valor_original = bruto;
+        avisos.push({
+          linha: r.linha,
+          codigo: "UNIDADE_IMPERIAL",
+          mensagem: `A medida "${bruto}" na linha ${r.linha} está em pés e polegadas e não foi convertida.`,
+        });
+        imperialNaQuantidade = true;
+      } else if (ehErroCelula(original)) {
+        avisos.push({ linha: r.linha, codigo: "ERRO_FORMULA", mensagem: `A quantidade da linha ${r.linha} é uma fórmula com erro (${original.erroCelula}).` });
+      } else if (typeof original === "number") {
+        if (Number.isFinite(original)) {
+          quantidade = original;
+          if (original < 0) avisos.push({ linha: r.linha, codigo: "VALOR_NEGATIVO", mensagem: `Quantidade negativa na linha ${r.linha}: ${original}.` });
+        } else {
+          avisos.push({ linha: r.linha, codigo: "VALOR_NAO_NUMERICO", mensagem: `A quantidade da linha ${r.linha} não é um número válido.` });
+        }
+      } else if (bruto === "") {
         avisos.push({ linha: r.linha, codigo: "QUANTIDADE_AUSENTE", mensagem: `A linha ${r.linha} está sem quantidade.` });
       } else {
         const n = lerNumero(bruto, estilo);
@@ -492,17 +617,23 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
     if (!unidade && cQtd?.unidadePadrao) unidade = cQtd.unidadePadrao;
     if (!unidade && software === "sketchup") unidade = "un";
     if (unidade) unidade = normalizarUnidade(unidade) ?? unidade.trim();
+    if (quantidade !== null) somaQuantidades += quantidade;
 
     let imperial = false;
     for (const c of colunas) {
       if (c.papel) continue;
       const v = cel[c.indice];
       if (v === undefined) continue;
+      const original = r.brutas[c.indice];
+      if (typeof original === "number") {
+        extras[c.nome] = original; // Excel: o valor bruto, não o texto formatado
+        continue;
+      }
       const moeda = lerMoeda(v);
       extras[c.nome] = moeda !== null ? moeda : (cortar(v) ?? v);
       if (/^\d+(\.\d+)?\s*["']$/.test(v)) imperial = true;
     }
-    if (imperial) {
+    if (imperial && !imperialNaQuantidade) {
       avisos.push({ linha: r.linha, codigo: "UNIDADE_IMPERIAL", mensagem: `A linha ${r.linha} traz medidas em polegadas; elas não foram convertidas.` });
     }
 
@@ -537,11 +668,11 @@ export function importarCsv({ nome, bytes }: { nome: string; bytes: Uint8Array }
   return {
     origem: {
       arquivo: nome,
-      formato: "csv",
+      formato,
       software,
-      aba: null,
+      aba,
       delimitador,
-      codificacao: dec.codificacao,
+      codificacao,
       linhas_lidas: lidas,
       linhas_descartadas: descartadas,
     },
