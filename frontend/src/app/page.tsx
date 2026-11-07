@@ -83,9 +83,11 @@ function Previa() {
 export default function Inicio() {
   return (
     <main className="in">
-      <section className="in-hero" aria-labelledby="in-titulo">
+      {/* palco: a planta viva fica atrás do topo E da prévia, e some devagar no fim dela */}
+      <div className="in-palco">
         <div className="in-brilho" aria-hidden="true" />
         <PlantaViva />
+      <section className="in-hero" aria-labelledby="in-titulo">
         <div className="in-hero__conteudo">
           <p className="in-selo">Agente de orçamento para escritórios de arquitetura</p>
           <h1 id="in-titulo">Do projeto ao orçamento, com fonte em cada preço.</h1>
@@ -107,6 +109,7 @@ export default function Inicio() {
 
       <div className="in-faixa in-faixa--previa">
         <Previa />
+      </div>
       </div>
 
       <section id="como-funciona" className="in-faixa in-faixa--grade" aria-labelledby="in-como">

@@ -11,7 +11,7 @@
 import { useEffect, useRef } from "react";
 
 const ALTURA_PAREDE = 260;
-const ALTURA_VOO = 680;
+const ALTURA_VOO = 470;
 const ALTURA_INICIAL = 1700;
 const DURACAO_INTRO = 3.4; // s
 const VELOCIDADE = 0.0075; // voltas do caminho por segundo
@@ -250,10 +250,10 @@ export function PlantaViva() {
     const caminhos = { marfim: [] as Path2D[], azul: [] as Path2D[] };
     const marfim = sprite(237, 237, 243), azul = sprite(143, 156, 255);
 
-    let W = 0, H = 0, dpr = 1;
+    let W = 0, H = 0, V = 0, dpr = 1; // W×H = palco (topo + prévia); V = altura da tela visível
     const medir = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      W = hero.clientWidth; H = hero.clientHeight;
+      W = hero.clientWidth; H = hero.clientHeight; V = window.innerHeight || H;
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     };
     medir();
@@ -272,21 +272,21 @@ export function PlantaViva() {
       const ei = 1 - Math.pow(1 - intro, 3);
       foco += (alvoFoco - foco) * Math.min(1, dt * 2.2);
       u += VELOCIDADE * dt * (1 - foco * 0.92) * (0.35 + 0.65 * ei);
-      const alvoExtra = (window.scrollY / Math.max(1, H)) * 0.12;
+      const alvoExtra = (window.scrollY / Math.max(1, V)) * 0.12;
       extra += (alvoExtra - extra) * Math.min(1, dt * 3);
 
       const temMouse = mx > -1e4 && !reduzido;
       tiltX += ((temMouse ? (mx / W - 0.5) : 0) - tiltX) * Math.min(1, dt * 2);
-      tiltY += ((temMouse ? (my / H - 0.5) : 0) - tiltY) * Math.min(1, dt * 2);
+      tiltY += ((temMouse ? (Math.min(my, V) / V - 0.5) : 0) - tiltY) * Math.min(1, dt * 2);
 
       const [cx, cy] = noCaminho(u + extra);
       const [fx, fy] = noCaminho(u + extra + 0.012);
       const cz = ALTURA_INICIAL + (ALTURA_VOO - ALTURA_INICIAL) * ei;
       const yaw = Math.atan2(fy - cy, fx - cx) + tiltX * 0.22;
-      const pitch = 1.35 + (0.86 - 1.35) * ei + tiltY * 0.1;
+      const pitch = 1.35 + (0.74 - 1.35) * ei + tiltY * 0.1;
       const cosY = Math.cos(yaw), sinY = Math.sin(yaw), cosP = Math.cos(pitch), sinP = Math.sin(pitch);
-      const f = Math.max(W, H) * 0.6 * dpr;
-      const meioX = (W * dpr) / 2, meioY = (H * dpr) * 0.46;
+      const f = Math.max(W, V) * 0.6 * dpr;
+      const meioX = (W * dpr) / 2, meioY = (V * dpr) * 0.46;
       const raio = RAIO_MOUSE * dpr, empurrao = EMPURRAO * dpr;
       const mxd = mx * dpr, myd = my * dpr;
       const revelar = ei * 2300;
@@ -420,7 +420,10 @@ export function PlantaViva() {
         let tcx = 0, tcy = 0;
         for (let j = 0; j < n; j++) { tcx += TX[j] / n; tcy += TY[j] / n; }
         const acende = temMouse ? Math.max(0, 1 - Math.hypot(tcx - mxd, tcy - myd) / (raio * 1.6)) : 0;
-        const a = e * (1 - suave(1200, 3600, profMedia)) * (1 - foco * 0.85) * (1 + acende * 1.2);
+        // atrás do título e dos botões (centro da primeira tela) o móvel fica bem mais apagado, para o texto ler bem
+        const ex = (tcx - meioX) / (0.36 * W * dpr), ey = (tcy - V * dpr * 0.5) / (0.32 * V * dpr);
+        const longeDoTexto = 0.22 + 0.78 * suave(0.55, 1.15, Math.hypot(ex, ey));
+        const a = e * longeDoTexto * (1 - suave(1200, 3600, profMedia)) * (1 - foco * 0.85) * (1 + acende * 1.2);
         if (a < 0.02) continue;
         // laterais
         ctx.fillStyle = "rgb(82,102,235)";
