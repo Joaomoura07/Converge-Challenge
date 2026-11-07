@@ -4,8 +4,27 @@
     {
       "name": "previa-fatia-b",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "ui-fatia-b", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "ui-fatia-b",
+        "run",
+        "dev"
+      ],
       "port": 5174
+    },
+    {
+      "name": "orca-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3100"
+      ],
+      "port": 3100
     }
   ]
 }
