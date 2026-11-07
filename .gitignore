@@ -30,3 +30,4 @@ tests/importacao/fixtures/grandes/
 # front-end (prévia da fatia B)
 node_modules/
 ui-fatia-b/dist/
+ui-fatia-b/.vite/
