@@ -60,7 +60,10 @@ class Settings(BaseSettings):
     pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
     pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
-    pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"
+    # Extração (o LLM lê os anúncios e confere se é o mesmo produto). Medido em 08/11 com a página da loja como gabarito,
+    # 16 itens: Kimi-K2 0 erros em 11 confirmadas, 2,4 s; Qwen3-32B 4 erros em 20 (20%), 3,7 s; DeepSeek-V3.2 2 em 16,
+    # 6 s. Custo do Kimi: ~US$ 0,0008 por extração (5x o Qwen; ~US$ 0,05 por orçamento de 20 itens).
+    pesquisa_modelo_extracao: str = "moonshotai/Kimi-K2-Instruct-0905"
     # "Pesquisar de novo" com alternativa. Medido em 07/11 (3 casos): Gemma 4–10 s e US$ 0,00007, mantendo cor e
     # acabamento; Qwen3-32B 12–24 s; GLM-5.2 48–125 s (com a busca depois, estourava os 120 s da tela).
     pesquisa_modelo_alternativa: str = "google/gemma-4-31B-it"

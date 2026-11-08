@@ -55,7 +55,7 @@ def test_parametros_da_pesquisa_batem_com_o_plano():
     s = _s()
     # 3 LLM simultâneos (era 4): medido na etapa 9, 6 chamadas ao Qwen3-32B ao mesmo tempo → 3 respostas vazias
     assert (s.pesquisa_concorrencia_llm, s.pesquisa_max_lojas, s.pesquisa_cache_dias) == (3, 5, 7)
-    assert s.pesquisa_modelo_extracao == "Qwen/Qwen3-32B"
+    assert s.pesquisa_modelo_extracao == "moonshotai/Kimi-K2-Instruct-0905"
 
 
 # ---------------------------------------------------------------- real (gasta créditos)

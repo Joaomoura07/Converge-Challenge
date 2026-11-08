@@ -102,7 +102,7 @@ def _http(status):
 def test_usa_reserva_se_principal_falha_ou_responde_lixo(primeira):
     cli = _ClienteFalso([primeira, "0|739.90|lata 18 L|S"])
     r = asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
-    assert cli.modelos == ["Qwen/Qwen3-32B", p.MODELO_RESERVA_EXTRACAO]
+    assert cli.modelos == ["moonshotai/Kimi-K2-Instruct-0905", p.MODELO_RESERVA_EXTRACAO]
     assert r.modelo == p.MODELO_RESERVA_EXTRACAO and r.conferidas and r.erro is None
 
 
@@ -111,7 +111,7 @@ def test_resposta_vazia_da_featherless_tenta_de_novo_no_mesmo_modelo(monkeypatch
     monkeypatch.setattr(p.asyncio, "sleep", _sem_espera)
     cli = _ClienteFalso([VAZIA, "0|739.90|lata 18 L|S"])
     r = asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
-    assert cli.modelos == ["Qwen/Qwen3-32B", "Qwen/Qwen3-32B"] and r.modelo == "Qwen/Qwen3-32B" and r.conferidas
+    assert cli.modelos == ["moonshotai/Kimi-K2-Instruct-0905", "moonshotai/Kimi-K2-Instruct-0905"] and r.modelo == "moonshotai/Kimi-K2-Instruct-0905" and r.conferidas
 
 
 def test_duas_respostas_vazias_vao_para_a_reserva(monkeypatch):
@@ -132,7 +132,7 @@ def test_modelo_fora_do_ar_e_pulado_nas_proximas_extracoes(monkeypatch):
     cli = _ClienteFalso([_http(400), "0|739.90|lata 18 L|S", "0|739.90|lata 18 L|S"])
     asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
     r = asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
-    assert cli.modelos == ["Qwen/Qwen3-32B", p.MODELO_RESERVA_EXTRACAO, p.MODELO_RESERVA_EXTRACAO]
+    assert cli.modelos == ["moonshotai/Kimi-K2-Instruct-0905", p.MODELO_RESERVA_EXTRACAO, p.MODELO_RESERVA_EXTRACAO]
     assert r.modelo == p.MODELO_RESERVA_EXTRACAO and r.conferidas
 
 
@@ -141,12 +141,12 @@ def test_503_nao_desliga_o_modelo_e_disjuntor_volta_depois_da_pausa(monkeypatch)
     cli = _ClienteFalso([_http(503), "0|739.90|lata 18 L|S", "0|739.90|lata 18 L|S"])
     asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
     asyncio.run(p.extrair_e_conferir(PRODUTO, ANUNCIOS, cliente=cli))
-    assert cli.modelos[2] == "Qwen/Qwen3-32B", "503 é passageiro: o principal continua sendo tentado"
-    p._marcar_indisponivel("Qwen/Qwen3-32B")
-    p._indisponivel_ate["Qwen/Qwen3-32B"] = 0   # pausa acabou
-    assert p.modelos_extracao()[0] == "Qwen/Qwen3-32B"
-    p._marcar_indisponivel("Qwen/Qwen3-32B"); p._marcar_indisponivel(p.MODELO_RESERVA_EXTRACAO)
-    assert p.modelos_extracao() == ["Qwen/Qwen3-32B", p.MODELO_RESERVA_EXTRACAO], "todos fora: tenta todos"
+    assert cli.modelos[2] == "moonshotai/Kimi-K2-Instruct-0905", "503 é passageiro: o principal continua sendo tentado"
+    p._marcar_indisponivel("moonshotai/Kimi-K2-Instruct-0905")
+    p._indisponivel_ate["moonshotai/Kimi-K2-Instruct-0905"] = 0   # pausa acabou
+    assert p.modelos_extracao()[0] == "moonshotai/Kimi-K2-Instruct-0905"
+    p._marcar_indisponivel("moonshotai/Kimi-K2-Instruct-0905"); p._marcar_indisponivel(p.MODELO_RESERVA_EXTRACAO)
+    assert p.modelos_extracao() == ["moonshotai/Kimi-K2-Instruct-0905", p.MODELO_RESERVA_EXTRACAO], "todos fora: tenta todos"
 
 
 def test_sem_anuncios_nao_chama_llm():
