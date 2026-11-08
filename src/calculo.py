@@ -190,7 +190,7 @@ def _singular(p: str) -> str:
     return p[:-1] if p.endswith("s") and len(p) > 4 else p
 
 
-_KIT = re.compile(r"\b(?:kit|jogo|pack|pacote|conjunto|cx|caixa)\s*(?:com\s*|c/\s*)?(\d{1,3})(?![\d.,x])\b(?!\s*(?:mm|cm|m|l|kg|w|v|a|m2)\b)")
+_KIT = re.compile(r"\b(?:kit|jogo|pack|pacote|cx|caixa)\s*(?:com\s*|c/\s*)?(\d{1,3})(?![\d.,x])\b(?!\s*(?:mm|cm|m|l|kg|w|v|a|m2)\b)")
 
 
 def pecas_do_kit(titulo: str) -> int | None:

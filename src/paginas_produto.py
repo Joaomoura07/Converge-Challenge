@@ -100,18 +100,35 @@ def _leitura(texto: str) -> tuple[bool, str, set[float]]:
 @observe(name="pesquisa.links_compra", capture_input=False, capture_output=False)
 async def verificar_ofertas(descricao: str, ofertas: list[Oferta]) -> list[Oferta]:
     s = get_settings()
+    # 1º a conferência direta na loja (src/conferir_links.py): tira os links errados e confirma os certos.
+    from .conferir_links import conferir
+    # confirmação antiga (do cache) não vale: a página é conferida de novo agora
     ofertas = [o.model_copy(update={"link_verificado": False}) if o.link_verificado else o for o in ofertas]
-    urls = list(dict.fromkeys(o.url for o in ofertas if _candidata(o)))[:LIMITE_LINKS]
+    ofertas = await conferir(descricao, ofertas)
+    # 2º o Tavily Extract, só para o que ficou sem confirmar (loja que bloqueia robô)
+    urls = list(dict.fromkeys(o.url for o in ofertas if _candidata(o) and not o.link_verificado))[:LIMITE_LINKS]
     if not urls or not s.pesquisa_paginas_por_rodada or not s.tavily_keys:
         return ofertas
     try:
         from tavily import AsyncTavilyClient
-        chave = _rodizio_global().atual
-        if not chave:
+        rodizio = _rodizio_global()
+        dados = None
+        for _ in range(len(s.tavily_keys)):   # chave sem crédito: tenta a próxima (antes desistia e nada era confirmado)
+            chave = rodizio.atual
+            if not chave:
+                return ofertas
+            try:
+                dados = await asyncio.wait_for(AsyncTavilyClient(api_key=chave).extract(
+                    urls=urls, extract_depth="basic", format="markdown", timeout=s.pesquisa_pagina_timeout_s,
+                ), timeout=s.pesquisa_pagina_timeout_s + 1)
+                break
+            except Exception as exc:  # noqa: BLE001
+                if type(exc).__name__ in ("ForbiddenError", "InvalidAPIKeyError", "UsageLimitExceededError"):
+                    rodizio.descartar_atual(type(exc).__name__)
+                    continue
+                raise
+        if dados is None:
             return ofertas
-        dados = await asyncio.wait_for(AsyncTavilyClient(api_key=chave).extract(
-            urls=urls, extract_depth="basic", format="markdown", timeout=s.pesquisa_pagina_timeout_s,
-        ), timeout=s.pesquisa_pagina_timeout_s + 1)
         leituras = {r["url"]: _leitura(r.get("raw_content") or "") for r in dados.get("results", []) if r.get("url") in urls}
         indisponiveis = {url for url, (ausente, _, _) in leituras.items() if ausente}
         indisponiveis.update(r["url"] for r in dados.get("failed_results", []) if r.get("url") in urls
@@ -128,5 +145,5 @@ async def verificar_ofertas(descricao: str, ofertas: list[Oferta]) -> list[Ofert
         identidade = _identidade(titulo)
         verificado = (precos == {o.preco} and semelhanca(descricao, titulo) >= MIN_MESMO
                       and identidade == _identidade(o.titulo) and set(_identidade(descricao)) <= set(identidade))
-        saida.append(o.model_copy(update={"link_verificado": True}) if verificado else o)
+        saida.append(o.model_copy(update={"link_verificado": True}) if verificado and not o.link_verificado else o)
     return saida

@@ -16,3 +16,12 @@ def _sem_servicos_opcionais(request, monkeypatch):
     monkeypatch.setattr(s, "serper_api_keys", "")
     monkeypatch.setattr(s, "ors_api_key", "")
     monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 0)
+
+
+
+@pytest.fixture(autouse=True)
+def _sem_abrir_paginas_das_lojas(monkeypatch):
+    """Os testes usam links de mentira: a conferência na loja (src/conferir_links.py) fica desligada.
+    tests/fatia_b/test_conferir_links.py liga de novo com páginas falsas."""
+    import src.conferir_links as conferir_links
+    monkeypatch.setattr(conferir_links, "ATIVO", False)
