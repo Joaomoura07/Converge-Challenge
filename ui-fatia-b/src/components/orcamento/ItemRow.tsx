@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDiretoProduto } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDiretoProduto, precoDoAnuncio } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import { ImagemProduto } from "../imagens/ImagemProduto";
@@ -232,13 +232,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
                 </span>
               )}
               {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
-              {/* o preço do anúncio (o mesmo que aparece ao clicar), com a embalagem quando ela é outra */}
-              <span>
-                {reais(f.preco_anunciado ?? f.preco_embalagem)}
-                {f.preco_anunciado != null && f.embalagem_anunciada && f.embalagem_anunciada !== f.embalagem
-                  ? ` · ${f.embalagem_anunciada}`
-                  : ""}
-              </span>
+              <span>{precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada)}</span>
             </li>
           ))}
           {linkGoogle && (

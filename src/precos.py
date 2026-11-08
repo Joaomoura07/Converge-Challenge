@@ -104,7 +104,11 @@ def preco_no_texto(preco: float, texto: str) -> bool:
 
 # ------------------------------------------------------------------ montagem e leitura
 def montar_anuncios(resultados: list[ResultadoWeb]) -> str:
-    return "\n".join(f"[{i}] {r.loja}: {r.titulo} — {r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO]}" for i, r in enumerate(resultados))
+    linhas = []
+    for i, r in enumerate(resultados):
+        venda = f" (preço de venda encontrado na página: R$ {r.preco_pagina:.2f})" if r.preco_pagina is not None else ""
+        linhas.append(f"[{i}] {r.loja}: {r.titulo}{venda} — {r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO]}")
+    return "\n".join(linhas)
 
 
 def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Oferta], int]:
@@ -125,8 +129,9 @@ def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Ofert
             preco = preco if preco > 0 else None
         except ValueError:
             preco = None
-        if preco and not preco_no_texto(preco, f"{r.titulo} {r.trecho}"):
-            logger.warning("Preço %.2f não aparece no anúncio %d (%s): descartado", preco, i, r.loja)
+        evidencia_preco = r.trecho if r.pagina_lida else f"{r.titulo} {r.trecho}"
+        if preco and (not preco_no_texto(preco, evidencia_preco) or (r.preco_pagina is not None and preco != r.preco_pagina)):
+            logger.warning("Preço %.2f sem confirmação no anúncio %d (%s): descartado", preco, i, r.loja)
             preco, alucinadas = None, alucinadas + 1
         emb = partes[2] if partes[2] not in ("", "-") else None
         igual = MAPA_IGUAL.get(partes[3].upper().strip(" .*"))

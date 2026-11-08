@@ -7,6 +7,11 @@ const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
 export const reais = (v: number) => moeda.format(v);
 
+export function precoDoAnuncio(preco?: number | null, embalagem?: string | null): string {
+  if (preco == null || !Number.isFinite(preco) || preco <= 0) return "Preço anunciado indisponível";
+  return `${reais(preco)}${embalagem ? ` / ${embalagem}` : ""}`;
+}
+
 /** Valor curto para as pontas da cota: R$ 659 (sem centavos quando passa de R$ 100). */
 export const reaisCurto = (v: number) =>
   v >= 100 ? `R$ ${Math.round(v).toLocaleString("pt-BR")}` : moeda.format(v);
