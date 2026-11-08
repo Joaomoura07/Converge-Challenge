@@ -355,7 +355,9 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
             anterior = await _resultado_atual(banco, item_id)
             atual = (anterior.produto_normalizado if anterior and anterior.produto_normalizado else item.descricao)
             # Antes de marcar "buscando": se o LLM falhar, nada muda na tela.
-            alt = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria)
+            ref = ({"preco_atual": anterior.preco_emb_med, "embalagem": anterior.embalagem}
+                   if anterior is not None and anterior.preco_emb_med else {})
+            alt = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria, **ref)
             busca = item.model_copy(update={"descricao": alt.produto, "classificacao": "definido"})
         campos = {"status": "buscando", "pergunta": None, "motivo": None}
         if nova_descricao:
@@ -370,7 +372,20 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
         elif aceitar_media:
             resultado = aceitar_media_estimada(resultado)   # dispensou a especificação: fica como estimativa
         if alt is not None:
-            resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
+            resultado, trocou = decidir(resultado, anterior, alt, objetivo, item.descricao)
+            if not trocou and anterior is not None:
+                # saiu fora da faixa ou repetiu: UMA nova sugestão, dizendo o que evitar
+                try:
+                    alt2 = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria,
+                                                   evitar=(alt.produto,), **ref)
+                    busca2 = item.model_copy(update={"descricao": alt2.produto, "classificacao": "definido"})
+                    with na_obra(*(await _local_da_obra(banco, orcamento_id))):
+                        nova2 = await pesquisar_item(busca2, usar_cache=False, **opcoes)
+                    resultado2, trocou2 = decidir(nova2, anterior, alt2, objetivo, item.descricao)
+                    if trocou2:
+                        resultado = resultado2
+                except Exception as exc:  # noqa: BLE001 — a 2ª tentativa nunca piora: fica o anterior com o motivo
+                    logger.info("Segunda alternativa indisponível (%s)", type(exc).__name__)
     await _gravar_e_conferir(banco, resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
     if orcamento_id:

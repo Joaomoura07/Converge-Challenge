@@ -46,7 +46,8 @@ def test_sugere_produto_e_manda_o_objetivo_ao_modelo():
     alt = sugerir_alternativa("Tinta Suvinil Toque de Seda branco 18 L", "preco", categoria="Pintura", client=c, model="m")
     assert alt == Alternativa("Tinta Coral Rende Muito fosco branco 18 L", "Linha de entrada da Coral.")
     pedido = json.loads(c.chamadas[0]["messages"][1]["content"])
-    assert pedido == {"produto_atual": "Tinta Suvinil Toque de Seda branco 18 L", "objetivo": "preco", "categoria": "Pintura"}
+    assert pedido == {"produto_atual": "Tinta Suvinil Toque de Seda branco 18 L", "objetivo": "preco", "categoria": "Pintura",
+                      "faixa_de_preco": "mais barata que a atual"}
     assert c.chamadas[0]["max_tokens"] >= 2000   # GLM pensa antes: limite baixo devolve vazio
 
 
@@ -129,7 +130,7 @@ ITEM = ItemEntrada(id="a", descricao="Tinta acrílica branca 18 L", quantidade=1
 
 def test_repesquisar_pesquisa_a_alternativa_sem_mudar_a_descricao_do_arquiteto(monkeypatch, sem_fatia_c):
     pedidos, buscas = [], []
-    def sugerir(atual, objetivo, categoria=None):
+    def sugerir(atual, objetivo, categoria=None, **_):
         pedidos.append((atual, objetivo, categoria))
         return ALT
     async def pesquisar_item(item, **kw):
@@ -159,7 +160,7 @@ def test_llm_fora_nao_toca_no_item(monkeypatch, sem_fatia_c):
 
 def test_banco_sem_resultado_atual_usa_a_descricao(monkeypatch, sem_fatia_c):
     pedidos = []
-    monkeypatch.setattr(o, "sugerir_alternativa", lambda atual, objetivo, categoria=None: pedidos.append(atual) or ALT)
+    monkeypatch.setattr(o, "sugerir_alternativa", lambda atual, objetivo, categoria=None, **_: pedidos.append(atual) or ALT)
     async def pesquisar_item(item, **kw): return tinta(item.id, produto=item.descricao)
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     asyncio.run(o.repesquisar_item("a", banco=BancoFalso([ITEM]), objetivo="qualidade"))
