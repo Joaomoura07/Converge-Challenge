@@ -129,3 +129,24 @@ def test_categoria_pintura_aciona_mesmo_sem_a_palavra_tinta_na_descricao():
     res = sugerir_complementos([{"linha": 1, "categoria": "Pintura", "descricao": "Coral Decora cinza urbano",
                                  "quantidade": 22, "unidade": "m2"}])
     assert {c.regra for c in res} == {"pintura"}
+
+
+def test_argamassa_pela_marca_nao_e_piso_nem_falta():
+    """Caso real da Casa térrea (site, 07/11): 'Votomassa AC-II' na categoria 'Revestimentos e argamassas' entrava
+    na área de piso (324 m² em vez de 162) e a regra sugeria 98 sacos de argamassa para uma lista que já tinha."""
+    from src.complementos import sugerir_complementos
+    cat = "Revestimentos e argamassas"
+    itens = [{"linha": 7, "categoria": cat, "descricao": "Eliane Munari 60x60", "quantidade": 120, "unidade": "m2"},
+             {"linha": 8, "categoria": cat, "descricao": "Votomassa AC-II", "quantidade": 162, "unidade": "m2"},
+             {"linha": 9, "categoria": cat, "descricao": "Rejunte Quartzolit cinza platina", "quantidade": 120, "unidade": "m2"},
+             {"linha": 10, "categoria": cat, "descricao": "Ceusa branco 30x60", "quantidade": 42, "unidade": "m2"}]
+    sug = sugerir_complementos(itens)
+    assert [s.descricao for s in sug] == ["Espaçador/nivelador de piso (pacote 100 un)"]
+    assert sug[0].origem_linhas == [7, 10] and "162 m²" in sug[0].motivo
+
+
+def test_rejunte_acrilico_nao_vira_pintura():
+    from src.complementos import sugerir_complementos
+    sug = sugerir_complementos([{"linha": 1, "categoria": "Piscina", "descricao": "Rejunte acrílico cinza",
+                                 "quantidade": 30, "unidade": "m2"}])
+    assert not [s for s in sug if s.regra == "pintura"]

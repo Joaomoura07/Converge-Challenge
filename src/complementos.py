@@ -20,6 +20,8 @@ from typing import Any, Callable
 
 from pydantic import BaseModel
 
+from .compra import com_apelidos
+
 
 class Complemento(BaseModel):
     """Um item sugerido. Já no formato aceito por ``Item`` do contrato (descricao/quantidade/unidade)."""
@@ -64,8 +66,10 @@ def _texto(item: dict[str, Any]) -> str:
 
 def _desc(item: dict[str, Any]) -> str:
     """só a descrição: usada para exclusões e para saber o que JÁ está na lista.
-    A categoria não pode entrar aqui ('Revestimentos e argamassas' não significa que há argamassa)."""
-    return _norm(item.get("descricao"))
+    A categoria não pode entrar aqui ('Revestimentos e argamassas' não significa que há argamassa).
+    Com os apelidos de src/compra.py: medido no site em 07/11, "Votomassa AC-II" (162 m²) não era reconhecida como
+    argamassa, entrava na área de piso e a regra sugeria 98 sacos de argamassa para uma lista que já tinha."""
+    return com_apelidos(_norm(item.get("descricao")))
 
 
 def _ceil(x: float) -> int:
