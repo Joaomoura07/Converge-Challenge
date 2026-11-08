@@ -501,15 +501,58 @@ async def _tavily(consulta: str, limite: int, rodizio: _RodizioChaves) -> Respos
 DDG_TIMEOUT_S = 8
 
 
-async def _duckduckgo(consulta: str, limite: int) -> RespostaBusca:
-    """Reserva: só texto (a busca de imagem dobrava o tempo) e com limite de tempo."""
+# O ddgs raspa buscadores sem chave e eles bloqueiam IP de nuvem de vez em quando. Tenta o Brave (rápido, ~1 s) e,
+# se falhar ou vier vazio, o modo "auto" (que sorteia outros motores). A soma dos prazos é DDG_TIMEOUT_S.
+DDG_BACKENDS = (("brave", 3.0), ("auto", DDG_TIMEOUT_S - 3.0))
+
+
+async def _ddg_texto(consulta: str) -> list[dict]:
+    """Resultados de texto do ddgs, tentando um motor por vez. Levanta o último erro se nenhum render nada."""
     from ddgs import DDGS
 
-    def _sync():
-        with DDGS() as d:
-            return d.text(consulta, region="br-pt", max_results=25) or []
+    ultimo: Exception = RuntimeError("ddgs sem resultados")
+    for backend, prazo in DDG_BACKENDS:
+        def _sync(backend=backend):
+            with DDGS() as d:
+                return d.text(consulta, region="br-pt", max_results=25, backend=backend) or []
+        try:
+            texto = await asyncio.wait_for(asyncio.to_thread(_sync), timeout=prazo)
+            if texto:
+                return texto
+        except Exception as exc:  # noqa: BLE001 — timeout, bloqueio, sem resultados
+            ultimo = exc
+            logger.info("DuckDuckGo (%s) falhou: %s", backend, type(exc).__name__)
+    raise ultimo
 
-    texto = await asyncio.wait_for(asyncio.to_thread(_sync), timeout=DDG_TIMEOUT_S)
+
+async def _serper_texto(consulta: str) -> list[tuple[str, str, str]]:
+    """Busca orgânica do Google (serper.dev) como reserva do Tavily. Sem chave ou com falha: lista vazia.
+    Gasta crédito do Serper, por isso só entra depois que o Tavily falhou ou veio vazio."""
+    import httpx
+
+    from . import serper
+
+    chaves = get_settings().serper_keys
+    if not chaves:
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as cli:
+            j = await serper.post(cli, "https://google.serper.dev/search",
+                                  {"q": consulta, "gl": "br", "hl": "pt-br", "num": 10}, chaves)
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Serper (reserva da busca) falhou: %s", type(exc).__name__)
+        return []
+    return [(o.get("title"), o.get("link"), o.get("snippet")) for o in ((j or {}).get("organic") or [])
+            if isinstance(o, dict) and o.get("link")]
+
+
+async def _serper_busca(consulta: str, limite: int) -> RespostaBusca:
+    return RespostaBusca(consulta, "serper", _filtra(await _serper_texto(consulta), limite))
+
+
+async def _duckduckgo(consulta: str, limite: int) -> RespostaBusca:
+    """Reserva: só texto (a busca de imagem dobrava o tempo) e com limite de tempo."""
+    texto = await _ddg_texto(consulta)
     brutos = [(x.get("title"), x.get("href"), x.get("body")) for x in texto]
     return RespostaBusca(consulta, "duckduckgo", _filtra(brutos, limite))
 
@@ -535,17 +578,15 @@ async def _tavily_aberto(consulta: str, limite: int, rodizio: _RodizioChaves, lo
 
 
 async def _duckduckgo_aberto(consulta: str, limite: int, local: Local | None) -> RespostaBusca:
-    from ddgs import DDGS
-
     q = consulta_regional(consulta, local)
-
-    def _sync():
-        with DDGS() as d:
-            return d.text(q, region="br-pt", max_results=25) or []
-
-    texto = await asyncio.wait_for(asyncio.to_thread(_sync), timeout=DDG_TIMEOUT_S)
+    texto = await _ddg_texto(q)
     return RespostaBusca(q, "duckduckgo", _filtra_aberto([(x.get("title"), x.get("href"), x.get("body")) for x in texto],
                                                         limite, local))
+
+
+async def _serper_aberto(consulta: str, limite: int, local: Local | None) -> RespostaBusca:
+    q = consulta_regional(consulta, local)
+    return RespostaBusca(q, "serper", _filtra_aberto(await _serper_texto(q), limite, local))
 
 
 async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, local: Local | None) -> RespostaBusca:
@@ -555,7 +596,13 @@ async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, lo
         if r.resultados:
             return r
     except Exception as exc:  # noqa: BLE001
-        logger.info("Busca aberta no Tavily falhou (%s); tentando DuckDuckGo", type(exc).__name__)
+        logger.info("Busca aberta no Tavily falhou (%s); tentando Serper e DuckDuckGo", type(exc).__name__)
+    try:
+        r = await _serper_aberto(consulta, limite, local)
+        if r.resultados:
+            return r
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Busca aberta no Serper falhou (%s); tentando DuckDuckGo", type(exc).__name__)
     try:
         return await _duckduckgo_aberto(consulta, limite, local)
     except Exception as exc:  # noqa: BLE001
@@ -657,6 +704,15 @@ async def _buscar_fixa(consulta: str, limite: int, rodizio: _RodizioChaves) -> R
             erros.append(f"tavily: {type(exc).__name__}")
         if tentativa == 0:
             await asyncio.sleep(0.5)
+    if not resp or not resp.resultados:
+        try:
+            serper_r = await _serper_busca(consulta, limite)
+            if serper_r.resultados:
+                if resp and resp.imagens:
+                    serper_r.imagens = resp.imagens
+                return serper_r
+        except Exception as exc:  # noqa: BLE001
+            erros.append(f"serper: {type(exc).__name__}")
     if not resp or not resp.resultados:
         try:
             reserva = await _duckduckgo(consulta, limite)
