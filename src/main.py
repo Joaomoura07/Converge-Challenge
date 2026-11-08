@@ -45,6 +45,10 @@ from .rotas_orcamentos import router as orcamentos_router  # noqa: E402  (Fatia 
 
 app.include_router(orcamentos_router)
 
+from .rotas_exportar_pdf import router as exportar_pdf_router  # noqa: E402  (plano de compra em PDF)
+
+app.include_router(exportar_pdf_router)
+
 from .rotas_proximidade import router as proximidade_router  # noqa: E402  (lojas próximas, distância e tempo)
 
 app.include_router(proximidade_router)

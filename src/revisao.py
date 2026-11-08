@@ -106,7 +106,9 @@ _MARCAS = frozenset(
         "amanco|fortlev|steck|schneider|easy9|pial|legrand|liz|orion|philips|ledvance|taschibra|stella|avant|"
         "samsung|lg|pormade|sincol|pado|papaiz|yale|sasazaki|blum|hafele|rehau|guararapes|tramontina|rinnai|"
         "sodramar|viapol|3m|norton|cortag|astra|windfree|azalea|vogue|acqua duo|hydra|debba|morgana|silestone|"
-        "tandembox|clip top|bidim|santa luzia|sao gabriel"
+        "tandembox|clip top|bidim|santa luzia|sao gabriel|"
+        # 08/11 (Fatia B): marcas usadas nos exemplos do site, que passaram a ser específicos
+        "sil|prysmian|afumex|intelbras|duratex|cebrace|blindex|ciser|tigreflex"
     ).split("|")
 )
 _COR_COM_CORAL = re.compile(r"\b(?:cor|tom|rosa|salmao|laranja|vermelho) coral\b")

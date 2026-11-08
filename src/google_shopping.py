@@ -75,9 +75,18 @@ def semelhanca(descricao: str, titulo: str) -> float:
     return comuns / len(item) if len(palavras & anuncio) >= min(2, len(palavras)) else 0.0
 
 
+_ROTULO_UNIDADE = {"l": "L", "kg": "kg", "m2": "m²", "m3": "m³", "m": "m"}
+
+
 def _embalagem(titulo: str, unidade_item: str | None) -> str | None:
-    if conteudo_embalagem(titulo):
-        return titulo
+    """Rótulo curto da embalagem lida no título ("20 kg", "18 L", "kit 5 unidades"), que a tela mostra e o cálculo
+    relê. Antes ia o título inteiro e a tela mostrava "Compre Produtos QUARTZOLIT em Promoção..." como embalagem."""
+    c = conteudo_embalagem(titulo)
+    if c:
+        q = f"{c.quantidade:g}".replace(".", ",")
+        if c.unidade == "un":
+            return "unidade" if c.quantidade == 1 else f"kit {q} unidades"
+        return f"{q} {_ROTULO_UNIDADE.get(c.unidade, c.unidade)}"
     if normalizar_unidade(unidade_item) in ("un", None):
         return "unidade"
     return None

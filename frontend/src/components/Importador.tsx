@@ -38,6 +38,8 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
   const [exemplosAbertos, setExemplosAbertos] = useState(false);
   const [arrastando, setArrastando] = useState(false);
+  const [colado, setColado] = useState("");
+  const idColar = useId();
   const entrada = useRef<HTMLInputElement>(null);
   const idAviso = useId();
 
@@ -62,7 +64,8 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
 
   /** Lê os bytes com o leitor da extensão. Planilha com várias abas pede a escolha antes de mexer na lista. */
   async function avaliar(nome: string, bytes: Uint8Array, aba: string | null) {
-    const resultado = await lerArquivo({ nome, bytes, aba });
+    // texto colado não tem extensão: vai para o leitor de .txt (tabela por tabulação ou lista, um item por linha)
+    const resultado = await lerArquivo({ nome: nome === "lista colada" ? "lista-colada.txt" : nome, bytes, aba });
     if (!aba && !ehErro(resultado)) {
       const abas = abasEscolhaveis(resultado);
       if (abas.length > 1) {
@@ -77,7 +80,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       setSituacao({
         tipo: "erro",
         nome,
-        mensagem: `${resultado.erro.mensagem} A lista atual foi mantida. Corrija o arquivo, exporte como CSV ou digite os materiais.`,
+        mensagem: /Cadastro manual/.test(resultado.erro.mensagem)
+          ? `${resultado.erro.mensagem} A lista atual foi mantida.`
+          : `${resultado.erro.mensagem} A lista atual foi mantida. Se preferir, cole a lista na aba Cadastro manual, um material por linha.`,
       });
       return;
     }
@@ -143,6 +148,14 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
     await processar(arquivo.name, async () => new Uint8Array(await arquivo.arrayBuffer()));
   }
 
+  /** Lista colada (WhatsApp, bloco de notas, células copiadas do Excel): o mesmo leitor do .txt. Texto solto vira
+   * um material por linha; células do Excel chegam separadas por tabulação e são lidas como tabela. */
+  async function lerColado() {
+    const texto = colado.trim();
+    if (!texto) return;
+    await processar("lista colada", async () => new TextEncoder().encode(texto));
+  }
+
   async function usarExemplo(ex: Exemplo) {
     setExemplosAbertos(false);
     await processar(`${ex.id}.csv`, async () => {
@@ -199,6 +212,30 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
         )}
       </div>
 
+      {modo === "manual" && (
+        <div className="importador-colar">
+          <label htmlFor={idColar} className="importador-colar__rotulo">
+            Já tem a lista pronta? Cole aqui, um material por linha
+          </label>
+          <textarea
+            id={idColar}
+            rows={5}
+            value={colado}
+            onChange={(e) => setColado(e.target.value)}
+            placeholder={"10 sacos de cimento\n2 m³ de areia\n15 caixas de porcelanato 60x60\ntinta acrílica branca 18 litros"}
+          />
+          <p className="nota">
+            Serve a lista do WhatsApp, do bloco de notas ou células copiadas do Excel. Nada muda na tabela até você
+            clicar em &quot;Ler a lista&quot;.
+          </p>
+          <div className="importador-acoes">
+            <button type="button" className="botao-primario" onClick={() => void lerColado()} disabled={!colado.trim()}>
+              Ler a lista
+            </button>
+          </div>
+        </div>
+      )}
+
       {exemplosAbertos && (
         <ul id="lista-exemplos" className="exemplos">
           {EXEMPLOS.map((ex) => (
@@ -224,8 +261,8 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
               : modo === "revit"
               ? "Aceita a tabela exportada do Revit em .txt (colunas separadas por tabulação), de até 20 MB. A lista só muda depois da leitura."
               : modo === "excel"
-              ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Macros nunca são executadas. A lista só muda depois da leitura."
-              : "Aceita CSV de até 20 MB, em UTF-8 ou Windows-1252, com ponto e vírgula, vírgula ou tabulação. A lista só muda depois da leitura."
+              ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Não precisa de modelo: basta uma coluna com o material e outra com a quantidade (com ou sem cabeçalho). Macros nunca são executadas. A lista só muda depois da leitura."
+              : "Aceita CSV de até 20 MB. Não precisa de modelo: basta uma coluna com o material e outra com a quantidade (com ou sem cabeçalho), ou um material por linha. A lista só muda depois da leitura."
             : "Os exemplos usam o mesmo leitor dos arquivos enviados.")}
         {situacao.tipo === "lendo" && `Lendo ${situacao.nome}…`}
       </p>
@@ -321,6 +358,15 @@ function montarResumo(r: Importacao): string {
   }
   if (r.origem.formato !== "csv" && r.origem.aba) {
     return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · aba "${r.origem.aba}"`;
+  }
+  // Lista colada ou lida como texto (um material por linha): sem detalhe técnico de codificação e separador.
+  const comoLista = r.avisos.some((a) => a.codigo === "LISTA_TEXTO");
+  const fonte = r.origem.arquivo === "lista-colada.txt" ? "da lista colada" : `de ${r.origem.arquivo}`;
+  if (comoLista || r.origem.arquivo === "lista-colada.txt") {
+    return `${r.itens.length} ${r.itens.length === 1 ? "material lido" : "materiais lidos"} ${fonte}, um por linha`;
+  }
+  if (r.avisos.some((a) => a.codigo === "SEM_CABECALHO")) {
+    return `${r.itens.length} ${r.itens.length === 1 ? "material lido" : "materiais lidos"} de ${r.origem.arquivo} (sem cabeçalho: confira as colunas)`;
   }
   const cod = ROTULO_CODIFICACAO[r.origem.codificacao ?? ""] ?? r.origem.codificacao ?? "?";
   const sep = r.origem.delimitador === "\t" ? "tabulação" : r.origem.delimitador === ";" ? "ponto e vírgula" : r.origem.delimitador === "," ? "vírgula" : r.origem.delimitador;

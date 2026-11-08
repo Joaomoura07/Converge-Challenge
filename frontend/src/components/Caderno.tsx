@@ -237,7 +237,11 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
                   No Revit, exporte a tabela de quantitativos como texto (.txt, separado por tabulação). Títulos, grupos como &quot;Nível: Térreo&quot;, subtotais e o total geral são tratados: só as linhas de itens entram, com o nível do grupo.
                 </p>
               ) : (
-                <p className="apoio">Digite os materiais um a um. Quantidade aceita vírgula decimal (12,5) e a unidade aceita m².</p>
+                <p className="apoio">
+                  Digite os materiais um a um na tabela, ou cole a lista inteira no campo abaixo. Não precisa de
+                  formato: &quot;10 sacos de cimento&quot; ou &quot;tinta branca 18 litros&quot; já servem. Quantidade
+                  aceita vírgula (12,5) e a unidade aceita m².
+                </p>
               )}
               <Importador
                 modo={lista.modo}

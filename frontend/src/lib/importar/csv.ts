@@ -457,8 +457,10 @@ function deduzirColunas(linhas: RegistroTextoSimples[]): { desc: number; qtd: nu
   };
   // numeração da linha (1, 2, 3...) não é quantidade
   const sequencia = (j: number) => {
-    const v = amostra.map((r) => numeroBr((r.celulas[j] ?? "").trim()));
-    return v.length > 1 && v.every((n, i) => n !== null && (i === 0 || n === (v[i - 1] as number) + 1));
+    // a numeração (1, 2, 3...) cobre o arquivo inteiro e começa em 1 (a 1ª linha pode ser cabeçalho)
+    const v = linhas.map((r) => numeroBr((r.celulas[j] ?? "").trim()));
+    const corpo = v[0] === null ? v.slice(1) : v;
+    return corpo.length > 1 && corpo[0] === 1 && corpo.every((n, i) => n !== null && (i === 0 || n === (corpo[i - 1] as number) + 1));
   };
   const numeracoes = Array.from({ length: largura }, (_, j) => j).filter(sequencia);
   const qtd = melhor(pareceQuantidade, numeracoes);
