@@ -15,11 +15,13 @@ import statistics
 import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
+from urllib.parse import urlparse
 
 from .busca import LOCAL_DA_OBRA, eh_pagina_de_listagem, fonte_nao_e_loja, perto_da_obra
 from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normalizar_unidade, qtd_embalagens
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
+from .regiao import regional_por_dominio, regional_por_nome
 
 OUTLIER_MIN, OUTLIER_MAX = 0.4, 2.5
 MIN_EMBALAGEM_OBRA = {"l": 0.9, "kg": 0.9}   # genérico: descarta 60 ml / 250 ml (artesanato, amostra)
@@ -168,10 +170,18 @@ def e_outro_tipo_de_produto(o: Oferta, pedido: str) -> bool:
     return any(w not in p for w in OUTRO_TIPO.findall(_norm(o.titulo)))
 
 
+def e_oferta_shopping(o: Oferta) -> bool:
+    """Anúncio do Google Shopping (src/google_shopping.py): preço e loja vêm estruturados do Google, não lidos por LLM.
+    O link abre no google.com (que é bloqueado como fonte de TEXTO), por isso fica fora desses dois filtros."""
+    host = (urlparse(o.url or "").hostname or "").lower()
+    return "google." in host and ("ibp=oshop" in (o.url or "") or "tbm=shop" in (o.url or ""))
+
+
 def motivo_descarte(o: Oferta, pedido: str) -> str | None:
-    if fonte_nao_e_loja(o.dominio, o.url):
+    shopping = e_oferta_shopping(o)
+    if not shopping and fonte_nao_e_loja(o.dominio, o.url):
         return "fonte não é loja (órgão público ou arquivo)"
-    if preco_e_codigo_do_titulo(o):
+    if not shopping and preco_e_codigo_do_titulo(o):
         return "preço é código do título"
     if not embalagem_confere_com_titulo(o):
         return "embalagem não confere com o título"
@@ -253,11 +263,19 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     def emb(v: float) -> float:
         return round(v * ref.quantidade, 2)
 
-    fontes = [Fonte(loja=n.oferta.loja, dominio=n.oferta.dominio, url=n.oferta.url,
-                    preco_embalagem=emb(n.unitario), embalagem=rotulo,
-                    preco_anunciado=n.oferta.preco, embalagem_anunciada=n.oferta.embalagem,
-                    perto_da_obra=perto_da_obra(n.oferta.dominio, LOCAL_DA_OBRA.get())) for n in validas]
-    fontes.sort(key=lambda f: not f.perto_da_obra)   # perto da obra primeiro (sort estável)
+    def fonte(n: _Normalizada) -> Fonte:
+        # loja da região da obra (Google Maps pelo CEP): pelo site ou pelo nome (anúncio do Shopping)
+        regional = regional_por_dominio(n.oferta.dominio) or regional_por_nome(n.oferta.loja)
+        return Fonte(loja=n.oferta.loja, dominio=n.oferta.dominio, url=n.oferta.url,
+                     preco_embalagem=emb(n.unitario), embalagem=rotulo,
+                     preco_anunciado=n.oferta.preco, embalagem_anunciada=n.oferta.embalagem,
+                     perto_da_obra=regional is not None or perto_da_obra(n.oferta.dominio, LOCAL_DA_OBRA.get()),
+                     distancia_km=regional.km if regional else None,
+                     endereco=regional.endereco if regional else None)
+
+    fontes = [fonte(n) for n in validas]
+    # perto da obra primeiro, a mais próxima antes (sort estável: as outras ficam na ordem da busca)
+    fontes.sort(key=lambda f: (not f.perto_da_obra, f.distancia_km if f.distancia_km is not None else 9e9))
 
     # 4. R$ por unidade do quantitativo só quando a unidade da embalagem é a mesma do item (m² com m²)
     ui = normalizar_unidade(item.unidade)

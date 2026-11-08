@@ -1,0 +1,141 @@
+"""Google Shopping como fonte de preço e lojas da região da obra (Google Maps pelo CEP).
+Os anúncios e lugares abaixo são do formato REAL do serper.dev (conferido com chave em 08/11)."""
+
+from __future__ import annotations
+
+import asyncio
+
+import pytest
+
+import src.busca as b
+import src.google_shopping as g
+import src.regiao as rg
+from src.calculo import calcular
+from src.modelos import ItemEntrada
+from src.precos import Oferta, ResultadoExtracao
+
+LINK = "https://www.google.com/search?ibp=oshop&q=x&prds=catalogid:1"
+RECIFE = b.Local("Recife", "PE")
+OBRA = (-8.05, -34.90)
+
+PLACES = [
+    {"title": "Canal da Construção", "address": "Av. Beberibe, 1501", "website": "http://www.canalconstrucao.com.br/",
+     "latitude": -8.024019, "longitude": -34.893867},
+    {"title": "Canal da Construção", "address": "Av. Fernando Simões Barbosa, 1274",
+     "website": "https://www.canalconstrucao.com.br/", "latitude": -8.12863, "longitude": -34.902256},
+    {"title": "Armazém Helena - Material de Construção em Recife", "address": "Av. Caxangá, 2678",
+     "website": "http://www.instagram.com/armazemhelenaa", "latitude": -8.044927, "longitude": -34.930477},
+    {"title": "Ferreira Pinto - Matriz", "address": "R. Dr. José Mariano, 421", "website": "http://ferreirapinto.com.br/",
+     "latitude": -8.06523, "longitude": -34.885838},
+    {"title": "Loja em Caruaru", "website": "https://lojacaruaru.com.br", "latitude": -8.28, "longitude": -35.97},
+    {"title": "Sem coordenada", "website": "https://x.com.br"},
+]
+
+
+# ---------------------------------------------------------------- Google Shopping
+@pytest.mark.parametrize("a,b", [("Argamassa AC-III", "argamassa aciii"), ("Argamassa Ac-3", "argamassa aciii"),
+                                 ("Argamassa AC III", "argamassa aciii")])
+def test_codigo_escrito_de_jeitos_diferentes(a, b):
+    assert g._tokens(a) == g._tokens(b)
+
+
+@pytest.mark.parametrize("titulo,esperado", [
+    ("SUVINIL TOQUE DE SEDA BRANCO NEVE 18L", True),
+    ("Tinta Acrílica Toque de Seda Branco Neve 18 l Suvinil", True),
+    ("Tinta Suvinil Toque de Seda Branco Neve 3,6L", False),     # outra medida
+    ("Tinta Coral Decora Branco 18L", False),                     # outra marca/linha
+])
+def test_anuncio_so_conta_com_a_mesma_medida_e_a_mesma_linha(titulo, esperado):
+    assert (g.semelhanca("Suvinil Toque de Seda Branco Neve 18L", titulo) >= g.MIN_MESMO) is esperado
+
+
+def test_anuncios_viram_ofertas_uma_por_loja_com_embalagem_do_titulo():
+    anuncios = [
+        {"title": "Argamassa ACIII 20kg Cinza Quartzolit", "price": "R$\xa057,00", "source": "Kaue Home Center", "link": LINK},
+        {"title": "Quartzolit Argamassa AC-III 20kg Cinza", "price": "R$\xa071,28 agora", "source": "Construbet", "link": LINK},
+        {"title": "Argamassa ACIII 20kg Quartzolit", "price": "R$\xa060,00", "source": "Construbet", "link": LINK},  # loja repetida
+        {"title": "Argamassa Colafix AC-3 20 Kilos", "price": "R$\xa030,94", "source": "temfer"},                   # outra marca
+        {"title": "Argamassa Quartzolit AC-III 20kg", "price": "sem preço", "source": "X", "link": LINK},
+    ]
+    ofs = g.ler_anuncios("Argamassa Quartzolit AC-III 20kg", "m2", anuncios, generico=False)
+    assert [(o.loja, o.preco, o.mesmo_produto) for o in ofs] == [("Kaue Home Center", 57.0, "sim"), ("Construbet", 71.28, "sim")]
+    assert all(o.url.startswith("https://www.google.com/") and o.dominio == "google.com" for o in ofs)
+
+
+def test_item_contado_em_unidade_aceita_anuncio_sem_medida():
+    a = [{"title": "Spot Stella 7W Embutir Redondo", "price": "R$\xa065,90", "source": "Loja Elétrica", "link": LINK}]
+    assert g.ler_anuncios("Spot Stella 7W", "un", a, False)[0].embalagem == "unidade"
+    assert g.ler_anuncios("Spot Stella 7W", "m2", a, False) == [], "item em m² sem medida no anúncio não compara"
+
+
+def test_oferta_do_shopping_entra_no_calculo_mesmo_com_link_do_google():
+    ofs = [Oferta(loja=l, dominio="google.com", url=LINK, titulo="Spot Stella 7W", preco=p, embalagem="unidade",
+                  mesmo_produto="sim") for l, p in [("A", 65.9), ("B", 66.5), ("C", 70.0)]]
+    c = calcular(ItemEntrada(id="1", descricao="Spot Stella 7W", quantidade=10, unidade="un"), ResultadoExtracao(ofertas=ofs))
+    assert c.tem_preco and len(c.fontes) == 3 and c.preco_emb_med == 66.5
+
+
+# ---------------------------------------------------------------- lojas da região
+def test_places_vira_lojas_da_regiao_mais_perto_primeiro():
+    lojas = rg.ler_places(PLACES, OBRA)
+    assert [l.nome for l in lojas][:2] == ["Ferreira Pinto - Matriz", "Canal da Construção"]
+    canal = next(l for l in lojas if l.dominio == "canalconstrucao.com.br")
+    assert canal.endereco == "Av. Beberibe, 1501", "das duas filiais fica a mais perto da obra"
+    helena = next(l for l in lojas if "Helena" in l.nome)
+    assert helena.dominio is None, "Instagram não é site da loja"
+    assert not any("Caruaru" in l.nome for l in lojas), "a mais de 40 km não é perto da obra"
+    assert all(l.km is not None for l in lojas)
+
+
+def test_loja_da_regiao_por_site_e_por_nome():
+    with rg.na_obra(RECIFE, rg.ler_places(PLACES, OBRA)):
+        assert rg.regional_por_dominio("loja.canalconstrucao.com.br").nome == "Canal da Construção"
+        assert rg.regional_por_nome("Ferreira Pinto").nome == "Ferreira Pinto - Matriz"
+        assert rg.regional_por_nome("Ferreira Costa") is None, "nome parecido de outra loja não conta"
+        assert rg.regional_por_nome("Material de Construção") is None, "só palavras genéricas não identificam"
+        assert rg.dominios_regionais() == ["ferreirapinto.com.br", "canalconstrucao.com.br"]
+    assert rg.dominios_regionais() == [], "fora do orçamento não há região"
+
+
+def test_fonte_da_regiao_vem_primeiro_com_distancia_e_endereco():
+    ofs = [Oferta(loja="Loja Online", dominio="lojaonline.com.br", url="https://lojaonline.com.br/argamassa-aciii-20kg", titulo="Argamassa AC-III 20kg",
+                  preco=60.0, embalagem="saco 20 kg", mesmo_produto="sim"),
+           Oferta(loja="Canal da Construção", dominio="canalconstrucao.com.br", url="https://canalconstrucao.com.br/p",
+                  titulo="Argamassa AC-III 20kg", preco=58.0, embalagem="saco 20 kg", mesmo_produto="sim")]
+    with rg.na_obra(RECIFE, rg.ler_places(PLACES, OBRA)):
+        c = calcular(ItemEntrada(id="1", descricao="Argamassa Quartzolit AC-III 20kg", quantidade=48, unidade="m2"),
+                     ResultadoExtracao(ofertas=ofs))
+    primeira = c.fontes[0]
+    assert primeira.loja == "Canal da Construção" and primeira.perto_da_obra and primeira.distancia_km > 0
+    assert primeira.endereco == "Av. Beberibe, 1501" and not c.fontes[1].perto_da_obra
+
+
+def test_busca_regional_procura_nos_sites_das_lojas_da_regiao(monkeypatch):
+    import tavily
+    chamadas = {}
+
+    class Falso:
+        def __init__(self, api_key): pass
+        async def search(self, q, **kw):
+            chamadas.update(kw)
+            return {"results": [
+                {"title": "Argamassa AC-III 20kg", "url": "https://www.canalconstrucao.com.br/argamassa-aciii", "content": "R$ 49,90"},
+                {"title": "Argamassa AC-III", "url": "https://www.canalconstrucao.com.br/outra", "content": "R$ 50,00"},
+                {"title": "Busca", "url": "https://ferreirapinto.com.br/busca?q=argamassa", "content": "R$ 40,00"},
+                {"title": "Sem preço", "url": "https://ferreirapinto.com.br/p/1", "content": "consulte"}]}
+
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", Falso)
+
+    async def cenario():
+        with rg.na_obra(RECIFE, rg.ler_places(PLACES, OBRA)):
+            return await b._buscar_regional("argamassa", b._RodizioChaves(["k"]))
+
+    r = asyncio.run(cenario())
+    assert sorted(chamadas["include_domains"]) == ["canalconstrucao.com.br", "ferreirapinto.com.br"]
+    assert [(x.loja, x.url) for x in r.resultados] == [("Canal da Construção", "https://www.canalconstrucao.com.br/argamassa-aciii")]
+
+
+def test_sem_regiao_a_busca_regional_nao_gasta_busca(monkeypatch):
+    import tavily
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", lambda **k: (_ for _ in ()).throw(AssertionError("não devia buscar")))
+    assert asyncio.run(b._buscar_regional("argamassa", b._RodizioChaves(["k"]))).resultados == []

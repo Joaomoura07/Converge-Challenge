@@ -79,12 +79,12 @@ def tabela(m: Metricas, titulo: str) -> str:
 # ------------------------------------------------------------------ fontes dos dados
 async def medir_arquivo(caminho: Path, usar_cache: bool) -> Metricas:
     from scripts.aquecer_cache import cep_do_arquivo, ler_itens
-    from src.busca import local_do_cep, na_regiao
+    from src.regiao import na_obra, preparar_obra
     from src.custo import acumular
     from src.pesquisa import pesquisar_itens
 
     itens = ler_itens(caminho)
-    local = await local_do_cep(cep_do_arquivo(caminho))   # mesma região que o orçamento real usaria
+    local, lojas = await preparar_obra(cep_do_arquivo(caminho))   # mesma região que o orçamento real usaria
     t0 = time.perf_counter()
     primeiro: list[float] = []
 
@@ -92,7 +92,7 @@ async def medir_arquivo(caminho: Path, usar_cache: bool) -> Metricas:
         if not primeiro:
             primeiro.append(time.perf_counter() - t0)
 
-    with acumular() as custo, na_regiao(local):
+    with acumular() as custo, na_obra(local, lojas):
         resultados = await pesquisar_itens(itens, ao_terminar=ao_terminar, usar_cache=usar_cache)
     return resumir(resultados, primeiro[0] if primeiro else None, time.perf_counter() - t0, custo.usd)
 

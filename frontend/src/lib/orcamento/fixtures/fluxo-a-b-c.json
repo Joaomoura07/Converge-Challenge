@@ -14,9 +14,11 @@
       "extras": {},
       "fontes": [
         {
+          "distancia_km": null,
           "dominio": "leroymerlin.com.br",
           "embalagem": "lata 18 L",
           "embalagem_anunciada": null,
+          "endereco": null,
           "loja": "Leroy Merlin",
           "perto_da_obra": false,
           "preco_anunciado": null,
@@ -69,9 +71,11 @@
       "extras": {},
       "fontes": [
         {
+          "distancia_km": null,
           "dominio": "cec.com.br",
           "embalagem": "barrica 25 kg",
           "embalagem_anunciada": null,
+          "endereco": null,
           "loja": "C&C",
           "perto_da_obra": false,
           "preco_anunciado": null,
@@ -212,9 +216,11 @@
       "extras": {},
       "fontes": [
         {
+          "distancia_km": null,
           "dominio": "leroymerlin.com.br",
           "embalagem": "lata 18 L",
           "embalagem_anunciada": null,
+          "endereco": null,
           "loja": "Leroy Merlin",
           "perto_da_obra": false,
           "preco_anunciado": null,

@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src import cache
-from src.busca import local_do_cep, na_regiao
+from src.regiao import na_obra, preparar_obra
 from src.modelos import ItemEntrada, ResultadoItem
 from src.pesquisa import pesquisar_itens
 
@@ -110,9 +110,9 @@ def cep_do_arquivo(caminho: Path) -> str | None:
 async def aquecer(itens: list[ItemEntrada], manter: float, usar_agente: bool = True,
                   cep: str | None = None) -> tuple[list[Medida], list[Medida], float]:
     # mesma região que a pesquisa do orçamento usará na demo (busca aberta com cidade/UF da obra)
-    local = await local_do_cep(cep)
+    local, lojas = await preparar_obra(cep)
     print(f"Região da busca aberta: {f'{local.cidade}/{local.uf}' if local else 'sem cidade (passe --cep)'}")
-    with na_regiao(local):
+    with na_obra(local, lojas):
         return await _aquecer(itens, manter, usar_agente)
 
 

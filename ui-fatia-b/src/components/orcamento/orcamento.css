@@ -63,6 +63,7 @@
 .orc-item__falha { border-left-color: var(--cor-erro); }
 .orc-item__pergunta p, .orc-item__falha p { margin: 0; font-size: 0.875rem; }
 .orc-item__resposta { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.orc-item__acoes { display: flex; flex-wrap: wrap; gap: 8px; }
 .orc-item__resposta input {
   flex: 1 1 260px; min-width: 0;
   font: inherit; font-size: 0.875rem; padding: 6px 8px;

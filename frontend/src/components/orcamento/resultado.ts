@@ -60,13 +60,15 @@ export class ErroRepesquisa extends Error {}
 export { OBJETIVOS } from "./formato";
 export type { Objetivo } from "./tipos";
 
-/** Segundo argumento de repesquisarItem: texto = resposta à pergunta; objeto = alternativa. */
-export type PedidoRepesquisa = string | { objetivo: Objetivo };
+/** Segundo argumento de repesquisarItem: texto = resposta à pergunta; `{objetivo}` = alternativa;
+ *  `{ aceitarMedia: true }` = "Usar a média mesmo assim" (o item pendente fica com a média dos parecidos). */
+export type PedidoRepesquisa = string | { objetivo: Objetivo } | { aceitarMedia: true };
 
 /**
  * POST {API}/orcamento-itens/{id}/repesquisar. Sem `pedido` = "Pesquisar de novo" (o mesmo produto); com texto =
  * "Responder"; com `{objetivo}` = pesquisar uma alternativa (o item só troca se ela for achada à venda e, no
- * "menor preço", sair mais barata; senão volta como estava, com o motivo).
+ * "menor preço", sair mais barata; senão volta como estava, com o motivo); com `{aceitarMedia: true}` = "Usar a
+ * média mesmo assim" (o item sai de pendente e fica como estimativa, sem marca).
  * O backend grava o item no Supabase (o Realtime atualiza a tela) e também devolve o resultado.
  * Pode levar até ~1 min: o agente refaz a busca quando faltam lojas.
  */
@@ -82,7 +84,9 @@ export async function repesquisarItem(
   if (texto !== undefined && texto.length < MIN_ESPECIFICACAO) {
     throw new ErroRepesquisa("Escreva a especificação com pelo menos 3 letras (marca, linha ou medida).");
   }
-  const corpo = texto ? { nova_descricao: texto } : typeof pedido === "object" ? { objetivo: pedido.objetivo } : null;
+  const corpo = texto ? { nova_descricao: texto }
+    : typeof pedido === "object" ? ("aceitarMedia" in pedido ? { aceitar_media: true } : { objetivo: pedido.objetivo })
+    : null;
   let resposta: Response;
   try {
     resposta = await buscar(`${base}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {

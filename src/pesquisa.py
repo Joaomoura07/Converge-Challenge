@@ -33,6 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
+from .google_shopping import ofertas_google
 from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -282,6 +283,19 @@ def aceitar_mais_proximo(r: ResultadoItem) -> ResultadoItem:
                                               "estimativa": True, "motivo": MOTIVO_MAIS_PROXIMO}))
 
 
+MOTIVO_MEDIA_ACEITA = "sem marca nem modelo: o preço é a média de produtos parecidos, aceita por você; confira nas fontes"
+
+
+def aceitar_media_estimada(r: ResultadoItem) -> ResultadoItem:
+    """O arquiteto escolheu "Usar a média mesmo assim": não quer especificar marca e modelo. Se a pesquisa achou
+    preço de produtos parecidos, o item deixa de ser pendente (sem pergunta) e segue como estimativa, com o aviso e as
+    fontes. Sem preço, fica como a pesquisa devolveu: não existe média para aceitar."""
+    if r.status != "pendente_especificacao" or r.preco_emb_med is None:
+        return r
+    return ResultadoItem(**(r.model_dump() | {"status": "definido", "pergunta": None, "estimativa": True,
+                                              "motivo": MOTIVO_MEDIA_ACEITA}))
+
+
 def _precisa_refazer(calc: Calculo) -> bool:
     return not calc.tem_preco or len(calc.fontes) < get_settings().pesquisa_min_lojas
 
@@ -324,9 +338,13 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
 
     # ② busca + ③ extração
     consulta = montar_consulta(item)
-    b, ext = await buscar_e_extrair(consulta, item.descricao)
+    # Google Shopping em paralelo: dezenas de lojas com preço estruturado (medido em 07/11: com só a busca, 33 de 113
+    # itens dos exemplos ficavam a mais de 50% da mediana do Google)
+    (b, ext), google = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
+                                            ofertas_google(item.descricao, item.unidade, generico))
     coleta = Coleta(imagem=b.imagem, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
     coleta.juntar(ext.ofertas)
+    coleta.juntar(google)
     calc = calcular(item, coleta.extracao(), generico)
 
     precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured

@@ -94,6 +94,47 @@ def test_repesquisar_com_resposta_nao_repete_a_pergunta(monkeypatch):
     assert r.status == "definido" and r.pergunta is None and banco.gravados[-1].status == "definido"
 
 
+def test_usar_a_media_tira_a_pendencia_e_mantem_estimativa_e_fontes():
+    r = p.aceitar_media_estimada(_pendente_com_preco())
+    assert r.status == "definido" and r.pergunta is None and r.estimativa and r.fontes == [FONTE]
+    assert r.preco_emb_med == 15.8 and "média" in r.motivo and "aceita por você" in r.motivo
+
+
+def test_usar_a_media_sem_preco_nao_inventa_definido():
+    sem = ResultadoItem(item_id="t", status="pendente_especificacao", pergunta="Qual marca?")
+    assert p.aceitar_media_estimada(sem) is sem
+
+
+def test_repesquisar_aceitando_a_media_grava_definido_sem_mudar_a_descricao(monkeypatch):
+    usou_cache = []
+    async def pesquisar_item(item, **kw):
+        usou_cache.append(kw["usar_cache"])
+        assert item.descricao == "Tomada Liz 20A"   # o pedido do arquiteto não muda
+        return _pendente_com_preco()
+    monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
+    banco = BancoFalso([ItemEntrada(id="t", descricao="Tomada Liz 20A", quantidade=6, unidade="un",
+                                    classificacao="pendente_especificacao")])
+    r = asyncio.run(o.repesquisar_item("t", banco=banco, aceitar_media=True))
+    assert usou_cache == [True]   # a média já pesquisada vale: não gasta busca nem LLM à toa
+    assert r.status == "definido" and r.pergunta is None and banco.gravados[-1].status == "definido"
+
+
+def test_rota_aceita_a_media_e_recusa_pedidos_misturados(monkeypatch):
+    from src.main import app
+    visto = {}
+    async def repesquisar_item(item_id, nova_descricao=None, **kw):
+        visto.update(item_id=item_id, nova_descricao=nova_descricao, **kw)
+        return _pendente_com_preco()
+    monkeypatch.setattr(o, "repesquisar_item", repesquisar_item)
+    monkeypatch.setattr(get_settings(), "supabase_url", "http://x", raising=False)
+    monkeypatch.setattr(get_settings(), "supabase_key", "k", raising=False)
+    c = TestClient(app)
+    assert c.post("/orcamento-itens/t/repesquisar", json={"aceitar_media": True}).status_code == 200
+    assert visto == {"item_id": "t", "nova_descricao": None, "aceitar_media": True}
+    assert c.post("/orcamento-itens/t/repesquisar", json={"aceitar_media": True, "objetivo": "preco"}).status_code == 422
+    assert c.post("/orcamento-itens/t/repesquisar", json={"aceitar_media": True, "nova_descricao": "Suvinil"}).status_code == 422
+
+
 def test_pesquisar_de_novo_sem_resposta_mantem_pendente(monkeypatch):
     async def pesquisar_item(item, **kw): return _pendente_com_preco()
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
