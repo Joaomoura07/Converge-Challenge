@@ -29,7 +29,7 @@ from .complementos import sugerir_complementos
 from .database import get_supabase
 from .exportar import gerar_xlsx
 from .ganho import Ganho, calcular_ganho
-from .logistica import Fornecedor, Logistica, calcular_logistica, distancias_km
+from .logistica import Fornecedor, Logistica, calcular_logistica, distancias_km, enriquecer_rotas_lojas
 from .viabilidade import Viabilidade, calcular_viabilidade
 
 logger = logging.getLogger(__name__)
@@ -117,6 +117,8 @@ def calcular_resultado(orc: dict[str, Any], itens: list[dict[str, Any]],
         lg = calcular_logistica(itens, fornecedores, km)
     elif itens:
         lg = calcular_logistica(itens, _lojas_pelas_fontes(itens), {})   # frete 0: só agrupa pelo menor preço
+        if lg and lg.lojas:
+            enriquecer_rotas_lojas(lg.lojas, str(orc.get("cep") or ""))
     vi: Viabilidade | None = None
     if orc.get("orcamento_cliente") is not None:
         vi = calcular_viabilidade(itens, float(orc["orcamento_cliente"]), lg.frete_total if lg else 0.0)

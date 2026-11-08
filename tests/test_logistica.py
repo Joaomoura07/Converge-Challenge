@@ -200,3 +200,106 @@ def test_ecommerce_sem_cep_nao_consulta_api_e_usa_frete_fixo(api):
                                    Fornecedor(id="C", nome="C", dominio="cec.com.br", frete_base=35)], km)
     assert r.frete_total in (35.0, 70.0) and r.lojas[0].distancia_km == lg_mod.KM_PADRAO
     assert r.estrategia == "loja_unica" and r.total == 185.0               # L: 150 + 35 (dividir custaria +35 de frete)
+
+
+# --- Filial física (Serper Maps) + rota/tempo (ORS) ----------------------------------------------------
+
+
+def test_buscar_filial_serper_escolhe_a_mais_proxima_e_ignora_concorrente_e_online(monkeypatch):
+    lg_mod.limpar_cache_cep()
+    posts: list[tuple[str, dict]] = []
+
+    def fake_post(url, **kw):
+        posts.append((url, kw.get("json") or {}))
+        return {
+            "places": [
+                # Concorrente que apareceu no Maps: deve ser ignorado
+                {"title": "Armazém Coral Graças", "latitude": -8.0450, "longitude": -34.9020, "address": "Rua Perto, 10"},
+                # Filial Imbiribeira (longe das Graças ~8,5 km)
+                {"title": "Ferreira Costa - Imbiribeira", "latitude": -8.1180, "longitude": -34.9140,
+                 "address": "Av. Mal. Mascarenhas de Morais, 2967"},
+                # Filial Tamarineira (perto das Graças ~2,2 km)
+                {"title": "Ferreira Costa - Tamarineira", "latitude": -8.0285, "longitude": -34.9065,
+                 "address": "Rua Cônego Barata, 275 - Tamarineira"},
+            ]
+        }
+
+    monkeypatch.setattr(lg_mod, "_post_json", fake_post)
+
+    # Loja somente online (Amazon): nunca chama Serper Maps e devolve None
+    assert lg_mod.buscar_filial_serper(
+        "Amazon", "amazon.com.br", "Recife", "PE", -8.0453, -34.9029, chaves_serper=["k1"]
+    ) is None
+    assert posts == []
+
+    # Obra nas Graças (-8.0453, -34.9029) -> escolhe Ferreira Costa Tamarineira
+    filial = lg_mod.buscar_filial_serper(
+        "Ferreira Costa", "ferreiracosta.com", "Recife", "PE", -8.0453, -34.9029, chaves_serper=["k1"]
+    )
+    assert filial is not None
+    assert "Tamarineira" in filial["titulo"] and "Cônego Barata" in (filial["endereco"] or "")
+    assert len(posts) == 1
+
+    # Obra em Boa Viagem (-8.1226, -34.8995) -> usa o cache da cidade (sem nova requisição) e escolhe Imbiribeira
+    filial_sul = lg_mod.buscar_filial_serper(
+        "Ferreira Costa", "ferreiracosta.com", "Recife", "PE", -8.1226, -34.8995, chaves_serper=["k1"]
+    )
+    assert filial_sul is not None and "Imbiribeira" in filial_sul["titulo"]
+    assert len(posts) == 1
+
+
+def test_rotas_ors_converte_metros_e_segundos_e_faz_fallback_sem_chave(monkeypatch):
+    def fake_post(url, **kw):
+        assert "openrouteservice.org/v2/matrix/driving-car" in url
+        # ORS exige [lon, lat]
+        assert kw["json"]["locations"][0] == [-34.9029, -8.0453]
+        return {"distances": [[3420.0, 9850.0]], "durations": [[540.0, 1320.0]]}
+
+    monkeypatch.setattr(lg_mod, "_post_json", fake_post)
+    destinos = {"fc": (-8.0285, -34.9065), "leroy": (-8.1226, -34.8995)}
+    r = lg_mod.rotas_ors((-8.0453, -34.9029), destinos, chave_ors="ors-key")
+    assert r == {"fc": (3.4, 9), "leroy": (9.8, 22)}
+
+    # Sem chave ORS: fallback Haversine × 1,3 e velocidade 30 km/h
+    r_fb = lg_mod.rotas_ors((-8.0453, -34.9029), {"fc": (-8.0285, -34.9065)}, chave_ors="")
+    km, mins = r_fb["fc"]
+    assert 2.0 <= km <= 3.5 and mins >= 4
+
+
+def test_enriquecer_rotas_lojas_so_preenche_loja_fisica_vencedora_e_zera_amazon(api, monkeypatch):
+    api()  # ViaCEP + Nominatim simulados para 52011-050 -> (-8.04, -34.90, "rua"), Recife/PE
+    posts: list[str] = []
+
+    def fake_post(url, **kw):
+        posts.append(url)
+        if "serper.dev/maps" in url:
+            q = kw["json"]["q"]
+            assert "Amazon" not in q
+            return {"places": [{"title": "Leroy Merlin Boa Viagem", "latitude": -8.1226, "longitude": -34.8995,
+                                "address": "Av. Antônio Falcão, 1000"}]}
+        if "openrouteservice" in url:
+            return {"distances": [[6200.0]], "durations": [[840.0]]}
+        raise AssertionError(url)
+
+    monkeypatch.setattr(lg_mod, "_post_json", fake_post)
+    lojas = [
+        lg_mod.LojaPlano(id="amazon.com.br", nome="Amazon", distancia_km=15.0, itens=[0], subtotal=120.0, frete=0.0),
+        lg_mod.LojaPlano(id="leroymerlin.com.br", nome="Leroy Merlin", distancia_km=15.0, itens=[1], subtotal=350.0, frete=0.0),
+    ]
+    lg_mod.enriquecer_rotas_lojas(lojas, "52011-050", chaves_serper=["serper-1"], chave_ors="ors-1")
+
+    # Amazon ganhou no item 0, mas é somente online: sem distância e sem tempo
+    assert lojas[0].distancia_km is None and lojas[0].tempo_min is None and lojas[0].endereco is None
+    # Leroy Merlin ganhou no item 1 e tem filial física: recebe km, minutos e endereço
+    assert lojas[1].distancia_km == 6.2 and lojas[1].tempo_min == 14
+    assert lojas[1].endereco == "Av. Antônio Falcão, 1000"
+
+
+def test_dominio_desconhecido_e_tratado_como_online_sem_rede(monkeypatch):
+    from src import logistica as lg
+    chamadas = []
+    monkeypatch.setattr(lg, "_post_json", lambda *a, **k: chamadas.append(1) or {"places": []})
+    assert lg.buscar_filial_serper("Loja X", "lojaxqualquer.com.br", "Recife", "PE", -8.0, -34.9, chaves_serper=["k"]) is None
+    assert chamadas == []
+    assert lg._somente_online("lojaxqualquer.com.br") and lg._somente_online("amazon.com.br")
+    assert not lg._somente_online("www.leroymerlin.com.br") and not lg._somente_online("loja.cec.com.br")

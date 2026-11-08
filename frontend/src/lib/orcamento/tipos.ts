@@ -14,7 +14,16 @@ export type Logistica = {
   economia_estimada?: number;
   itens_sem_loja?: number[];
   /** `itens` são POSIÇÕES na lista de itens ordenada por `linha` (não são ids). */
-  lojas?: { id: string; nome: string; itens: number[]; subtotal: number; frete: number }[];
+  lojas?: {
+    id: string;
+    nome: string;
+    distancia_km?: number | null;
+    tempo_min?: number | null;
+    endereco?: string | null;
+    itens: number[];
+    subtotal: number;
+    frete: number;
+  }[];
 };
 
 export type Viabilidade = {
