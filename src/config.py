@@ -46,6 +46,9 @@ class Settings(BaseSettings):
 
     # Busca de preços (Fatia B): várias chaves Tavily separadas por vírgula (1 conta por integrante)
     tavily_api_keys: str = ""
+    # Serper (Google Shopping / Google Maps) e OpenRouteService (distância/tempo por rua)
+    serper_api_keys: str = ""
+    ors_api_key: str = ""
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
     pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
@@ -79,6 +82,14 @@ class Settings(BaseSettings):
     @property
     def tavily_keys(self) -> list[str]:
         return [k.strip().strip('"').strip("'") for k in self.tavily_api_keys.split(",") if k.strip().strip('"\'')]
+
+    @property
+    def serper_keys(self) -> list[str]:
+        return [k.strip().strip('"').strip("'") for k in self.serper_api_keys.split(",") if k.strip().strip('"\'')]
+
+    @property
+    def ors_key(self) -> str:
+        return self.ors_api_key.strip().strip('"').strip("'")
 
     @property
     def featherless_keys(self) -> list[str]:
