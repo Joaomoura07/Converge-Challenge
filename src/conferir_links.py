@@ -187,8 +187,12 @@ def conflito(pedido: str, nome: str, oferta: Oferta) -> str | None:
     if pc and nc and not pc & nc:
         return f"outra cor ({', '.join(sorted(nc))})"
     n = pecas(nome)
-    if n and not pecas(oferta.titulo) and not pecas(oferta.embalagem or "") and not pecas(pedido):
+    do_anuncio = pecas(oferta.titulo) or pecas(oferta.embalagem or "")
+    if n and not do_anuncio and not pecas(pedido):
         return f"kit de {n} com preço de 1"
+    if n and do_anuncio and n != do_anuncio:
+        # medido em 08/11: anúncio "kit 2" (R$ 61,28 a peça) cujo link era um kit de 5 (R$ 24,51 a peça)
+        return f"o link é um kit de {n}, o anúncio diz {do_anuncio}"
     return None
 
 

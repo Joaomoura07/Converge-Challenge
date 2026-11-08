@@ -154,3 +154,12 @@ def test_oferta_sem_preco_nao_vai_para_a_ia_e_falha_da_ia_nao_traz_errado_de_vol
 
     saida = asyncio.run(rodar())
     assert [o.loja for o in saida] == ["H", "F"] and not any(o.link_verificado for o in saida)
+
+
+
+def test_kit_do_link_diferente_do_kit_do_anuncio_sai():
+    url = "https://www.mercadolivre.com.br/kit-5-spot-embutido-led-easy-stella-7w/p/MLB1"
+    assert "kit de 5" in cl.julgar("Spot Stella 7W 3000K", of(url, "Kit 2 Spot Stella Easy 7W", 122.56),
+                                   cl.Pagina(http=200, final="", nome="Mercado Libre")).errado
+    assert not cl.julgar("Spot Stella 7W 3000K", of(url, "Kit 5 Spot Stella Easy 7W", 122.56),
+                         cl.Pagina(http=200, final="", nome="Mercado Libre")).errado
