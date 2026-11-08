@@ -343,6 +343,7 @@ create table if not exists orcamento_itens (
 -- Conta da compra que a B grava (ex.: "rendimento ≈ 11 m²/L (selador, 2 demãos)"); a tela mostra "Conta: ...".
 -- Sem esta coluna a B tirava o campo calado e a linha nunca aparecia (medido no site em 07/11).
 alter table orcamento_itens add column if not exists premissa text;
+alter table orcamento_itens add column if not exists pesquisa_detalhes jsonb;
 
 create index if not exists orcamento_itens_orcamento_idx on orcamento_itens (orcamento_id);
 create index if not exists orcamento_itens_status_idx on orcamento_itens (orcamento_id, status);
@@ -652,7 +653,7 @@ begin
                                             'unidade_preco', 'pergunta', 'motivo', 'qtd_embalagens',
                                             'iteracoes', 'preco_emb_min', 'preco_emb_med', 'preco_emb_max',
                                             'preco_un_min', 'preco_un_med', 'preco_un_max', 'confianca',
-                                            'estimativa', 'fontes', 'preco_data', 'similar']));
+                                            'estimativa', 'fontes', 'preco_data', 'similar', 'pesquisa_detalhes']));
     if cardinality(v_extras) > 0 then
         raise exception 'campos não permitidos em gravar_resultado_item: %', v_extras using errcode = '22023';
     end if;
@@ -673,6 +674,7 @@ begin
     end if;
 
     update orcamento_itens i set
+        pesquisa_detalhes   = case when p_dados ? 'pesquisa_detalhes' then nullif(p_dados -> 'pesquisa_detalhes', 'null'::jsonb) else i.pesquisa_detalhes end,
         status              = case when p_dados ? 'status'              then p_dados ->> 'status'                          else i.status end,
         produto_normalizado = case when p_dados ? 'produto_normalizado' then p_dados ->> 'produto_normalizado'             else i.produto_normalizado end,
         imagem_url          = case when p_dados ? 'imagem_url'          then p_dados ->> 'imagem_url'                      else i.imagem_url end,

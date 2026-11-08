@@ -30,7 +30,6 @@ from langfuse import observe
 from pydantic import Field
 
 from . import cache
-from .imagens import imagem_do_cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
@@ -42,6 +41,9 @@ from .modelos import ItemEntrada, ResultadoItem
 from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, conferir_resposta,
                      extrair_e_conferir, semaforo_do_loop)
 from .tools import ToolArgs, ToolRegistry
+from .especificacao import orientacao, nao_confirmados
+from .paginas_produto import aprofundar
+from .imagens import imagem_do_cache
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +70,7 @@ def _norm(s: str) -> str:
 
 
 def pergunta_para(descricao: str) -> str:
-    d = _norm(descricao)
-    return next((p for padrao, p in PERGUNTAS if re.search(padrao, d)), PERGUNTA_PADRAO)
+    return orientacao(descricao)
 
 
 # ------------------------------------------------------------------ estado de um item
@@ -138,6 +139,7 @@ def _porteiro_agente() -> asyncio.Semaphore:
 async def buscar_e_extrair(consulta: str, produto: str):
     async with _porteiro_busca():
         b = await buscar(consulta)
+        b.resultados = await aprofundar(produto, b.resultados)
     return b, await extrair_e_conferir(produto, b.resultados)
 
 
@@ -166,6 +168,10 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     except Exception as exc:  # noqa: BLE001 — argumento ruim volta ao LLM como observação
         return {"ok": False, "error": f"Argumentos inválidos: {exc}"}
     coleta.buscas_agente += 1
+    if args.consulta.casefold().strip() in {c.casefold().strip() for c in coleta.consultas}:
+        return {"ok": False, "error": "consulta repetida; preserve as especificações e use outra formulação"}
+    if faltam := nao_confirmados(item.descricao, args.consulta):
+        return {"ok": False, "error": "preserve as especificações: " + "; ".join(faltam)}
     coleta.consultas.append(args.consulta)
     b, ext = await buscar_e_extrair(args.consulta, item.descricao)
     coleta.juntar(ext.ofertas)
@@ -190,7 +196,8 @@ def criar_agente(cliente=None) -> Agent:
     # Com 2+ chaves, o agente usa a última, que fica só para ele (src/chaves_llm.py): não disputa cota com as extrações.
     agente = Agent(name="pesquisador", system_prompt=load_prompt("pesquisador_precos"), tools=FERRAMENTAS,
                    model=s.pesquisa_modelo_agente or s.featherless_model,
-                   client=cliente or build_llm_client(api_key=chave_agente()))
+                   client=cliente or build_llm_client(api_key=chave_agente()).with_options(max_retries=0),
+                   max_tokens=s.pesquisa_max_tokens_saida)
     agente.fallback_model = agente.fallback_model or MODELO_RESERVA_AGENTE
     return agente
 
@@ -202,7 +209,6 @@ async def _chamar_agente(agente: Agent, mensagens: list[dict]):
     for tentativa in range(TENTATIVAS_RESPOSTA_VAZIA):
         async with _porteiro_agente():
             r = await asyncio.to_thread(agente._complete, mensagens)
-        _custo.registrar(getattr(getattr(r, "usage", None), "cost", 0))
         try:
             conferir_resposta(r)
             return r
@@ -311,11 +317,17 @@ class Rascunho:
     anterior: cache.EntradaCache | None = None
     erro_busca: str | None = None
     primeira: dict | None = None
+    consumo: _custo.Acumulador | None = None
 
     @property
     def precisa_agente(self) -> bool:
         return self.primeira is not None
 
+
+def _com_consumo(resultado: ResultadoItem, consumo: _custo.Acumulador, descricao: str) -> ResultadoItem:
+    resultado.pesquisa_detalhes = {**consumo.resumo(), "orientacao": orientacao(descricao)}
+    logger.info("Pesquisa item %s: %s", resultado.item_id, consumo.resumo())
+    return resultado
 
 def _erro(item: ItemEntrada, exc: Exception) -> ResultadoItem:
     logger.exception("Pesquisa do item %s falhou (%s)", item.id, type(exc).__name__)
@@ -324,6 +336,19 @@ def _erro(item: ItemEntrada, exc: Exception) -> ResultadoItem:
 
 @observe(name="pesquisa.item")
 async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -> Rascunho:
+    with _custo.acumular(item=True) as consumo:
+        try:
+            r = await _fase_rapida_impl(item, usar_agente, usar_cache)
+        except asyncio.CancelledError:
+            r = Rascunho(item, ResultadoItem(item_id=item.id, status="erro", motivo=MOTIVO_SEM_TEMPO))
+        except Exception as exc:
+            r = Rascunho(item, _erro(item, exc))
+        r.consumo = consumo
+        r.resultado = _com_consumo(r.resultado, consumo, item.descricao)
+        return r
+
+
+async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -> Rascunho:
     """① cache → ② busca → ③ extração → ⑤ cálculo, SEM agente. Se faltar loja, devolve um resultado
     provisório e marca o item para a fase 2 (o cache só é gravado no resultado final)."""
     generico = item.classificacao == "pendente_especificacao"
@@ -402,6 +427,15 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
 
 
 async def _fase_agente(r: Rascunho, cliente_llm=None, timeout: float | None = None) -> ResultadoItem:
+    with _custo.acumular(r.consumo, item=True) as consumo:
+        try:
+            resultado = await _fase_agente_impl(r, cliente_llm, timeout)
+        except Exception as exc:
+            resultado = r.resultado if r.resultado.status != "erro" else _erro(r.item, exc)
+        return _com_consumo(resultado, consumo, r.item.descricao)
+
+
+async def _fase_agente_impl(r: Rascunho, cliente_llm=None, timeout: float | None = None) -> ResultadoItem:
     """Fase 2 de um item: o agente refaz a busca e o resultado é refeito com tudo que juntou."""
     if timeout is None or timeout > 0:
         await refazer_com_agente(r.item, r.coleta, r.primeira, cliente_llm, timeout=timeout)
@@ -468,6 +502,11 @@ async def pesquisar_itens(itens: list[ItemEntrada], ao_terminar: Callable[[Resul
     tarefas = {asyncio.create_task(fase1(i)): i for i in itens}
     if tarefas:
         await asyncio.wait(tarefas, timeout=max(0.0, fim_total - loop.time()))
+    pendurados = [t for t in tarefas if not t.done()]
+    for tarefa in pendurados:
+        tarefa.cancel()
+    if pendurados:
+        await asyncio.gather(*pendurados, return_exceptions=True)
     rascunhos = []
     for tarefa, item in tarefas.items():
         if tarefa.done() and not tarefa.cancelled() and tarefa.exception() is None:
@@ -478,9 +517,6 @@ async def pesquisar_itens(itens: list[ItemEntrada], ao_terminar: Callable[[Resul
         r = ResultadoItem(item_id=item.id, status="erro", motivo=MOTIVO_SEM_TEMPO)
         await avisar(r)
         rascunhos.append(Rascunho(item, r))
-    pendurados = [t for t in tarefas if not t.done()]
-    if pendurados:
-        await asyncio.gather(*pendurados, return_exceptions=True)
     finais = {r.item.id: r.resultado for r in rascunhos}
 
     pendentes = sorted((r for r in rascunhos if r.precisa_agente), key=lambda r: r.resultado.preco_emb_med is not None)

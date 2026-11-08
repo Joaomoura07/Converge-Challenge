@@ -22,7 +22,7 @@ MISTURADOR = ItemEntrada(id="2", descricao="Misturador monocomando Deca Link par
 
 def of(loja, preco, emb="lata 18 L", igual="sim", titulo=None):
     return Oferta(loja=loja, dominio=f"{loja.lower().replace(' ', '')}.com.br", url=f"https://{loja}/{preco}/{igual}",
-                  titulo=titulo or loja, preco=preco, embalagem=emb, mesmo_produto=igual)
+                  titulo=titulo or (f"Tinta {emb}" if igual == "parecido" and "L" in emb else TINTA.descricao if "L" in emb else MISTURADOR.descricao), preco=preco, embalagem=emb, mesmo_produto=igual)
 
 
 # ---------------------------------------------------------------- dublês
@@ -80,7 +80,7 @@ class LLMFalso:
     @property
     def chat(self): return NS(completions=NS(create=self._create))
 
-    def _create(self, model, messages, tools=None, temperature=None, top_p=None):
+    def _create(self, model, messages, tools=None, temperature=None, top_p=None, max_tokens=None):
         acao, valor = self.roteiro[self.chamadas]
         self.chamadas += 1
         if acao == "buscar":

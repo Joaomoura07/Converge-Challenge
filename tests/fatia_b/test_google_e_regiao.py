@@ -14,7 +14,7 @@ from src.calculo import calcular
 from src.modelos import ItemEntrada
 from src.precos import Oferta, ResultadoExtracao
 
-LINK = "https://www.google.com/search?ibp=oshop&q=x&prds=catalogid:1"
+LINK = "https://loja.example/produto-123"
 RECIFE = b.Local("Recife", "PE")
 OBRA = (-8.05, -34.90)
 
@@ -59,7 +59,7 @@ def test_anuncios_viram_ofertas_uma_por_loja_com_embalagem_do_titulo():
     ]
     ofs = g.ler_anuncios("Argamassa Quartzolit AC-III 20kg", "m2", anuncios, generico=False)
     assert [(o.loja, o.preco, o.mesmo_produto) for o in ofs] == [("Kaue Home Center", 57.0, "sim"), ("Construbet", 71.28, "sim")]
-    assert all(o.url.startswith("https://www.google.com/") and o.dominio == "google.com" for o in ofs)
+    assert all(o.url == LINK and o.dominio == "loja.example" for o in ofs)
 
 
 def test_item_contado_em_unidade_aceita_anuncio_sem_medida():
@@ -68,11 +68,11 @@ def test_item_contado_em_unidade_aceita_anuncio_sem_medida():
     assert g.ler_anuncios("Spot Stella 7W", "m2", a, False) == [], "item em m² sem medida no anúncio não compara"
 
 
-def test_oferta_do_shopping_entra_no_calculo_mesmo_com_link_do_google():
-    ofs = [Oferta(loja=l, dominio="google.com", url=LINK, titulo="Spot Stella 7W", preco=p, embalagem="unidade",
+def test_oferta_do_shopping_sem_link_direto_nao_entra_no_calculo():
+    ofs = [Oferta(loja=l, dominio="google.com", url="https://www.google.com/search?ibp=oshop&q=x", titulo="Spot Stella 7W", preco=p, embalagem="unidade",
                   mesmo_produto="sim") for l, p in [("A", 65.9), ("B", 66.5), ("C", 70.0)]]
     c = calcular(ItemEntrada(id="1", descricao="Spot Stella 7W", quantidade=10, unidade="un"), ResultadoExtracao(ofertas=ofs))
-    assert c.tem_preco and len(c.fontes) == 3 and c.preco_emb_med == 66.5
+    assert not c.tem_preco and not c.fontes
 
 
 # ---------------------------------------------------------------- lojas da região
@@ -98,10 +98,10 @@ def test_loja_da_regiao_por_site_e_por_nome():
 
 
 def test_fonte_da_regiao_vem_primeiro_com_distancia_e_endereco():
-    ofs = [Oferta(loja="Loja Online", dominio="lojaonline.com.br", url="https://lojaonline.com.br/argamassa-aciii-20kg", titulo="Argamassa AC-III 20kg",
+    ofs = [Oferta(loja="Loja Online", dominio="lojaonline.com.br", url="https://lojaonline.com.br/argamassa-aciii-20kg", titulo="Argamassa Quartzolit AC-III 20kg",
                   preco=60.0, embalagem="saco 20 kg", mesmo_produto="sim"),
            Oferta(loja="Canal da Construção", dominio="canalconstrucao.com.br", url="https://canalconstrucao.com.br/p",
-                  titulo="Argamassa AC-III 20kg", preco=58.0, embalagem="saco 20 kg", mesmo_produto="sim")]
+                  titulo="Argamassa Quartzolit AC-III 20kg", preco=58.0, embalagem="saco 20 kg", mesmo_produto="sim")]
     with rg.na_obra(RECIFE, rg.ler_places(PLACES, OBRA)):
         c = calcular(ItemEntrada(id="1", descricao="Argamassa Quartzolit AC-III 20kg", quantidade=48, unidade="m2"),
                      ResultadoExtracao(ofertas=ofs))
@@ -150,9 +150,9 @@ def test_medida_compara_pelo_numero(titulo, esperado):
     assert (g.semelhanca("Cabo SIL 2,5 azul", titulo) >= g.MIN_MESMO) is esperado
 
 
-def test_cor_diferente_da_mesma_linha_ainda_vale():
-    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Acrílica Coral Decora Matte Cinza Tecnológico 16l") >= g.MIN_MESMO
-    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Coral Rende Muito Cinza Urbano 3,2L") < g.MIN_MESMO or True
+def test_cor_diferente_da_mesma_linha_nao_confirma_produto():
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Acrílica Coral Decora Matte Cinza Tecnológico 16l") < g.MIN_MESMO
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Coral Rende Muito Cinza Urbano 3,2L") < g.MIN_MESMO
 
 
 @pytest.mark.parametrize("texto,esperado", [

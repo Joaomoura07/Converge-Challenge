@@ -17,11 +17,12 @@ from collections import Counter
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
-from .busca import LOCAL_DA_OBRA, eh_pagina_de_listagem, fonte_nao_e_loja, perto_da_obra
+from .busca import LOCAL_DA_OBRA, eh_pagina_de_listagem, fonte_nao_e_loja, perto_da_obra, link_direto_produto
 from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normalizar_unidade, qtd_embalagens
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
 from .regiao import regional_por_dominio, regional_por_nome
+from .especificacao import nao_confirmados
 
 OUTLIER_MIN, OUTLIER_MAX = 0.4, 2.5
 MIN_EMBALAGEM_OBRA = {"l": 0.9, "kg": 0.9}   # genérico: descarta 60 ml / 250 ml (artesanato, amostra)
@@ -187,6 +188,8 @@ def motivo_descarte(o: Oferta, pedido: str) -> str | None:
         return "embalagem não confere com o título"
     if e_outro_tipo_de_produto(o, pedido):
         return "outro tipo de produto (ferramenta/acessório)"
+    if not link_direto_produto(o.url):
+        return "link não abre uma página específica de produto"
     return None
 
 
@@ -198,15 +201,20 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     aceitas = ("sim", "parecido") if generico else ("sim",)
     candidatas = []
     for o in extracao.ofertas:
+        if motivo := motivo_descarte(o, item.descricao):
+            descartadas[motivo] += 1
+            continue
+        faltam = nao_confirmados(item.descricao, f"{o.titulo} {o.evidencia}")
+        if o.mesmo_produto == "sim" and faltam:
+            o = o.model_copy(update={"mesmo_produto": "parecido"})
+            if not generico:
+                descartadas["especificações não confirmadas"] += 1
         if o.mesmo_produto == "sim" and eh_pagina_de_listagem(o.dominio, o.url):
             # listagem serve para estimar (item genérico), nunca para afirmar o preço do produto exato
             o = o.model_copy(update={"mesmo_produto": "parecido"})
             if not generico:
                 descartadas["página de listagem (vale só para estimativa)"] += 1
         if not (o.preco and o.mesmo_produto in aceitas):
-            continue
-        if motivo := motivo_descarte(o, item.descricao):
-            descartadas[motivo] += 1
             continue
         candidatas.append(o)
     normalizadas: list[_Normalizada] = []

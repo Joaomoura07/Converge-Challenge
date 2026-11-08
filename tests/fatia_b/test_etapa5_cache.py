@@ -14,9 +14,9 @@ from src.calculo import calcular
 from src.modelos import ItemEntrada
 from src.precos import Oferta, ResultadoExtracao
 
-OFERTAS = [Oferta(loja="Telhanorte", dominio="telhanorte.com.br", url="https://t/a", titulo="Suvinil 18L",
+OFERTAS = [Oferta(loja="Telhanorte", dominio="telhanorte.com.br", url="https://t/a", titulo="Tinta Suvinil Toque de Seda Branco Neve 18L",
                   preco=739.9, embalagem="lata 18 L", mesmo_produto="sim"),
-           Oferta(loja="Magazine Luiza", dominio="magazineluiza.com.br", url="https://m/b", titulo="Suvinil 18L",
+           Oferta(loja="Magazine Luiza", dominio="magazineluiza.com.br", url="https://m/b", titulo="Tinta Suvinil Toque de Seda Branco Neve 18L",
                   preco=849.0, embalagem="lata 18 L", mesmo_produto="sim")]
 DESC = "Tinta Suvinil Toque de Seda Branco Neve 18L"
 

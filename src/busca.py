@@ -69,6 +69,7 @@ class ResultadoWeb:
     dominio: str
     loja: str
     trecho: str
+    pagina_lida: bool = False
 
 
 @dataclass
@@ -386,6 +387,21 @@ def eh_pagina_de_listagem(dominio: str, url: str) -> bool:
     padrao = next((p for d, p in _PRODUTO_POR_LOJA.items() if host == d or host.endswith("." + d)), None)
     return padrao is not None and not padrao.search(partes.path)
 
+
+def link_direto_produto(url: str) -> bool:
+    """Exclui buscadores, home e listagens; não inventa URLs."""
+    try:
+        p = urlparse(url or "")
+        host = (p.hostname or "").lower()
+        if p.scheme not in ("http", "https") or not host or p.username or p.password:
+            return False
+        if re.search(r"(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\.", host):
+            return False
+        if not p.path.strip("/") or re.search(r"/(?:categoria|category|catalogo|catalog|departamento|collections?)(/|$)", p.path, re.I):
+            return False
+        return not (eh_pagina_de_busca(url) or eh_pagina_de_listagem(host, url) or fonte_nao_e_loja(host, url))
+    except ValueError:
+        return False
 
 
 def fonte_nao_e_loja(dominio: str, url: str) -> bool:

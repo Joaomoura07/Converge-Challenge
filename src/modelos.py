@@ -84,6 +84,7 @@ class ResultadoItem(_Base):
     preco_data: datetime | None = None    # quando o preço foi obtido (cache vencido mostra a data)
     iteracoes: int = Field(default=0, ge=0)  # quantas vezes o agente refez a busca
     validacao: Validacao | None = None    # conferência do preço numa 2ª fonte (Google Shopping); nunca troca o preço
+    pesquisa_detalhes: dict | None = None  # consumo desta pesquisa, páginas e orientação de especificação
 
     @model_validator(mode="after")
     def _regras(self) -> "ResultadoItem":
