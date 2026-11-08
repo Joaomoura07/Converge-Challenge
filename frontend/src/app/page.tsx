@@ -203,7 +203,7 @@ export default function Inicio() {
           </li>
         </ol>
         <p className="in-sobre__tec" data-revelar>
-          Feito com Featherless (GLM-5.2 e Qwen3), Tavily, Supabase Realtime, Langfuse, FastAPI e Next.js na Vercel. Cada
+          Feito com Featherless (Kimi K2), Tavily, Supabase Realtime, Langfuse, FastAPI e Next.js na Vercel. Cada
           passo do agente fica registrado no Langfuse para auditoria.
         </p>
       </section>
