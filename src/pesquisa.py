@@ -91,8 +91,10 @@ class Coleta:
     def extracao(self) -> ResultadoExtracao:
         return ResultadoExtracao(ofertas=list(self.ofertas), modelo=self.modelo)
 
-    def lojas_conferidas(self, generico: bool = False) -> int:
+    def lojas_conferidas(self, generico: bool = False, *, item: ItemEntrada | None = None) -> int:
         """Lojas que contam para parar: o mesmo produto; no item genérico (estimativa), também os parecidos."""
+        if item is not None:
+            return len(calcular(item, self.extracao(), generico).fontes)
         if generico:
             return len({o.loja for o in self.ofertas if o.mesmo_produto in ("sim", "parecido") and o.preco})
         # página de listagem não confirma o produto exato (src/calculo.py): não conta para o agente parar
@@ -100,24 +102,34 @@ class Coleta:
                     and not eh_pagina_de_listagem(o.dominio, o.url)})
 
 
-def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta, generico: bool = False) -> dict:
+def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta, generico: bool = False,
+                      *, item: ItemEntrada | None = None) -> dict:
     """Observação enxuta: só o que ajuda a reformular (sem texto de anúncio inteiro)."""
     def titulo(o): return o.titulo[:90]
+    calc = calcular(item, coleta.extracao(), generico) if item is not None else None
+    urls_validas = {f.url for f in calc.fontes} if calc is not None else None
+    def serve(o): return urls_validas is None or o.url in urls_validas
+    qualificacao = {
+        "descartes": calc.descartadas if calc else {},
+        "especificacoes_nao_confirmadas": sorted({v for o in ofertas for v in o.especificacoes_nao_confirmadas})[:8],
+    }
     if generico:   # item sem marca: o parecido com preço também serve para a faixa estimada
         return {
+            **qualificacao,
             "servem_para_estimar": [f"{o.loja}: R$ {o.preco:.2f} ({o.embalagem or '?'})" for o in ofertas
-                                    if o.mesmo_produto in ("sim", "parecido") and o.preco],
-            "outros": [titulo(o) for o in ofertas if o.mesmo_produto == "nao" or not o.preco][:5],
-            "lojas_acumuladas": coleta.lojas_conferidas(generico=True),
+                                    if o.mesmo_produto in ("sim", "parecido") and o.preco and serve(o)],
+            "outros": [titulo(o) for o in ofertas if o.mesmo_produto == "nao" or not o.preco or not serve(o)][:5],
+            "lojas_acumuladas": coleta.lojas_conferidas(generico=True, item=item),
             "buscas_restantes": max(0, get_settings().pesquisa_max_refazer - coleta.buscas_agente),
         }
     return {
+        **qualificacao,
         "mesmo_produto": [f"{o.loja}: R$ {o.preco:.2f} ({o.embalagem or '?'})" for o in ofertas
-                          if o.mesmo_produto == "sim" and o.preco],
+                          if o.mesmo_produto == "sim" and o.preco and serve(o)],
         "parecidos": [titulo(o) for o in ofertas if o.mesmo_produto == "parecido"][:5],
         "outros": [titulo(o) for o in ofertas if o.mesmo_produto == "nao" or
-                   (o.mesmo_produto == "sim" and not o.preco)][:5],
-        "lojas_acumuladas": coleta.lojas_conferidas(),
+                   (o.mesmo_produto == "sim" and (not o.preco or not serve(o)))][:5],
+        "lojas_acumuladas": coleta.lojas_conferidas(item=item),
         "buscas_restantes": max(0, get_settings().pesquisa_max_refazer - coleta.buscas_agente),
     }
 
@@ -176,7 +188,7 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     b, ext = await buscar_e_extrair(args.consulta, item.descricao)
     coleta.juntar(ext.ofertas)
     coleta.imagem = coleta.imagem or b.imagem
-    return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item))}
+    return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item), item=item)}
 
 
 def _generico(item: ItemEntrada) -> bool:
@@ -241,8 +253,9 @@ async def _loop_react(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente
             obs = (await _executar_busca(item, coleta, call.function.arguments) if call.function.name == "buscar_preco"
                    else {"ok": False, "error": f"Ferramenta desconhecida: {call.function.name}"})
             mensagens.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(obs, ensure_ascii=False)})
-        if coleta.lojas_conferidas(generico) >= s.pesquisa_min_lojas:
-            return f"parou: {coleta.lojas_conferidas(generico)} lojas com preço"
+        lojas = coleta.lojas_conferidas(generico, item=item)
+        if lojas >= s.pesquisa_min_lojas:
+            return f"parou: {lojas} lojas com preço"
         if coleta.buscas_agente >= s.pesquisa_max_refazer:
             return "parou: limite de buscas"
     return "parou: limite de passos"
@@ -381,7 +394,7 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured
     resultado = await _concluir(item, coleta, anterior, b.erro, gravar_cache=not precisa)
     return Rascunho(item, resultado, coleta, anterior, b.erro,
-                    primeira=resumo_para_agente(ext.ofertas, coleta, generico) if precisa else None)
+                    primeira=resumo_para_agente(ext.ofertas, coleta, generico, item=item) if precisa else None)
 
 
 def imagem_das_ofertas(ofertas: list[Oferta], usadas: set[str] | None = None) -> str | None:

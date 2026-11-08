@@ -23,7 +23,7 @@ from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normal
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
 from .regiao import regional_por_dominio, regional_por_nome
-from .especificacao import nao_confirmados
+from .especificacao import acessorio_incompativel, nao_confirmados
 
 OUTLIER_MIN, OUTLIER_MAX = 0.4, 2.5
 MIN_EMBALAGEM_OBRA = {"l": 0.9, "kg": 0.9}   # genérico: descarta 60 ml / 250 ml (artesanato, amostra)
@@ -169,7 +169,10 @@ OUTRO_TIPO = re.compile(r"\b(alicate|ferramenta|aplicador|pincel|trincha|espatul
 
 def e_outro_tipo_de_produto(o: Oferta, pedido: str) -> bool:
     p = set(OUTRO_TIPO.findall(_norm(pedido)))
-    return any(w not in p for w in OUTRO_TIPO.findall(_norm(o.titulo)))
+    if any(w not in p for w in OUTRO_TIPO.findall(_norm(o.titulo))):
+        return True
+    # "Assento para bacia" não é a bacia. "Bacia com assento" continua válida.
+    return acessorio_incompativel(pedido, o.titulo)
 
 
 def e_oferta_shopping(o: Oferta) -> bool:
@@ -205,7 +208,7 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         if motivo := motivo_descarte(o, item.descricao):
             descartadas[motivo] += 1
             continue
-        faltam = nao_confirmados(item.descricao, f"{o.titulo} {o.evidencia}")
+        faltam = nao_confirmados(item.descricao, f"{o.titulo} {o.evidencia}", titulo=o.titulo)
         if o.mesmo_produto == "sim" and faltam:
             o = o.model_copy(update={"mesmo_produto": "parecido"})
             if not generico:

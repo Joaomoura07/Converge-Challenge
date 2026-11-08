@@ -275,7 +275,7 @@ async def _tentar(cliente, modelo: str, produto: str, anuncios: str, resultados:
         return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
     ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
     for o in ofertas:
-        o.especificacoes_nao_confirmadas = nao_confirmados(produto, f"{o.titulo} {o.evidencia}")
+        o.especificacoes_nao_confirmadas = nao_confirmados(produto, f"{o.titulo} {o.evidencia}", titulo=o.titulo)
         if o.mesmo_produto == "sim" and o.especificacoes_nao_confirmadas:
             o.mesmo_produto = "parecido"
     return _Tentativa(modelo, ofertas, alucinadas, r.usage, None if ofertas else f"{modelo}: resposta sem linhas válidas",

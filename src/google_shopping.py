@@ -25,7 +25,7 @@ from .compra import conteudo_embalagem, normalizar_unidade
 from .config import get_settings
 from .precos import Oferta
 from .regiao import regional_por_nome
-from .especificacao import nao_confirmados
+from .especificacao import nao_confirmados, texto_para_similaridade
 from .busca import dominio_de, link_direto_produto, nome_da_loja
 from .validacao_serper import _buscar, converter_preco
 
@@ -67,10 +67,10 @@ def semelhanca(descricao: str, titulo: str) -> float:
     """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item.
     Medida compara pelo NÚMERO: "2,5" do item casa com "2,5mm" ou "2.50mm" do anúncio (medido em 08/11: o cabo SIL
     2,5 ficava sem preço porque "2.5" ≠ "2.5mm")."""
-    if nao_confirmados(descricao, titulo):
+    if nao_confirmados(descricao, titulo, titulo=titulo):
         return 0.0
-    item = _tokens(descricao) - FRACAS
-    anuncio = _tokens(titulo)
+    item = _tokens(texto_para_similaridade(descricao)) - FRACAS
+    anuncio = _tokens(texto_para_similaridade(titulo))
     if len(item) < 2 or not _numeros(_medidas(item)) <= _numeros(anuncio):
         return 0.0
     palavras = item - _medidas(item)

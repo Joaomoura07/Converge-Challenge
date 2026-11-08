@@ -17,9 +17,52 @@ def normalizar(texto: str) -> str:
 GRUPOS = [
     ("cor", ("branco branca", "preto preta", "cinza", "bege", "azul", "verde", "vermelho vermelha", "cromado cromada", "dourado dourada")),
     ("acabamento", ("fosco fosca", "acetinado acetinada", "polido polida", "semibrilho semi-brilho", "natural", "retificado retificada")),
+    ("material", ("cobre", "aluminio", "pvc", "cpvc", "ppr", "inox inoxidavel", "latao")),
+    ("conexão", ("soldavel soldaveis", "roscavel roscaveis rosqueavel rosqueaveis", "solda",)),
+    ("aplicação", ("externo externa externos externas exterior exteriores", "interno interna internos internas interior interiores")),
 ]
 MEDIDA = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)\s*(mm2|cm2|m2|mm|cm|ml|kg|kw|mpa|litros?|l|g|v|w|a|k|m)\b")
-DIMENSAO = re.compile(r"\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?(?:\s*[x×]\s*\d+(?:\.\d+)?)?")
+_EIXO = r"\d+(?:\.\d+)?\s*(?:mm|cm|m)?"
+DIMENSAO = re.compile(rf"(?<![\w.]){_EIXO}\s*[x×]\s*{_EIXO}(?:\s*[x×]\s*{_EIXO})?(?![\w.])")
+REFERENCIA = re.compile(r"\b(?:ref(?:erencia)?|codigo|sku|ean|modelo)\b\.?\s*[:#=-]?\s*([a-z0-9][a-z0-9./-]*)")
+CONVERSOES = {"cm": (10, "mm"), "m": (1000, "mm"), "ml": (0.001, "l"), "g": (0.001, "kg"),
+              "kw": (1000, "w"), "litro": (1, "l"), "litros": (1, "l"), "cm2": (100, "mm2"), "m2": (1000000, "mm2")}
+
+
+def _medida(numero: str, unidade: str) -> str:
+    fator, unidade = CONVERSOES.get(unidade, (1, unidade))
+    valor = f"{float(numero) * fator:.12f}".rstrip("0").rstrip(".")
+    return f"{valor}{unidade}"
+
+
+def texto_para_similaridade(texto: str) -> str:
+    """Usar após conferir atributos: unidades equivalentes não reduzem a similaridade textual."""
+    t = DIMENSAO.sub(" dimensao ", normalizar(texto))
+    return MEDIDA.sub(lambda m: _medida(*m.groups()), t)
+
+
+def acessorio_incompativel(pedido: str, titulo: str) -> bool:
+    acessorio = re.match(r"\s*(?:kit\s+)?(assento|tampa|suporte|refil)\b.*\bpara\b", normalizar(titulo))
+    return bool(acessorio and not re.search(rf"\b{acessorio[1]}\b", normalizar(pedido)))
+
+
+def _dimensoes(texto: str) -> list[tuple[str, str]]:
+    """Canônica em mm + números originais. Sem unidade explícita, não inferir escala."""
+    saida = []
+    for d in DIMENSAO.findall(texto):
+        pares = re.findall(r"(\d+(?:\.\d+)?)\s*(mm|cm|m)?", d)
+        comum = next((u for _, u in pares if u), "")
+        bruta = "x".join(f"{float(n):g}" for n, _ in pares)
+        canonica = bruta
+        if comum:
+            fatores = {"mm": 1, "cm": 10, "m": 1000}
+            canonica = "x".join(f"{float(n) * fatores[u or comum]:g}" for n, u in pares) + "mm"
+        saida.append((canonica, bruta))
+    return saida
+
+
+def _presente(valor: str, texto: str) -> bool:
+    return bool(re.search(rf"(?<![\w/-]){re.escape(valor)}(?!\w|[./-]\w)", texto))
 
 
 def atributos(texto: str) -> dict[str, set[str]]:
@@ -30,19 +73,49 @@ def atributos(texto: str) -> dict[str, set[str]]:
     saida["marca/linha"] = set(marcas_encontradas(t))
     saida["tonalidade"] = set(re.findall(r"\b(?:branco neve|branco gelo|cinza urbano|cinza tecnologico|vermelho cardinal)\b", t))
     # Unidades normalizadas: nunca comparar somente o número (20 A != 20 W).
-    conversoes = {"cm": (10, "mm"), "m": (1000, "mm"), "ml": (0.001, "l"), "g": (0.001, "kg"), "kw": (1000, "w"), "litro": (1, "l"), "litros": (1, "l")}
     saida["medida"] = set()
-    for numero, unidade in MEDIDA.findall(t):
-        fator, unidade = conversoes.get(unidade, (1, unidade))
-        saida["medida"].add(f"{float(numero) * fator:g}{unidade}")
-    saida["dimensão"] = {re.sub(r"\s+", "", x).replace("×", "x") for x in DIMENSAO.findall(t)}
-    saida["referência"] = set(re.findall(r"\b(?:ref(?:erencia)?|codigo|sku|ean|modelo)\s*[:#-]?\s*([a-z0-9][a-z0-9./-]*\d[a-z0-9./-]*)", t))
+    # Não interpretar o último eixo de 60x120cm como uma medida independente.
+    for numero, unidade in MEDIDA.findall(DIMENSAO.sub(" ", t)):
+        saida["medida"].add(_medida(numero, unidade))
+    saida["dimensão"] = {d for d, _ in _dimensoes(t)}
+    saida["referência"] = {v.rstrip("./-") for v in REFERENCIA.findall(t)}
+    saida["classe"] = {"ac" + {"1": "i", "2": "ii", "3": "iii"}.get(v, v)
+                        for v in re.findall(r"\bac\s*-?\s*(iii|ii|i|[123])\b", t)}
+    saida["marca explícita"] = {m[0] or m[1] for m in re.findall(r'\bmarca\s*[:=]?\s*(?:"([^"]+)"|([a-z0-9][a-z0-9-]*))', t)}
     return saida
 
 
-def nao_confirmados(pedido: str, evidencia: str) -> list[str]:
+def nao_confirmados(pedido: str, evidencia: str, *, titulo: str | None = None) -> list[str]:
     a, b = atributos(pedido), atributos(evidencia)
-    return [f"{campo}: {valor}" for campo, valores in a.items() for valor in sorted(valores - b[campo])]
+    t = normalizar(evidencia)
+    # O anúncio não precisa repetir o rótulo "referência"/"marca"; precisa conter o valor inteiro.
+    for campo in ("referência", "marca explícita"):
+        b[campo] |= {v for v in a[campo] if _presente(v, t)}
+    b["dimensão"] |= {bruta for _, bruta in _dimensoes(t) if bruta in a["dimensão"]}
+    faltam = {f"{campo}: {valor}" for campo, valores in a.items() for valor in valores - b[campo]}
+    if acessorio_incompativel(pedido, titulo or evidencia):
+        faltam.add("tipo: acessório para o produto pedido")
+    if titulo:
+        # Um trecho com outras variantes não pode corrigir uma especificação incompatível do título.
+        principal = atributos(titulo)
+        for campo in ("cor", "tonalidade", "material", "conexão", "aplicação", "classe", "dimensão", "referência"):
+            if principal[campo] and a[campo] and not a[campo] <= principal[campo]:
+                # Dimensão sem unidade no pedido aceita a mesma medida escrita com unidade no anúncio.
+                if campo == "dimensão" and a[campo] <= principal[campo] | {d for _, d in _dimensoes(normalizar(titulo))}:
+                    continue
+                faltam.add(f"{campo}: título incompatível com o pedido")
+        for campo in ("cor", "classe", "referência"):
+            if a[campo] and principal[campo] - a[campo]:
+                faltam.add(f"{campo}: título informa outra variante")
+        # Grandezas diferentes não conflitam: 220V e 7500W podem coexistir.
+        for medida in a["medida"] - principal["medida"]:
+            unidade = re.sub(r"^[\d.]+", "", medida)
+            if any(re.sub(r"^[\d.]+", "", v) == unidade for v in principal["medida"]):
+                faltam.add(f"medida: título incompatível ({medida})")
+        exclusivos = {"fosco", "acetinado", "polido", "semibrilho"}
+        if a["acabamento"] & exclusivos and (principal["acabamento"] & exclusivos) - a["acabamento"]:
+            faltam.add("acabamento: título incompatível com o pedido")
+    return sorted(faltam)
 
 
 def orientacao(descricao: str) -> str:
