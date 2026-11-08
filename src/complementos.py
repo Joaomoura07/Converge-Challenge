@@ -170,6 +170,30 @@ REGRAS: tuple[_Regra, ...] = (
         ),
     ),
     _Regra(
+        id="eletrica",
+        gatilhos=("tomada", "interruptor"),
+        exclui=("caixa", "placa", "plug", "adaptador", "extensao", "filtro de linha", "cabo", "fio "),
+        medida="un",
+        motivo="Para {m} ponto(s) de tomada/interruptor costumam faltar caixa de luz e cabo.",
+        complementos=(
+            _Comp("Caixa de luz 4x2 PVC", "un", lambda n: _ceil(n), ("caixa de luz", "caixa 4x2", "caixinha"),
+                  "Elétrica"),
+            _Comp("Cabo flexível 2,5 mm² (rolo 100 m)", "un", lambda n: _ceil(n * 8 / 100), ("cabo", "fio "),
+                  "Elétrica"),
+        ),
+    ),
+    _Regra(
+        id="hidraulica",
+        gatilhos=("joelho", "luva soldavel", "te soldavel", "tubo pvc", "cano pvc", "conexao soldavel"),
+        exclui=("adesivo", "cola", "lixa", "fita veda", "veda rosca"),
+        medida="un",
+        motivo="Para {m} conexão(ões) de PVC soldável costuma faltar o adesivo para PVC.",
+        complementos=(
+            _Comp("Adesivo plástico para PVC 75 g (bisnaga)", "un", lambda n: _ceil(n / 20),
+                  ("adesivo", "cola pvc", "cola para pvc"), "Hidráulica"),
+        ),
+    ),
+    _Regra(
         id="cuba",
         gatilhos=("cuba", "lavatorio", "pia ", "tanque"),
         exclui=("sifao", "valvula", "flexivel", "engate", "torneira", "misturador", "monocomando"),
@@ -192,6 +216,12 @@ def _area_m2(item: dict[str, Any]) -> float:
         return q
     if u == "l":
         return q * 5
+    if u in ("un", ""):
+        # "Lata de tinta ... 18L", 1 un (lista de componentes do SketchUp, medido em 08/11: sem recomendação)
+        from .compra import conteudo_embalagem
+        c = conteudo_embalagem(_desc(item))
+        if c and c.unidade == "l":
+            return q * c.quantidade * 5
     return 0.0
 
 

@@ -24,7 +24,7 @@ from typing import Protocol
 
 from langfuse import observe, propagate_attributes
 
-from .alternativas import Objetivo, decidir, sugerir_alternativa
+from .alternativas import Objetivo, escolher, sugerir_alternativas
 from .regiao import na_obra, preparar_obra
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
@@ -361,7 +361,8 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
                        aceitar_media: bool = False, voltar_para: str | None = None,
                        troca: dict | None = None) -> ResultadoItem:
     with acumular_custo() as custo:
-        anterior = alt = None
+        anterior = None
+        alts: list = []
         busca = item
         if objetivo:
             anterior = await _resultado_atual(banco, item_id)
@@ -369,8 +370,7 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
             # Antes de marcar "buscando": se o LLM falhar, nada muda na tela.
             ref = ({"preco_atual": anterior.preco_emb_med, "embalagem": anterior.embalagem}
                    if anterior is not None and anterior.preco_emb_med else {})
-            alt = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria, **ref)
-            busca = item.model_copy(update={"descricao": alt.produto, "classificacao": "definido"})
+            alts = await asyncio.to_thread(sugerir_alternativas, atual, objetivo, categoria=item.categoria, **ref)
         campos = {"status": "buscando", "pergunta": None, "motivo": None}
         if nova_descricao:
             item = busca = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
@@ -382,28 +382,20 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
             campos |= {"descricao": voltar_para, "classificacao": no_banco}
         await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
         with na_obra(*(await _local_da_obra(banco, orcamento_id))):
-            # "Usar a média" quer a média que já foi pesquisada (rápida e sem custo); os demais pedem preço novo.
-            resultado = await pesquisar_item(busca, usar_cache=aceitar_media or bool(voltar_para), **opcoes)
+            if alts:
+                # as opções da IA são pesquisadas AO MESMO TEMPO; quem decide é o preço real nas lojas
+                novas = await asyncio.gather(*(
+                    pesquisar_item(item.model_copy(update={"descricao": a.produto, "classificacao": "definido"}),
+                                   usar_cache=False, **opcoes) for a in alts))
+            else:
+                # "Usar a média" quer a média que já foi pesquisada (rápida e sem custo); os demais pedem preço novo.
+                resultado = await pesquisar_item(busca, usar_cache=aceitar_media or bool(voltar_para), **opcoes)
         if nova_descricao:
             resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
         elif aceitar_media:
             resultado = aceitar_media_estimada(resultado)   # dispensou a especificação: fica como estimativa
-        if alt is not None:
-            resultado, trocou = decidir(resultado, anterior, alt, objetivo, item.descricao)
-            escolhida = alt if trocou else None
-            if not trocou and anterior is not None:
-                # saiu fora da faixa ou repetiu: UMA nova sugestão, dizendo o que evitar
-                try:
-                    alt2 = await asyncio.to_thread(sugerir_alternativa, atual, objetivo, categoria=item.categoria,
-                                                   evitar=(alt.produto,), **ref)
-                    busca2 = item.model_copy(update={"descricao": alt2.produto, "classificacao": "definido"})
-                    with na_obra(*(await _local_da_obra(banco, orcamento_id))):
-                        nova2 = await pesquisar_item(busca2, usar_cache=False, **opcoes)
-                    resultado2, trocou2 = decidir(nova2, anterior, alt2, objetivo, item.descricao)
-                    if trocou2:
-                        resultado, escolhida = resultado2, alt2
-                except Exception as exc:  # noqa: BLE001 — a 2ª tentativa nunca piora: fica o anterior com o motivo
-                    logger.info("Segunda alternativa indisponível (%s)", type(exc).__name__)
+        if alts:
+            resultado, escolhida = escolher(list(zip(alts, novas)), anterior, objetivo, item.descricao)
             if escolhida is not None:
                 # o título vira o produto sugerido: o próximo "Pesquisar de novo" parte dele, não do original
                 await banco.marcar_item(item_id, {"descricao": escolhida.produto, "classificacao": "definido"})

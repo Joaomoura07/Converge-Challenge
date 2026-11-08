@@ -40,7 +40,9 @@ FAIXA: dict[str, str] = {
     "preco": "mais barata que a atual",
     "semelhante": "na mesma faixa de preço da atual (outra marca)",
 }
-RAZAO_ACEITA: dict[str, tuple[float, float]] = {"qualidade": (0.95, 99.0), "preco": (0.0, 0.999),
+# Medido em 08/11 com 3 opções: "menor preço" da torneira Docol (R$ 557) escolhia uma Tigre de R$ 11,83 (peça de
+# plástico, não a mesma função) e "maior qualidade" do spot (R$ 55) um de R$ 237. Piso de 15% e teto de 4x.
+RAZAO_ACEITA: dict[str, tuple[float, float]] = {"qualidade": (0.95, 4.0), "preco": (0.15, 0.999),
                                                 "semelhante": (0.7, 1.4)}
 
 
@@ -120,6 +122,13 @@ def acabamento(texto: str) -> str | None:
     return next((_ACABAMENTO[w] for w in t.split() if w in _ACABAMENTO), None)
 
 
+def mesmas_medidas(atual: str, sugerido: str) -> bool:
+    """Os números do atual (18 L, 20 kg, 7W, 3000K, 60x60, 3/4) continuam no sugerido. Medido em 08/11: "maior
+    qualidade" do Spot 7W virava um Spot 10W de R$ 421 (outra especificação, não outra qualidade)."""
+    from .google_shopping import _medidas, _numeros, _tokens
+    return _numeros(_medidas(_tokens(atual))) <= _numeros(_tokens(sugerido))
+
+
 def mesma_marca(a: str, b: str) -> bool:
     """As marcas reconhecidas do sugerido estão todas no atual (para o "semelhante, de outra marca")."""
     from .revisao import marcas_encontradas
@@ -140,6 +149,8 @@ def _validar(obj: dict, atual: str, objetivo: str = "", evitar: tuple[str, ...] 
         raise Repetiu(produto, "o modelo sugeriu de novo o mesmo produto")
     if objetivo == "semelhante" and mesma_marca(atual, produto):
         raise Repetiu(produto, "o modelo sugeriu a mesma marca")
+    if not mesmas_medidas(atual, produto):
+        raise Repetiu(produto, "o modelo trocou a especificação (medida, potência ou volume)")
     acab_atual, acab_novo = acabamento(atual), acabamento(produto)
     if acab_atual and acab_novo and acab_novo != acab_atual:
         raise Repetiu(produto, f"o modelo trocou o acabamento ({acab_atual} -> {acab_novo})")
@@ -149,6 +160,105 @@ def _validar(obj: dict, atual: str, objetivo: str = "", evitar: tuple[str, ...] 
     if not por_que or len(por_que) > MAX_POR_QUE or re.search(r"\d|r\$|%", por_que, re.I):
         por_que = ""
     return Alternativa(produto, por_que)
+
+
+MAX_OPCOES = 3
+
+
+def _opcoes_validas(obj: dict, atual: str, objetivo: str, evitar: tuple[str, ...]) -> tuple[list[Alternativa], list[str]]:
+    """Valida cada opção; devolve (válidas sem repetição, produtos recusados por repetir/mudar especificação)."""
+    brutas = obj.get("opcoes") if isinstance(obj.get("opcoes"), list) else [obj]
+    validas: list[Alternativa] = []
+    recusadas: list[str] = []
+    for bruta in brutas[:MAX_OPCOES + 2]:
+        if not isinstance(bruta, dict):
+            continue
+        try:
+            alt = _validar(bruta, atual, objetivo, (*evitar, *(a.produto for a in validas)))
+        except Repetiu as exc:
+            recusadas.append(exc.produto)
+            continue
+        except AlternativaIndisponivel:
+            continue
+        validas.append(alt)
+    return validas[:MAX_OPCOES], recusadas
+
+
+@observe(as_type="chain", name="pesquisa.alternativas")
+def sugerir_alternativas(atual: str, objetivo: Objetivo, *, categoria: str | None = None,
+                         client: Any = None, model: str | None = None, preco_atual: float | None = None,
+                         embalagem: str | None = None, evitar: tuple[str, ...] = ()) -> list[Alternativa]:
+    """Pede ao LLM ATÉ 3 produtos diferentes para o objetivo (a pesquisa nas lojas escolhe pelo preço real).
+    Medido em 08/11: com 1 sugestão só, o modelo errava a faixa de preço (Deca Belle "mais barata" que o Docol saía
+    R$ 1.242 contra R$ 557; "maior qualidade" saía mais barata) e o item voltava ao que era."""
+    if objetivo not in ROTULO:
+        raise ValueError(f"objetivo desconhecido: {objetivo}")
+    s = get_settings()
+    if client is None:
+        if not s.llm_configured:
+            raise AlternativaIndisponivel("LLM não configurado")
+        from .agent import build_llm_client
+        client = build_llm_client()
+    pedido = {"produto_atual": atual, "objetivo": objetivo, "categoria": categoria,
+              "faixa_de_preco": FAIXA[objetivo], "quantas_opcoes": MAX_OPCOES}
+    if preco_atual:
+        pedido["preco_atual_por_embalagem"] = round(float(preco_atual), 2)
+        pedido["embalagem_atual"] = embalagem
+    if evitar:
+        pedido["nao_sugira"] = list(evitar)
+    if acab := acabamento(atual):
+        pedido["acabamento_obrigatorio"] = acab
+    mensagens = [{"role": "system", "content": load_prompt("alternativa_produto")},
+                 {"role": "user", "content": json.dumps(pedido, ensure_ascii=False)}]
+    modelos = [model] if model else list(dict.fromkeys(
+        m for m in (s.pesquisa_modelo_alternativa, s.featherless_model_fallback or "Qwen/Qwen3-32B") if m))
+    ultimo: Exception | None = None
+    for modelo in modelos:
+        try:
+            validas, recusadas = _opcoes_validas(_extrair_json(_chamar_llm(client, modelo, mensagens)),
+                                                 atual, objetivo, evitar)
+        except Exception as exc:  # noqa: BLE001 — rede, modelo frio, JSON quebrado
+            logger.warning("Sugestão de alternativas falhou com %s (%s)", modelo, type(exc).__name__)
+            ultimo = exc
+            continue
+        if validas:
+            return validas
+        if recusadas and not evitar:
+            # só repetiu/mudou a especificação: pede de novo UMA vez, dizendo o que evitar
+            return sugerir_alternativas(atual, objetivo, categoria=categoria, client=client, model=modelo,
+                                        preco_atual=preco_atual, embalagem=embalagem, evitar=tuple(recusadas))
+        raise AlternativaIndisponivel("o modelo não achou alternativa razoável")
+    raise AlternativaIndisponivel(type(ultimo).__name__) from ultimo
+
+
+def escolher(opcoes: list[tuple[Alternativa, ResultadoItem]], anterior: ResultadoItem | None, objetivo: Objetivo,
+             original: str) -> tuple[ResultadoItem, Alternativa | None]:
+    """Entre as opções JÁ pesquisadas, a que cumpre o objetivo com o preço real das lojas:
+    menor preço -> a mais barata; maior qualidade -> a 1ª da ordem da IA (da melhor para a menos boa) que custa
+    igual ou mais; outra marca -> a de preço mais perto do atual. Nenhuma serve -> o anterior, com o motivo."""
+    from .conferir_links import ATIVO as conferindo
+    aprovadas = []
+    for ordem, (alt, nova) in enumerate(opcoes):
+        if conferindo and nova.preco_emb_med is not None and not any(f.link_verificado for f in nova.fontes):
+            continue   # auditoria de 08/11: trocava para um produto cujo preço nenhuma loja confirmou na página
+        final, trocou = decidir(nova, anterior, alt, objetivo, original)
+        if trocou:
+            aprovadas.append((ordem, alt, final, razao_de_preco(nova, anterior)))
+    if aprovadas:
+        if objetivo == "preco":
+            melhor = min(aprovadas, key=lambda a: (a[3] is None, a[3] or 0, a[0]))
+        elif objetivo == "semelhante":
+            melhor = min(aprovadas, key=lambda a: (a[3] is None, abs((a[3] or 1) - 1), a[0]))
+        else:
+            melhor = aprovadas[0]
+        return melhor[2], melhor[1]
+    if anterior is None:
+        return opcoes[0][1], None
+    nomes = "; ".join(a.produto for a, _ in opcoes)
+    fora = {"preco": "saiu mais barata nas lojas", "qualidade": "custou igual ou mais nas lojas (linha superior)",
+            "semelhante": "ficou na faixa de preço do atual"}[objetivo]
+    aviso = f"Pesquisei {len(opcoes)} alternativas ({nomes}) e nenhuma {fora}; mantive o produto anterior."
+    return anterior.model_copy(update={"motivo": aviso}), None
 
 
 @observe(as_type="chain", name="pesquisa.alternativa")
@@ -249,7 +359,8 @@ def decidir(nova: ResultadoItem, anterior: ResultadoItem | None, alt: Alternativ
     if razao is not None:
         lo, hi = RAZAO_ACEITA[objetivo]
         if not lo <= razao <= hi:
-            fora = {"preco": "não saiu mais barata nas lojas", "qualidade": "saiu mais barata que o atual",
+            fora = {"preco": "não saiu mais barata nas lojas" if razao >= 1 else "saiu barata demais para ser equivalente",
+                    "qualidade": "saiu mais barata que o atual" if razao < 1 else "saiu cara demais para o mesmo uso",
                     "semelhante": "ficou fora da faixa de preço do atual"}[objetivo]
             aviso = f"A alternativa sugerida ({alt.produto}) {fora}; mantive o produto anterior."
             return anterior.model_copy(update={"motivo": aviso}), False

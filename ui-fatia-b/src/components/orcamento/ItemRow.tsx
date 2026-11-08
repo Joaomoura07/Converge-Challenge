@@ -183,7 +183,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         {!carregando && item.preco_emb_med != null && (
           <p className="orc-item__confianca">
             {item.estimativa && <span className="orc-item__estimativa">Estimativa</span>}
-            <span>{lojas.length === 1 ? "1 loja" : `${lojas.length} lojas`}</span>
+            {lojas.length > 0 && <span>{lojas.length === 1 ? "1 loja" : `${lojas.length} lojas`}</span>}
             {item.preco_un_med != null && item.unidade_preco && (
               <span>{reais(item.preco_un_med)}/{item.unidade_preco === "m2" ? "m²" : item.unidade_preco}</span>
             )}

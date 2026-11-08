@@ -109,6 +109,10 @@ def test_qualidade_troca_mesmo_mais_cara():
 
 
 # ---------------------------------------------------------------- repesquisar_item com objetivo
+def varias(f):
+    """A rota agora pede várias opções; os testes antigos davam uma só."""
+    return lambda *a, **k: [f(*a, **k)]
+
 class BancoComResultado(BancoFalso):
     def __init__(self, itens, atual):
         super().__init__(itens)
@@ -136,7 +140,7 @@ def test_repesquisar_pesquisa_a_alternativa_e_o_titulo_vira_o_produto_sugerido(m
     async def pesquisar_item(item, **kw):
         buscas.append((item, kw))
         return tinta(item.id, produto=item.descricao, un=3.0)
-    monkeypatch.setattr(o, "sugerir_alternativa", sugerir)
+    monkeypatch.setattr(o, "sugerir_alternativas", varias(sugerir))
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     banco = BancoComResultado([ITEM], tinta())
     troca_feita: dict = {}
@@ -155,7 +159,7 @@ def test_repesquisar_pesquisa_a_alternativa_e_o_titulo_vira_o_produto_sugerido(m
 def test_llm_fora_nao_toca_no_item(monkeypatch, sem_fatia_c):
     def sugerir(*a, **k): raise AlternativaIndisponivel("fora")
     async def pesquisar_item(item, **kw): raise AssertionError("não deveria pesquisar")
-    monkeypatch.setattr(o, "sugerir_alternativa", sugerir)
+    monkeypatch.setattr(o, "sugerir_alternativas", varias(sugerir))
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     banco = BancoComResultado([ITEM], tinta())
     with pytest.raises(AlternativaIndisponivel):
@@ -165,7 +169,7 @@ def test_llm_fora_nao_toca_no_item(monkeypatch, sem_fatia_c):
 
 def test_banco_sem_resultado_atual_usa_a_descricao(monkeypatch, sem_fatia_c):
     pedidos = []
-    monkeypatch.setattr(o, "sugerir_alternativa", lambda atual, objetivo, categoria=None, **_: pedidos.append(atual) or ALT)
+    monkeypatch.setattr(o, "sugerir_alternativas", varias(lambda atual, objetivo, categoria=None, **_: pedidos.append(atual) or ALT))
     async def pesquisar_item(item, **kw): return tinta(item.id, produto=item.descricao)
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     asyncio.run(o.repesquisar_item("a", banco=BancoFalso([ITEM]), objetivo="qualidade"))
@@ -240,7 +244,7 @@ def test_sem_alternativa_razoavel_nao_tenta_outro_modelo():
 
 
 def test_alternativa_que_nao_vale_nao_troca_o_titulo(monkeypatch, sem_fatia_c):
-    monkeypatch.setattr(o, "sugerir_alternativa", lambda atual, objetivo, categoria=None, **_: ALT)
+    monkeypatch.setattr(o, "sugerir_alternativas", varias(lambda atual, objetivo, categoria=None, **_: ALT))
     async def pesquisar_item(item, **kw): return tinta(item.id, produto=item.descricao, un=9.0, emb=990.0)   # mais cara
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     banco = BancoComResultado([ITEM], tinta())
