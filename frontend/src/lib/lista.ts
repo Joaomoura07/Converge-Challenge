@@ -10,7 +10,7 @@ import {
   type Unidade,
 } from "./validacao";
 
-export type ModoEntrada = "manual" | "csv" | "excel" | "revit" | "pdf";
+export type ModoEntrada = "manual" | "csv" | "excel" | "revit" | "pdf" | "dxf";
 
 export type Campo = "descricao" | "quantidade" | "unidade" | "categoria";
 
