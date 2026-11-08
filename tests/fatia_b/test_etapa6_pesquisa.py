@@ -106,6 +106,42 @@ def test_cache_valido_responde_sem_buscar(mundo):
     assert m.consultas == [] and r.iteracoes == 0 and r.premissa.startswith("rendimento")
 
 
+@pytest.mark.parametrize("vencido", [False, True])
+def test_link_removido_da_loja_nao_volta_do_cache(mundo, monkeypatch, vencido):
+    import tavily
+
+    s = p.get_settings()
+    monkeypatch.setattr(s, "tavily_api_keys", "tvly-teste-sintetico")
+    monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 2)
+    removida = of("Loja antiga", 739.9).model_copy(update={"url": "https://antiga.example/tinta"})
+    soft404 = of("Outra loja", 739.9).model_copy(update={"url": "https://outra.example/tinta"})
+    atual = of("Loja atual", 749.9).model_copy(update={"url": "https://atual.example/tinta"})
+    chamadas = []
+
+    class Leitor:
+        def __init__(self, **kwargs):
+            pass
+
+        async def extract(self, urls, **kwargs):
+            chamadas.extend(urls)
+            return {
+                "results": [{"url": u, "raw_content": "# 404 - Página não encontrada"}
+                            for u in urls if u == soft404.url],
+                "failed_results": [{"url": u, "error": "HTTP 404 Not Found" if u == removida.url else "Timeout"}
+                                   for u in urls if u != soft404.url],
+            }
+
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", Leitor)
+    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url=None, provedor="tavily",
+                           extracao=ResultadoExtracao(ofertas=[removida]),
+                           atualizado_em=datetime.now(timezone.utc), vencido=vencido)
+    m = mundo({}, cache_linha=entrada, padrao=[] if vencido else [removida, soft404, atual])
+    r = rodar(TINTA, usar_agente=False)
+    assert len(m.consultas) == 1 and chamadas.count(removida.url) == 1
+    assert [f.url for f in r.fontes] == ([] if vencido else [atual.url])
+    assert r.status == ("nao_encontrado" if vencido else "definido")
+
+
 def test_achou_lojas_suficientes_nao_chama_agente(mundo):
     m = mundo({}, padrao=[of("Telhanorte", 739.9), of("Magazine Luiza", 849.0), of("Sertão", 749.9)])
     llm = LLMFalso([])

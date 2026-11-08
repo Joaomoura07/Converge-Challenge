@@ -17,6 +17,19 @@ from .especificacao import normalizar
 
 logger = logging.getLogger(__name__)
 
+_PAGINA_AUSENTE = re.compile(
+    r"(?:p[aá]gina|produto)\s+n[aã]o\s+encontrad[ao]|(?:page|product)\s+not\s+found", re.I,
+)
+_HTTP_AUSENTE = re.compile(r"^(?:404|410)\b|\b(?:http(?:\s+error)?|status(?:\s+code)?|error|erro)\s*[:=]?\s*(?:404|410)\b", re.I)
+
+
+def _conteudo_indisponivel(texto: str) -> bool:
+    """Algumas lojas retornam HTTP 200 com um título de página de erro."""
+    inicio = [linha.strip(" #*\t") for linha in texto[:2000].splitlines() if linha.strip()][:6]
+    return any(_PAGINA_AUSENTE.fullmatch(re.sub(r"^(?:404|410)\s*[-–:]\s*", "", linha).rstrip(".!"))
+               or _HTTP_AUSENTE.fullmatch(linha)
+               or re.fullmatch(r"(?:erro\s+)?404(?:\s*[-–:]\s*)?(?:not found)?", linha, re.I) for linha in inicio)
+
 
 def url_publica(url: str) -> bool:
     try:
@@ -47,11 +60,13 @@ def recortar(texto: str, produto: str, limite=1400) -> str:
 
 
 @observe(name="pesquisa.paginas", capture_output=False)
-async def aprofundar(produto: str, resultados: list[ResultadoWeb], cliente=None) -> list[ResultadoWeb]:
+async def aprofundar(produto: str, resultados: list[ResultadoWeb], cliente=None, *, limite: int | None = None) -> list[ResultadoWeb]:
     s = get_settings()
+    acc = custo.atual()
+    indisponiveis = acc.urls_indisponiveis if acc else set()
+    resultados = [r for r in resultados if r.url not in indisponiveis]
     if not s.pesquisa_paginas_por_rodada or (cliente is None and not s.tavily_keys):
         return resultados
-    acc = custo.atual()
     vistos = acc.urls if acc else set()
     candidatos = []
     for r in resultados:
@@ -59,7 +74,7 @@ async def aprofundar(produto: str, resultados: list[ResultadoWeb], cliente=None)
             continue
         candidatos.append(r)
         vistos.add(r.url)
-        if len(candidatos) >= s.pesquisa_paginas_por_rodada:
+        if len(candidatos) >= (limite or s.pesquisa_paginas_por_rodada):
             break
     if not candidatos:
         return resultados
@@ -74,12 +89,25 @@ async def aprofundar(produto: str, resultados: list[ResultadoWeb], cliente=None)
             urls=[r.url for r in candidatos], extract_depth="basic", timeout=s.pesquisa_pagina_timeout_s),
             timeout=s.pesquisa_pagina_timeout_s + 1)
         permitidas = {r.url for r in candidatos}
-        paginas = {r["url"]: recortar(r.get("raw_content") or "", produto)
-                   for r in dados.get("results", []) if r.get("url") in permitidas}
+        paginas = {}
+        for r in dados.get("results", []):
+            if r.get("url") not in permitidas:
+                continue
+            conteudo = r.get("raw_content") or ""
+            if _conteudo_indisponivel(conteudo):
+                indisponiveis.add(r["url"])
+            else:
+                paginas[r["url"]] = recortar(conteudo, produto)
+        for r in dados.get("failed_results", []):
+            erro = str(r.get("error") or "").strip()
+            ausente = (_HTTP_AUSENTE.search(erro) or _PAGINA_AUSENTE.search(erro)
+                       or erro.lower() in {"not found", "gone"})
+            if r.get("url") in permitidas and ausente:
+                indisponiveis.add(r["url"])
         paginas = {u: t for u, t in paginas.items() if t.strip()}
         custo.registrar_paginas(len(paginas))
-        # Página prevalece sobre snippet antigo; URLs com falha preservam o trecho da busca.
-        return [replace(r, trecho=paginas[r.url], pagina_lida=True) if r.url in paginas else r for r in resultados]
+        return [replace(r, trecho=paginas[r.url], pagina_lida=True) if r.url in paginas else r
+                for r in resultados if r.url not in indisponiveis]
     except Exception as exc:
         logger.info("Leitura de página indisponível (%s); mantendo resultados da busca", type(exc).__name__)
-        return resultados
+        return [r for r in resultados if r.url not in indisponiveis]

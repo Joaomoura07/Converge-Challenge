@@ -29,6 +29,7 @@ class Acumulador:
     limite_atingido: bool = False
     paginas: int = 0
     urls: set[str] = field(default_factory=set)
+    urls_indisponiveis: set[str] = field(default_factory=set)
 
     def resumo(self) -> dict:
         return {"tokens_entrada": self.entrada, "tokens_saida": self.saida,

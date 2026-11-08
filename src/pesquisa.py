@@ -22,7 +22,7 @@ import random
 import re
 import unicodedata
 import weakref
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
@@ -34,7 +34,7 @@ from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
 from .google_shopping import ofertas_google, ofertas_regionais, resolver_links_das_lojas
-from .busca import buscar, eh_pagina_de_listagem, montar_consulta
+from .busca import ResultadoWeb, buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
@@ -160,6 +160,29 @@ async def buscar_e_extrair(consulta: str, produto: str):
     return b, await extrair_e_conferir(produto, b.resultados)
 
 
+async def _verificar_fontes(item: ItemEntrada, extracao: ResultadoExtracao) -> ResultadoExtracao:
+    """Confere em lote os links que podem aparecer no orçamento, inclusive no cache."""
+    acc = _custo.atual()
+    indisponiveis = acc.urls_indisponiveis if acc else set()
+    extracao = replace(extracao, ofertas=[o for o in extracao.ofertas if o.url not in indisponiveis])
+    s = get_settings()
+    if not s.pesquisa_paginas_por_rodada or not s.tavily_keys:
+        return extracao
+    calc = calcular(item, extracao)
+    if not calc.tem_preco and not calc.estimativa:
+        calc = calcular(item, extracao, generico=True)
+    if not calc.fontes:
+        return extracao
+    prioritarias = {f.url for f in calc.fontes}
+    ofertas = sorted(extracao.ofertas, key=lambda o: o.url not in prioritarias)
+    candidatos = [ResultadoWeb(o.titulo, o.url, o.dominio, o.loja, "") for o in ofertas
+                  if o.preco and o.mesmo_produto in ("sim", "parecido")]
+    async with _porteiro_busca():
+        validas = await aprofundar(item.descricao, candidatos, limite=20)
+    removidas = {f.url for f in candidatos} - {f.url for f in validas}
+    return replace(extracao, ofertas=[o for o in extracao.ofertas if o.url not in removidas])
+
+
 # ------------------------------------------------------------------ agente que refaz a busca
 class BuscarPrecoArgs(ToolArgs):
     consulta: str = Field(min_length=3, max_length=120,
@@ -190,6 +213,7 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     coleta.consultas.append(args.consulta)
     b, ext = await buscar_e_extrair(args.consulta, item.descricao)
     coleta.juntar(ext.ofertas)
+    coleta.ofertas = (await _verificar_fontes(item, coleta.extracao())).ofertas
     coleta.imagem = coleta.imagem or b.imagem
     return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item), item=item)}
 
@@ -372,6 +396,7 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     # ① cache válido
     anterior = await cache.ler(item.descricao, aceitar_vencido=True) if usar_cache else None
     if anterior and not anterior.vencido:
+        anterior = replace(anterior, extracao=await _verificar_fontes(item, anterior.extracao))
         calc = calcular(item, anterior.extracao, generico)
         if calc.tem_preco:
             imagem = await imagem_do_cache(anterior, item.descricao)
@@ -392,6 +417,7 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
+    coleta.ofertas = (await _verificar_fontes(item, coleta.extracao())).ofertas
     calc = calcular(item, coleta.extracao(), generico)
 
     precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured
@@ -438,7 +464,8 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
 
     # falha total: cache vencido vale como reserva, com a data
     if anterior:
-        calc_v = calcular(item, anterior.extracao, generico)
+        extracao = await _verificar_fontes(item, anterior.extracao)
+        calc_v = calcular(item, extracao, generico)
         if calc_v.tem_preco:
             return _resultado(item, calc_v, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
                               anterior.atualizado_em, iteracoes, pergunta=pergunta_para(item.descricao) if generico else None,
