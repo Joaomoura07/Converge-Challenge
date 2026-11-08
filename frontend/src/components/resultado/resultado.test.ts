@@ -198,3 +198,19 @@ describe("linkRaciocinio (trace público do Langfuse)", () => {
     expect(linkRaciocinio("não é um link")).toBeNull();
   });
 });
+
+describe("fonte mostra o preço do anúncio", () => {
+  it("usa preco_anunciado e a embalagem do anúncio (o mesmo que aparece ao clicar no link)", () => {
+    const fonte = { loja: "Armazemcoral", dominio: "armazemcoral.com.br", url: "https://armazemcoral.com.br/selador",
+      preco_embalagem: 349.5, embalagem: "lata 18 L", preco_anunciado: 69.9, embalagem_anunciada: "galão 3,6 L" };
+    const tela = itemParaTela({ id: "s", descricao: "Selador Coral", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
+      preco_emb_min: 239.9, preco_emb_med: 294.7, preco_emb_max: 349.5, fontes: [fonte] } as never);
+    expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 69,90 / galão 3,6 L");
+  });
+  it("item antigo, sem preco_anunciado, continua mostrando o convertido", () => {
+    const fonte = { loja: "Telhanorte", dominio: "telhanorte.com.br", url: "https://t/s", preco_embalagem: 239.9, embalagem: "lata 18 L" };
+    const tela = itemParaTela({ id: "s", descricao: "Selador", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
+      preco_emb_min: 239.9, preco_emb_med: 239.9, preco_emb_max: 239.9, fontes: [fonte] } as never);
+    expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 239,90 / lata 18 L");
+  });
+});

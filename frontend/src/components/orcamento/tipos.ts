@@ -10,6 +10,11 @@ export interface Fonte {
   url: string;
   preco_embalagem: number;
   embalagem?: string | null;
+  /** Preço e embalagem como estão no anúncio (o que a pessoa vê ao clicar). Ausentes em itens antigos. */
+  preco_anunciado?: number | null;
+  embalagem_anunciada?: string | null;
+  /** Rede com loja física no estado da obra. */
+  perto_da_obra?: boolean;
 }
 
 export interface ItemOrcamento {

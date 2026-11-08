@@ -91,6 +91,7 @@
 .orc-item__lojas li { display: flex; gap: 6px; }
 .orc-item__lojas a { color: var(--cor-acao); text-underline-offset: 2px; }
 .orc-item__lojas span { color: var(--cor-texto-2); font-variant-numeric: tabular-nums; }
+.orc-item__lojas .orc-item__perto { font-size: 0.6875rem; padding: 1px 6px; border: 1px solid currentColor; border-radius: 999px; color: var(--cor-acao); font-variant-numeric: normal; }
 
 /* status: cor + ícone + texto */
 .orc-status {

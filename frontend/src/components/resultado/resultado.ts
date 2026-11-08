@@ -170,7 +170,11 @@ export function itemParaTela(i: ItemLinha): ItemTela {
       loja: f.loja,
       dominio: f.dominio,
       url: hmm(f.url),
-      preco: `${reais(f.preco_embalagem)}${f.embalagem || i.embalagem ? ` / ${f.embalagem || i.embalagem}` : ""}`,
+      // o preço do anúncio (o que se vê ao clicar no link); itens antigos sem ele mostram o convertido
+      preco:
+        f.preco_anunciado != null
+          ? `${reais(f.preco_anunciado)}${f.embalagem_anunciada ? ` / ${f.embalagem_anunciada}` : ""}`
+          : `${reais(f.preco_embalagem)}${f.embalagem || i.embalagem ? ` / ${f.embalagem || i.embalagem}` : ""}`,
       data: dataFonte(i.preco_data),
     }));
   const melhorLoja = fontes[0]?.loja;

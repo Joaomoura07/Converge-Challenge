@@ -38,6 +38,13 @@ class Fonte(_Base):
     url: str
     preco_embalagem: float = Field(gt=0)
     embalagem: str | None = None
+    # Como está NO ANÚNCIO (o que a pessoa vê ao clicar no link). `preco_embalagem`/`embalagem` são o mesmo preço
+    # convertido para a embalagem de referência do item, para comparar lojas e somar (a Fatia C usa estes).
+    # Medido no site em 07/11: a loja vendia o galão de 3,6 L a R$ 69,90 e a tela mostrava R$ 349,50 (o equivalente
+    # em 18 L): ao clicar, o preço "não batia".
+    preco_anunciado: float | None = Field(default=None, gt=0)
+    embalagem_anunciada: str | None = None
+    perto_da_obra: bool = False   # rede com loja física no estado da obra (src/busca.py, REDES_REGIONAIS)
 
 
 class ResultadoItem(_Base):
