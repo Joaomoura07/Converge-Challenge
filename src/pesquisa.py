@@ -34,7 +34,7 @@ from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
 from .google_shopping import ofertas_google, ofertas_regionais, resolver_links_das_lojas
-from .busca import buscar, eh_pagina_de_listagem, montar_consulta
+from .busca import ResultadoWeb, buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
@@ -42,7 +42,7 @@ from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, Resultado
                      extrair_e_conferir, semaforo_do_loop)
 from .tools import ToolArgs, ToolRegistry
 from .especificacao import orientacao, nao_confirmados
-from .paginas_produto import aprofundar
+from .paginas_produto import EXIGIR_PRECO_DA_PAGINA, aprofundar
 from .imagens import imagem_do_cache
 
 logger = logging.getLogger(__name__)
@@ -148,10 +148,19 @@ def _porteiro_agente() -> asyncio.Semaphore:
     return semaforo_do_loop(_semaforos_agente, get_settings().pesquisa_concorrencia_agente)
 
 
-async def buscar_e_extrair(consulta: str, produto: str):
+async def buscar_e_extrair(consulta: str, produto: str, unidade: str | None = None):
+    estrito = EXIGIR_PRECO_DA_PAGINA.get()
     async with _porteiro_busca():
-        b = await buscar(consulta)
+        if estrito:
+            b, google, regionais = await asyncio.gather(buscar(consulta), ofertas_google(produto, unidade),
+                                                        ofertas_regionais(produto, unidade))
+            # Buscadores fornecem URLs candidatas. Seus preços nunca vão para a extração da demo.
+            b.resultados += [ResultadoWeb(o.titulo, o.url, o.dominio, o.loja, "") for o in google + regionais]
+        else:
+            b = await buscar(consulta)
         b.resultados = await aprofundar(produto, b.resultados)
+    if estrito:
+        b.resultados = [r for r in b.resultados if r.pagina_lida and r.preco_pagina is not None]
     return b, await extrair_e_conferir(produto, b.resultados)
 
 
@@ -185,7 +194,8 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     if faltam := nao_confirmados(item.descricao, args.consulta):
         return {"ok": False, "error": "preserve as especificações: " + "; ".join(faltam)}
     coleta.consultas.append(args.consulta)
-    b, ext = await buscar_e_extrair(args.consulta, item.descricao)
+    b, ext = await (buscar_e_extrair(args.consulta, item.descricao, item.unidade) if EXIGIR_PRECO_DA_PAGINA.get()
+                    else buscar_e_extrair(args.consulta, item.descricao))
     coleta.juntar(ext.ofertas)
     coleta.imagem = coleta.imagem or b.imagem
     return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item), item=item)}
@@ -365,9 +375,10 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     """① cache → ② busca → ③ extração → ⑤ cálculo, SEM agente. Se faltar loja, devolve um resultado
     provisório e marca o item para a fase 2 (o cache só é gravado no resultado final)."""
     generico = item.classificacao == "pendente_especificacao"
+    estrito = EXIGIR_PRECO_DA_PAGINA.get()
 
     # ① cache válido
-    anterior = await cache.ler(item.descricao, aceitar_vencido=True) if usar_cache else None
+    anterior = await cache.ler(item.descricao, aceitar_vencido=True) if usar_cache and not estrito else None
     if anterior and not anterior.vencido:
         calc = calcular(item, anterior.extracao, generico)
         if calc.tem_preco:
@@ -381,10 +392,14 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     # Google Shopping em paralelo: dezenas de lojas com preço estruturado (medido em 07/11: com só a busca, 33 de 113
     # itens dos exemplos ficavam a mais de 50% da mediana do Google)
     # e as lojas PERTO DA OBRA (Google Maps pelo CEP -> busca do Google nos sites delas): o diferencial do Orça
-    (b, ext), google, regionais = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
-                                                       ofertas_google(item.descricao, item.unidade, generico),
-                                                       ofertas_regionais(item.descricao, item.unidade))
-    google = await resolver_links_das_lojas(item.descricao, google)   # link da loja, não o da página do Google
+    if estrito:
+        b, ext = await buscar_e_extrair(consulta, item.descricao, item.unidade)
+        google = regionais = []
+    else:
+        (b, ext), google, regionais = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
+                                                           ofertas_google(item.descricao, item.unidade, generico),
+                                                           ofertas_regionais(item.descricao, item.unidade))
+        google = await resolver_links_das_lojas(item.descricao, google)
     coleta = Coleta(imagem=b.imagem, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
     coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
@@ -416,7 +431,7 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
         coleta.imagem = imagem_das_ofertas(coleta.ofertas, {f.url for f in calc.fontes})
 
     if calc.tem_preco:
-        if gravar_cache:
+        if gravar_cache and not EXIGIR_PRECO_DA_PAGINA.get():
             await cache.gravar(item.descricao, coleta.extracao(), coleta.imagem, coleta.provedor, anterior=anterior,
                                iteracoes=iteracoes)
         imagem = coleta.imagem or (anterior.imagem_url if anterior else None)
@@ -444,7 +459,11 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
     if generico:
         return ResultadoItem(item_id=item.id, status="pendente_especificacao", imagem_url=coleta.imagem,
                              pergunta=pergunta_para(item.descricao), iteracoes=iteracoes,
-                             motivo="item genérico e sem preço de referência na busca")
+                             motivo="Preço não confirmado na página da loja." if EXIGIR_PRECO_DA_PAGINA.get()
+                             else "item genérico e sem preço de referência na busca")
+    if EXIGIR_PRECO_DA_PAGINA.get():
+        return ResultadoItem(item_id=item.id, status="nao_encontrado", imagem_url=coleta.imagem, iteracoes=iteracoes,
+                             motivo="Preço não confirmado na página da loja.")
     motivo = erro_busca or calc.motivo or "nenhuma loja com preço para este produto"
     return ResultadoItem(item_id=item.id, status="nao_encontrado", imagem_url=coleta.imagem, iteracoes=iteracoes,
                          motivo=f"{motivo} (consultas: {' | '.join(coleta.consultas)})")

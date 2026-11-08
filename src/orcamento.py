@@ -28,6 +28,7 @@ from .alternativas import Objetivo, decidir, sugerir_alternativa
 from .regiao import na_obra, preparar_obra
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
+from .paginas_produto import EXIGIR_PRECO_DA_PAGINA, modo_preco_da_pagina
 from .pesquisa import aceitar_media_estimada, aceitar_mais_proximo, pesquisar_item, pesquisar_itens
 from .validacao_serper import validar as validar_preco
 
@@ -130,6 +131,11 @@ class BancoSupabase:
         """CEP da obra (a fatia A grava só dígitos em orcamentos.cep)."""
         r = await self._rodar(lambda: self.sb.table(ORCAMENTOS).select("cep").eq("id", orcamento_id).limit(1).execute())
         return (r.data[0].get("cep") if r.data else None) or None
+
+    async def modo_demo(self, orcamento_id: str) -> bool:
+        r = await self._rodar(lambda: self.sb.table(ORCAMENTOS).select("origem").eq("id", orcamento_id).limit(1).execute())
+        origem = r.data[0].get("origem") if r.data else None
+        return isinstance(origem, dict) and origem.get("demo") is True
 
     async def somar_custo(self, orcamento_id: str, usd: float) -> None:
         """Soma o custo de uma nova pesquisa (ex.: 'Pesquisar de novo') ao total do orçamento."""
@@ -263,6 +269,8 @@ async def _gravar_e_conferir(banco: Banco, r: ResultadoItem) -> None:
     """Grava o item (a tela já o mostra) e, se houver chave do Serper, confere o preço numa 2ª fonte e regrava só
     se isso trouxe algo. Falha da conferência nunca desfaz nem atrasa a gravação do item."""
     await banco.gravar_item(r)
+    if EXIGIR_PRECO_DA_PAGINA.get():
+        return
     try:
         conferido = await validar_preco(r)
         if conferido.validacao is not None and conferido is not r:
@@ -279,7 +287,8 @@ async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) ->
     with acumular_custo() as custo:
         try:
             itens = await banco.itens_para_pesquisar(orcamento_id)
-            resultados = await pesquisar_itens(itens, ao_terminar=lambda r: _gravar_e_conferir(banco, r), **opcoes)
+            with modo_preco_da_pagina(await _modo_demo(banco, orcamento_id)):
+                resultados = await pesquisar_itens(itens, ao_terminar=lambda r: _gravar_e_conferir(banco, r), **opcoes)
         except Exception as exc:  # noqa: BLE001 — erro geral (banco fora, etc.): marca falhou e libera novo clique
             logger.exception("Pesquisa do orçamento %s falhou", orcamento_id)
             await banco.concluir(orcamento_id, erro=f"{type(exc).__name__}: {exc}"[:500], custo_usd=custo.usd)
@@ -314,6 +323,10 @@ async def _local_da_obra(banco: Banco, orcamento_id: str | None):
         return None, []
 
 
+async def _modo_demo(banco: Banco, orcamento_id: str | None) -> bool:
+    return bool(orcamento_id and hasattr(banco, "modo_demo") and await banco.modo_demo(orcamento_id))
+
+
 async def _resultado_atual(banco: Banco, item_id: str) -> ResultadoItem | None:
     if not hasattr(banco, "resultado_atual"):
         return None
@@ -341,7 +354,8 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
         return None
     orcamento_id = await banco.orcamento_do_item(item_id)
     # Mesma sessão do orçamento no Langfuse: "Pesquisar de novo"/"Responder" aparecem junto da pesquisa original.
-    with propagate_attributes(session_id=str(orcamento_id or item_id), tags=["fatia-b", "repesquisar"]):
+    with propagate_attributes(session_id=str(orcamento_id or item_id), tags=["fatia-b", "repesquisar"]), \
+         modo_preco_da_pagina(await _modo_demo(banco, orcamento_id)):
         return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes, aceitar_media)
 
 

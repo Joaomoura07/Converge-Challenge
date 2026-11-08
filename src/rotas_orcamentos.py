@@ -119,10 +119,11 @@ class OrcamentoIn(_Estrito):
 # --------------------------------------------------------------------------- persistência
 
 
-def calcular_hash(obra: dict[str, Any], itens: list[dict[str, Any]]) -> str:
+def calcular_hash(obra: dict[str, Any], itens: list[dict[str, Any]], *, demo: bool = False) -> str:
     """Resumo do CONTEÚDO enviado (obra e itens persistidos). Detecta conflito no reenvio com o mesmo UUID.
-    Não inclui `origem`: reenviar o mesmo conteúdo lido de outro arquivo não é conflito."""
-    base = json.dumps({"obra": obra, "itens": itens}, ensure_ascii=False, sort_keys=True, default=str)
+    A origem do arquivo é informativa; o modo demo entra no hash porque muda como o preço é obtido."""
+    base = json.dumps({"obra": obra, "itens": itens, **({"demo": True} if demo else {})},
+                      ensure_ascii=False, sort_keys=True, default=str)
     return hashlib.sha256(base.encode()).hexdigest()
 
 
@@ -209,7 +210,7 @@ async def criar_orcamento(req: OrcamentoIn) -> dict[str, Any]:
     orcamento_id = str(req.orcamento_id)
     itens_db = [_item_para_banco(i) for i in mantidos]
     obra = req.obra.model_dump()
-    hash_conteudo = calcular_hash(obra, itens_db)
+    hash_conteudo = calcular_hash(obra, itens_db, demo=req.origem.get("demo") is True)
 
     try:
         gravado = await asyncio.to_thread(_criar_no_banco, orcamento_id, hash_conteudo, obra, req.origem, itens_db)

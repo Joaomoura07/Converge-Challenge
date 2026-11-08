@@ -10,7 +10,7 @@ Os quatro formatos trazem os mesmos cinco materiais: 6 tomadas Tramontina Liz br
 2. Informe nome, CEP da obra fictícia e orçamento disponível. Esses dados não estão embutidos no arquivo.
 3. Revise os complementos sugeridos. Para uma demonstração curta, aceite apenas os pertinentes e mantenha no máximo dez itens; não é necessário aceitar todos.
 4. Envie para pesquisa. Observe as fontes diretas, as especificações, a faixa de preço, o número de embalagens e o consumo informado.
-5. Abra uma fonte e compare o produto anunciado. Preço ausente ou produto similar deve continuar sinalizado; não o apresente como cotação confirmada.
+5. Abra uma fonte e compare produto, embalagem e valor. A demo mostra o preço de venda lido na própria página. Se só houver parcela, cupom, valor ambíguo ou se a página estiver indisponível, o preço não é confirmado. Se a loja atualizar o valor depois, use **Pesquisar de novo** para consultar a página novamente.
 
 ## Teste 2: revisão antes da pesquisa
 

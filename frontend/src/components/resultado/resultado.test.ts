@@ -124,7 +124,8 @@ describe("resumoParaTela", () => {
 const sp = (t: string) => t.replace(/\u00a0/g, " "); // o formatador de moeda usa espaço não separável
 
 describe("itemParaTela e itensParaTela", () => {
-  const fonte = (loja: string, p: number) => ({ loja, dominio: `${loja.toLowerCase()}.com.br`, url: `https://${loja.toLowerCase()}.com.br/p`, preco_embalagem: p });
+  const fonte = (loja: string, p: number) => ({ loja, dominio: `${loja.toLowerCase()}.com.br`, url: `https://${loja.toLowerCase()}.com.br/p`,
+    preco_embalagem: p, preco_anunciado: p, embalagem_anunciada: "caixa 1,62 m²" });
   const porcelanato = () =>
     definido("Porcelanato 90x90", 33, "caixa 1,62 m²", 118.9, {
       categoria: "Revestimentos", quantidade: 53.46, unidade: "m2", produto_normalizado: "Portobello Cimento 90x90",
@@ -220,11 +221,11 @@ describe("fonte mostra o preço do anúncio", () => {
       preco_emb_min: 239.9, preco_emb_med: 294.7, preco_emb_max: 349.5, fontes: [fonte] } as never);
     expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 69,90 / galão 3,6 L");
   });
-  it("item antigo, sem preco_anunciado, continua mostrando o convertido", () => {
+  it("item antigo não mostra o preço convertido como se fosse o do anúncio", () => {
     const fonte = { loja: "Telhanorte", dominio: "telhanorte.com.br", url: "https://t/s", preco_embalagem: 239.9, embalagem: "lata 18 L" };
     const tela = itemParaTela({ id: "s", descricao: "Selador", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
       preco_emb_min: 239.9, preco_emb_med: 239.9, preco_emb_max: 239.9, fontes: [fonte] } as never);
-    expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 239,90 / lata 18 L");
+    expect(tela.fontes[0].preco).toBe("Preço anunciado indisponível");
   });
 });
 
