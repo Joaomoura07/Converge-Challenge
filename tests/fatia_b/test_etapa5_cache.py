@@ -145,15 +145,17 @@ def test_vencido_so_volta_quando_pedido_como_reserva():
     assert reserva and reserva.vencido and len(reserva.data_preco) == 5   # "dd/mm"
 
 
-def test_imagem_fica_a_mesma_quando_o_preco_e_atualizado():
-    """Pedido do Enzo: um produto, uma imagem — mesmo depois de pesquisar de novo."""
+def test_imagem_verificada_substitui_a_antiga_quando_o_preco_e_atualizado():
+    """Uma foto antiga quebrada não pode ficar presa no cache depois da repesquisa."""
     db = SupabaseFalso()
     asyncio.run(cache.gravar(DESC, ResultadoExtracao(ofertas=OFERTAS), "https://img/primeira.jpg", cliente=db))
     _envelhecer(db, DESC, 8)
     anterior = asyncio.run(cache.ler(DESC, aceitar_vencido=True, cliente=db))
     asyncio.run(cache.gravar(DESC, ResultadoExtracao(ofertas=OFERTAS[:1]), "https://img/outra.jpg", anterior=anterior, cliente=db))
     e = asyncio.run(cache.ler(DESC, cliente=db))
-    assert e.imagem_url == "https://img/primeira.jpg" and not e.vencido and len(e.extracao.ofertas) == 1
+    assert e.imagem_url == "https://img/outra.jpg" and not e.vencido and len(e.extracao.ofertas) == 1
+    asyncio.run(cache.gravar(DESC, ResultadoExtracao(ofertas=OFERTAS), None, anterior=e, cliente=db))
+    assert asyncio.run(cache.ler(DESC, cliente=db)).imagem_url == "https://img/outra.jpg"
 
 
 def test_nao_guarda_pesquisa_sem_preco():

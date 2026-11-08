@@ -1,0 +1,6 @@
+.quadro { display: block; position: relative; width: 100%; height: 100%; min-height: 48px; overflow: hidden; color: var(--cor-texto-2); background: var(--cor-superficie); }
+.reserva { display: flex; width: 100%; height: 100%; min-height: inherit; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 3px; box-sizing: border-box; }
+.reserva svg { width: 62%; height: 62%; max-width: 110px; max-height: 120px; }
+.reserva > span { font-size: 9px; line-height: 1.2; font-weight: 400; letter-spacing: 0; }
+.quadro .foto { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.buscando { background: repeating-linear-gradient(45deg, var(--cor-superficie) 0 6px, var(--cor-linha) 6px 7px); }

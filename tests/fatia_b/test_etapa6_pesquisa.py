@@ -97,12 +97,12 @@ def rodar(item, **kw):
 
 # ---------------------------------------------------------------- caminho fixo
 def test_cache_valido_responde_sem_buscar(mundo):
-    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img/cache.jpg", provedor="tavily",
+    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img.example/cache.jpg", provedor="tavily",
                            extracao=ResultadoExtracao(ofertas=[of("Telhanorte", 739.9), of("Magazine Luiza", 849.0)]),
                            atualizado_em=datetime.now(timezone.utc) - timedelta(days=1), vencido=False)
     m = mundo({}, cache_linha=entrada)
     r = rodar(TINTA, cliente_llm=LLMFalso([]))
-    assert r.status == "definido" and r.imagem_url == "https://img/cache.jpg" and r.qtd_embalagens == 2
+    assert r.status == "definido" and r.imagem_url == "https://img.example/cache.jpg" and r.qtd_embalagens == 2
     assert m.consultas == [] and r.iteracoes == 0 and r.premissa.startswith("rendimento")
 
 
