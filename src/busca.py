@@ -442,6 +442,35 @@ class _RodizioChaves:
                 return self.chaves[idx]
         return None
 
+    def _indice(self, chave: str | None) -> int | None:
+        try:
+            return self.chaves.index(chave) if chave is not None else None
+        except ValueError:
+            return None
+
+    def descartar(self, chave: str | None, motivo: str) -> None:
+        """Tira DE VEZ a chave que falhou. Medido em 08/11: com buscas simultâneas, cada uma que falhava na chave 1
+        (esgotada) chamava descartar_atual() quando o "atual" já era a 2, a 3... e uma chave morta derrubava as 8
+        (as outras 7 tinham 16 a 222 de 1.000 créditos usados). Agora só a chave que deu erro sai."""
+        idx = self._indice(chave)
+        if idx is None or self._ate.get(idx) == float("inf"):
+            return                                   # já descartada por outra busca simultânea
+        logger.warning("Tavily: chave %d/%d descartada (%s)", idx + 1, len(self.chaves), motivo)
+        self._ate[idx] = float("inf")
+        self._motivo[idx] = MOTIVOS_TAVILY.get(motivo, motivo)
+        if self.i == idx:
+            self.i = (idx + 1) % max(len(self.chaves), 1)
+
+    def esfriar(self, chave: str | None, motivo: str, segundos: float = ESFRIAR_S) -> None:
+        idx = self._indice(chave)
+        if idx is None or self._ate.get(idx, 0.0) > time.monotonic():
+            return
+        logger.warning("Tavily: chave %d/%d em pausa por %.0f s (%s)", idx + 1, len(self.chaves), segundos, motivo)
+        self._ate[idx] = time.monotonic() + segundos
+        self._motivo[idx] = MOTIVOS_TAVILY.get(motivo, motivo)
+        if self.i == idx:
+            self.i = (idx + 1) % max(len(self.chaves), 1)
+
     def descartar_atual(self, motivo: str) -> None:
         logger.warning("Tavily: chave %d/%d descartada (%s)", self.i + 1, len(self.chaves), motivo)
         self._ate[self.i] = float("inf")
@@ -484,9 +513,9 @@ async def _tavily(consulta: str, limite: int, rodizio: _RodizioChaves) -> Respos
     from tavily import AsyncTavilyClient
     from tavily.errors import ForbiddenError, InvalidAPIKeyError, UsageLimitExceededError
 
-    while rodizio.atual:
+    while (chave := rodizio.atual):
         try:
-            r = await AsyncTavilyClient(api_key=rodizio.atual).search(
+            r = await AsyncTavilyClient(api_key=chave).search(
                 consulta, search_depth="basic", max_results=limite + 3, include_images=True,
                 include_image_descriptions=True,  # sem custo extra; usado para escolher 1 imagem
                 # NÃO usar country="brazil": combinado com include_domains, o Tavily volta com 0 resultados
@@ -497,7 +526,7 @@ async def _tavily(consulta: str, limite: int, rodizio: _RodizioChaves) -> Respos
                        for i in r.get("images", [])]
             return RespostaBusca(consulta, "tavily", _filtra(brutos, limite), [i for i in imagens if i.url])
         except (UsageLimitExceededError, InvalidAPIKeyError, ForbiddenError) as exc:
-            rodizio.descartar_atual(type(exc).__name__)
+            rodizio.descartar(chave, type(exc).__name__)
     return RespostaBusca(consulta, "nenhum", erro="sem chave Tavily válida")
 
 
@@ -566,9 +595,9 @@ async def _tavily_aberto(consulta: str, limite: int, rodizio: _RodizioChaves, lo
     from tavily.errors import ForbiddenError, InvalidAPIKeyError, UsageLimitExceededError
 
     q = consulta_regional(consulta, local)
-    while rodizio.atual:
+    while (chave := rodizio.atual):
         try:
-            r = await AsyncTavilyClient(api_key=rodizio.atual).search(
+            r = await AsyncTavilyClient(api_key=chave).search(
                 q, search_depth="basic", max_results=10, include_images=True, country="brazil",
                 exclude_domains=list(LOJAS) + BLOQUEADOS, timeout=20)
             brutos = [(x.get("title"), x.get("url"), x.get("content")) for x in r.get("results", [])]
@@ -576,7 +605,7 @@ async def _tavily_aberto(consulta: str, limite: int, rodizio: _RodizioChaves, lo
                        for i in r.get("images", [])]
             return RespostaBusca(q, "tavily", _filtra_aberto(brutos, limite, local), [i for i in imagens if i.url])
         except (UsageLimitExceededError, InvalidAPIKeyError, ForbiddenError) as exc:
-            rodizio.descartar_atual(type(exc).__name__)
+            rodizio.descartar(chave, type(exc).__name__)
     return RespostaBusca(q, "nenhum", erro="sem chave Tavily válida")
 
 
@@ -671,12 +700,15 @@ async def _buscar_regional(consulta: str, rodizio: _RodizioChaves) -> RespostaBu
 
     from .regiao import dominios_regionais, regional_por_dominio
     dominios = dominios_regionais()[:MAX_DOMINIOS_REGIONAIS]
-    if not dominios or not rodizio.atual:
+    chave = rodizio.atual
+    if not dominios or not chave:
         return RespostaBusca(consulta, "nenhum")
     try:
-        r = await AsyncTavilyClient(api_key=rodizio.atual).search(
+        r = await AsyncTavilyClient(api_key=chave).search(
             consulta, search_depth="basic", max_results=10, include_domains=dominios, timeout=20)
     except Exception as exc:  # noqa: BLE001 — a busca regional nunca derruba a busca do item
+        if type(exc).__name__ in ("UsageLimitExceededError", "InvalidAPIKeyError", "ForbiddenError"):
+            rodizio.descartar(chave, type(exc).__name__)
         logger.info("Busca nas lojas da região falhou (%s)", type(exc).__name__)
         return RespostaBusca(consulta, "nenhum")
     saida, vistos = [], set()

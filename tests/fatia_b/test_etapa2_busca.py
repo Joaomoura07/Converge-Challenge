@@ -173,3 +173,35 @@ def test_etapa2_busca_real_traz_lojas_da_lista_e_imagem(descricao):
 def test_etapa2_reserva_real_com_chave_invalida():
     r = rodar(b.buscar("Tinta Suvinil Toque de Seda Branco Neve 18L preço", rodizio=b._RodizioChaves(["tvly-invalida"])))
     assert r.provedor == "duckduckgo", f"esperava cair no DuckDuckGo: {r.provedor} {r.erro}"
+
+
+
+def test_uma_chave_esgotada_nao_derruba_as_outras_em_buscas_simultaneas(monkeypatch):
+    """Medido em 08/11: 16 buscas ao mesmo tempo falhavam na chave 1 (esgotada) e cada uma descartava "a atual",
+    que já era a 2, a 3...: as 8 chaves saíam e o Tavily desligava. Só a chave 1 pode sair."""
+    import asyncio
+    from types import SimpleNamespace as NS
+
+    import tavily
+    from tavily.errors import ForbiddenError
+
+    import src.busca as b
+
+    class Cliente:
+        def __init__(self, api_key): self.k = api_key
+
+        async def search(self, *a, **kw):
+            await asyncio.sleep(0.01)
+            if self.k == "k1":
+                raise ForbiddenError("This request exceeds your plan's set usage limit")
+            return {"results": [], "images": []}
+
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", Cliente)
+    rod = b._RodizioChaves(["k1", "k2", "k3", "k4"])
+
+    async def rajada():
+        return await asyncio.gather(*(b._tavily(f"consulta {i}", 5, rod) for i in range(16)))
+
+    respostas = asyncio.run(rajada())
+    assert all(r.provedor == "tavily" for r in respostas)
+    assert rod._ate.get(0) == float("inf") and all(rod._ate.get(i, 0.0) != float("inf") for i in (1, 2, 3))

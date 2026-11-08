@@ -124,7 +124,7 @@ async def verificar_ofertas(descricao: str, ofertas: list[Oferta]) -> list[Ofert
                 break
             except Exception as exc:  # noqa: BLE001
                 if type(exc).__name__ in ("ForbiddenError", "InvalidAPIKeyError", "UsageLimitExceededError"):
-                    rodizio.descartar_atual(type(exc).__name__)
+                    rodizio.descartar(chave, type(exc).__name__)
                     continue
                 raise
         if dados is None:
