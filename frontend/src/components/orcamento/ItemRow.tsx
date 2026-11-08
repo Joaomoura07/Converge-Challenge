@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
+import { ImagemProduto } from "../imagens/ImagemProduto";
 import type { ItemOrcamento, Objetivo } from "./tipos";
 
 interface Props {
@@ -113,8 +114,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
   return (
     <article className={`orc-item orc-item--${item.status}${chegou ? " orc-item--chegou" : ""}`} aria-busy={carregando}>
-      <div className={`orc-item__imagem${item.imagem_url && !carregando ? "" : " orc-item__imagem--hachura"}`}>
-        {item.imagem_url && !carregando && <img src={item.imagem_url} alt={nome} loading="lazy" width={56} height={56} />}
+      <div className="orc-item__imagem">
+        <ImagemProduto src={item.imagem_url} nome={nome} carregando={carregando} />
       </div>
 
       <div className="orc-item__corpo">

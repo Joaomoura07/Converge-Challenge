@@ -168,14 +168,14 @@ def _gravar_sync(linha: dict, cliente) -> None:
 async def gravar(descricao: str, extracao: ResultadoExtracao, imagem_url: str | None, provedor: str | None = None,
                  anterior: EntradaCache | None = None, cliente=None, iteracoes: int = 0) -> bool:
     """Grava/atualiza o cache. Só grava pesquisa útil (alguma oferta com preço).
-    Imagem estável: se já havia uma imagem para este produto, ela é mantida."""
+    Uma nova imagem verificada substitui a antiga; sem foto nova, preserva a anterior."""
     chave = chave_cache(descricao)
     if not chave or not any(o.preco for o in extracao.ofertas):
         return False
     linha = {
         "chave": chave, "descricao": descricao,
         "ofertas": [o.model_dump() for o in extracao.ofertas],
-        "imagem_url": (anterior.imagem_url if anterior and anterior.imagem_url else None) or imagem_url,
+        "imagem_url": imagem_url or (anterior.imagem_url if anterior else None),
         "modelo": extracao.modelo or None, "provedor": provedor, "iteracoes": iteracoes,
         "atualizado_em": datetime.now(timezone.utc).isoformat(),
     }

@@ -30,6 +30,7 @@ from langfuse import observe
 from pydantic import Field
 
 from . import cache
+from .imagens import imagem_do_cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
@@ -332,8 +333,9 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     if anterior and not anterior.vencido:
         calc = calcular(item, anterior.extracao, generico)
         if calc.tem_preco:
+            imagem = await imagem_do_cache(anterior, item.descricao)
             return Rascunho(item, _resultado(
-                item, calc, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
+                item, calc, "pendente_especificacao" if generico else "definido", imagem,
                 anterior.atualizado_em, anterior.iteracoes, pergunta=pergunta_para(item.descricao) if generico else None))
 
     # ② busca + ③ extração
@@ -379,7 +381,7 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
         if gravar_cache:
             await cache.gravar(item.descricao, coleta.extracao(), coleta.imagem, coleta.provedor, anterior=anterior,
                                iteracoes=iteracoes)
-        imagem = anterior.imagem_url if anterior and anterior.imagem_url else coleta.imagem
+        imagem = coleta.imagem or (anterior.imagem_url if anterior else None)
         if generico:
             return _resultado(item, calc, "pendente_especificacao", imagem, agora, iteracoes,
                               pergunta=pergunta_para(item.descricao))
