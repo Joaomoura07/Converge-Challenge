@@ -668,3 +668,16 @@ button:disabled {
 }
 .importador-colar textarea::placeholder { color: var(--tinta-fraca, #777); }
 .importador-colar textarea:focus-visible { outline: 2px solid var(--foco, #4c6fff); outline-offset: 2px; }
+
+.sugestoes-todas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 4px 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--linha);
+}
+.sugestoes-todas button {
+  min-height: 40px;
+}

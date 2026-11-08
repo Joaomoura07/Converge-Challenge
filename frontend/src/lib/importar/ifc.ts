@@ -77,13 +77,17 @@ function lerArgs(texto: string): Valor[] {
     }
     if (c === ".") {
       const fim = texto.indexOf(".", i + 1);
+      if (fim < 0) {
+        i = texto.length; // enum sem ponto final (arquivo corrompido): sem isto o laço nunca avançava
+        return null;
+      }
       const e = texto.slice(i + 1, fim);
       i = fim + 1;
       return { enum: e };
     }
     if (c === '"') {
       const fim = texto.indexOf('"', i + 1);
-      i = fim + 1;
+      i = fim < 0 ? texto.length : fim + 1;
       return null; // binário: não usado
     }
     const m = /^[A-Z_][A-Z0-9_]*/i.exec(texto.slice(i));
@@ -256,6 +260,32 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     }
     return m;
   };
+
+  // Reserva: muitos exportadores (ArchiCAD, Revit sem "quantidades base") põem a área só numa PROPRIEDADE
+  // ("Area", "Área", "NetArea", "120_Pindala"...), às vezes como texto com vírgula: IFCLABEL('63,8').
+  const areaPorPropriedade = new Map<number, { valor: number; nome: string; prioridade: number }>();
+  const lerAreaDaPropriedade = (prop: Entidade): { valor: number; nome: string; prioridade: number } | null => {
+    if (prop.tipo !== "IFCPROPERTYSINGLEVALUE") return null;
+    const nome = texto(prop.args[0]);
+    if (!nome) return null;
+    const n = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    if (!/(area|pindala|flache|superficie|surface)/.test(n) || /(volume|perimet|cross|section|projected|altura|height)/.test(n)) return null;
+    const v = prop.args[2];
+    let valor: number | null = null;
+    if (v && typeof v === "object" && "tipo" in v) {
+      if (typeof v.valor === "number") valor = v.tipo === "IFCAREAMEASURE" ? v.valor * unid.area : v.valor;
+      else if (typeof v.valor === "string") {
+        const s = v.valor.replace(/\s|m²|m2/gi, "");
+        const num = /^\d+(\.\d{3})*(,\d+)?$/.test(s) ? Number(s.replace(/\./g, "").replace(",", ".")) : Number(s);
+        valor = Number.isFinite(num) ? num : null;
+      }
+    }
+    if (valor == null || valor <= 0) return null;
+    // "Net/Neto/Liquida" vale mais que a área bruta; o resto empata e vence o primeiro.
+    const prioridade = /(net|neto|liquid|netto)/.test(n) ? 2 : /(gross|bruta|brutto|ehitatav|hoonealune)/.test(n) ? 0 : 1;
+    return { valor, nome, prioridade };
+  };
+
   const nomeMaterial = (id: number, prof = 0): string | null => {
     const e = ents.get(id);
     if (!e || prof > 4) return null;
@@ -278,6 +308,18 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     const destino = e.args[5];
     if (e.tipo === "IFCRELDEFINESBYPROPERTIES" && ehRef(destino)) {
       const pset = ents.get(destino.ref);
+      if (pset?.tipo === "IFCPROPERTYSET" && Array.isArray(pset.args[4])) {
+        for (const r of pset.args[4].filter(ehRef)) {
+          const prop = ents.get(r.ref);
+          const a = prop ? lerAreaDaPropriedade(prop) : null;
+          if (!a) continue;
+          for (const alvo of alvos) {
+            const atual = areaPorPropriedade.get(alvo);
+            if (!atual || a.prioridade > atual.prioridade) areaPorPropriedade.set(alvo, a);
+          }
+        }
+        continue;
+      }
       if (pset?.tipo !== "IFCELEMENTQUANTITY") continue;
       const q = lerQuantidades(pset);
       for (const a of alvos) quantidadesDe.set(a, new Map([...(quantidadesDe.get(a) ?? []), ...q]));
@@ -299,7 +341,7 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
   }
 
   // Agrupa por classe + nome + material + pavimento, na ordem em que aparecem no arquivo.
-  type Grupo = { regra: Regra; classe: string; nome: string; material: string | null; nivel: string | null; n: number; soma: number; semQtd: number; guids: string[] };
+  type Grupo = { regra: Regra; classe: string; nome: string; material: string | null; nivel: string | null; n: number; soma: number; semQtd: number; guids: string[]; daPropriedade?: string };
   const grupos = new Map<string, Grupo>();
   for (const e of [...ents.values()].sort((a, b) => a.id - b.id)) {
     const regra = REGRAS[e.tipo];
@@ -313,7 +355,14 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     if (g.guids.length < 50 && texto(e.args[0])) g.guids.push(texto(e.args[0])!);
     if (regra.medida !== "contagem") {
       const qs = quantidadesDe.get(e.id);
-      const v = regra.quantidades?.map((k) => qs?.get(k)).find((x) => typeof x === "number");
+      let v = regra.quantidades?.map((k) => qs?.get(k)).find((x) => typeof x === "number");
+      if (v == null && regra.medida === "area") {
+        const p = areaPorPropriedade.get(e.id);
+        if (p) {
+          v = p.valor;
+          g.daPropriedade = p.nome;
+        }
+      }
       if (v == null) g.semQtd++;
       else g.soma += v;
     }
@@ -356,7 +405,7 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
       quantidade,
       unidade,
       nivel: g.nivel,
-      extras: { origem_ifc: { classe: g.classe, elementos: g.n, global_ids: g.guids, esquema, ...(g.material ? { material: g.material } : {}) } },
+      extras: { origem_ifc: { classe: g.classe, elementos: g.n, global_ids: g.guids, esquema, ...(g.material ? { material: g.material } : {}), ...(g.daPropriedade ? { area_da_propriedade: g.daPropriedade } : {}) } },
     });
   }
 
