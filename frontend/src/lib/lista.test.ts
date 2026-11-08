@@ -4,6 +4,7 @@ import {
   errosPorId,
   estadoInicial,
   itensValidados,
+  linhaVazia,
   primeiroErro,
   reduzir,
   type Acao,
@@ -117,5 +118,18 @@ describe("lista de revisão", () => {
       { id: "a", descricao: "Porcelanato 60x60", quantidade: 12.5, unidade: "m2", categoria: null },
     ]);
     expect(itensValidados(rodar([{ tipo: "adicionar", id: "z" }]).linhas)).toBeNull();
+  });
+});
+
+describe("manter_primeiras (lista acima do teto da pesquisa)", () => {
+  it("corta depois da N-ésima linha, limpa os toques e libera o complemento que saiu", () => {
+    const linhas = Array.from({ length: 5 }, (_, i) => ({ ...linhaVazia(`l${i}`), descricao: `item ${i}` }));
+    linhas[4] = { ...linhas[4], sugerida: { sugestaoId: "s1", regra: "porcelanato", motivo: "m", origemLinhas: [1], estimativaConsumo: true } } as never;
+    const estado = { ...estadoInicial, linhas, tocados: { "l0:descricao": true, "l4:descricao": true } as Record<string, true>, decisoes: { s1: "aceita" as const } };
+    const r = reduzir(estado, { tipo: "manter_primeiras", quantidade: 3 });
+    expect(r.linhas.map((l) => l.id)).toEqual(["l0", "l1", "l2"]);
+    expect(r.tocados).toEqual({ "l0:descricao": true });
+    expect(r.decisoes).toEqual({});
+    expect(reduzir(r, { tipo: "manter_primeiras", quantidade: 3 })).toBe(r);   // já cabe: nada muda
   });
 });

@@ -62,7 +62,9 @@ export type Acao =
   // Sugestões (etapa 06): só mudam a lista quando chegam por um clique do arquiteto, e cada id vale uma vez.
   | { tipo: "aceitar_correcao"; id: string; correcao: CorrecaoSugerida }
   | { tipo: "aceitar_complemento"; id: string; linha: Linha }
-  | { tipo: "recusar_sugestao"; id: string };
+  | { tipo: "recusar_sugestao"; id: string }
+  // Lista maior que o teto da pesquisa: o arquiteto escolhe manter só as primeiras N linhas (Caderno, "Manter só os N").
+  | { tipo: "manter_primeiras"; quantidade: number };
 
 export const estadoInicial: EstadoLista = { modo: "manual", linhas: [], tocados: {}, decisoes: {} };
 
@@ -113,6 +115,17 @@ export function reduzir(estado: EstadoLista, acao: Acao): EstadoLista {
         linhas: acao.como === "substituir" ? acao.linhas : [...estado.linhas, ...acao.linhas],
         decisoes: acao.como === "substituir" ? {} : estado.decisoes,
       };
+    case "manter_primeiras": {
+      const n = Math.max(0, Math.floor(acao.quantidade));
+      if (estado.linhas.length <= n) return estado;
+      const ficam = estado.linhas.slice(0, n);
+      const ids = new Set(ficam.map((l) => l.id));
+      const tocados = Object.fromEntries(Object.entries(estado.tocados).filter(([k]) => ids.has(k.split(":")[0])));
+      // complemento aceito que saiu da lista libera a sugestão (mesma regra de "remover")
+      const decisoes = { ...estado.decisoes };
+      for (const l of estado.linhas.slice(n)) if (l.sugerida?.sugestaoId) delete decisoes[l.sugerida.sugestaoId];
+      return { ...estado, linhas: ficam, tocados, decisoes };
+    }
     case "aceitar_correcao": {
       if (estado.decisoes[acao.id]) return estado; // aceite repetido (ou já recusada): não reaplica
       const linhas = aplicarCorrecao(estado.linhas, acao.correcao);
