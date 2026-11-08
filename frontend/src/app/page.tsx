@@ -138,29 +138,31 @@ export default function Inicio() {
 
       <section id="sobre" className="in-faixa in-sobre" aria-labelledby="in-sobre">
         <div className="in-cabeca" data-revelar>
-          <h2 id="in-sobre">Sobre o projeto</h2>
-          <p>A OrçaAI foi criada no Converge Challenge, em Recife, em novembro de 2026, pelo time Avisa que é Agente.</p>
+          <h2 id="in-sobre">Por que a OrçaAI existe</h2>
+          <p>Descobrir quanto a obra custa não deveria levar a semana inteira.</p>
         </div>
         <div className="in-sobre__grade" data-revelar>
           <div>
             <h3>O problema</h3>
             <p>
-              Montar o orçamento de uma obra é cotar dezenas de itens loja por loja, conferir embalagens e refazer contas.
-              É lento, repetitivo, e é aí que o projeto estoura o orçamento do cliente sem ninguém perceber a tempo.
+              Cada revisão de projeto exige levantar quantitativos, converter área em caixas, lembrar de argamassa e
+              rejunte e pesquisar preço loja por loja. São horas perdidas em planilha — ou um orçamento no chute que
+              estoura na hora da compra.
             </p>
           </div>
           <div>
             <h3>Para quem</h3>
             <p>
-              Arquitetos autônomos e escritórios de arquitetura e interiores que precisam de um preço de referência
-              confiável antes de falar com as lojas e com o cliente.
+              Arquitetos e escritórios de arquitetura e interiores que precisam responder &ldquo;quanto vai
+              custar?&rdquo; desde o estudo preliminar até o executivo, com números reais da região da obra.
             </p>
           </div>
           <div>
             <h3>A solução</h3>
             <p>
-              Um AI Agent que lê a lista de materiais do projeto, revisa, pesquisa o preço de cada item em lojas reais e
-              entrega o plano de compra, sempre com a fonte de cada valor.
+              Um AI Agent que lê a lista ou a planta (Excel, CSV, Revit, PDF ou DXF), aponta erros e itens esquecidos,
+              busca preços reais com link da loja e entrega o plano de compra pronto — mostrando na hora se cabe no
+              bolso do cliente.
             </p>
           </div>
         </div>
