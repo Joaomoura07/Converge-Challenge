@@ -7,10 +7,14 @@ import { PlantaViva } from "./PlantaViva";
 // prévia do produto, como funciona, regras do agente, números do ensaio e chamada final.
 // Dados da prévia são fictícios e rotulados. Números do ensaio: orçamento real de 07/11 (16 itens, cozinha 03).
 
+// Fotos: as mesmas que a pesquisa escolheu para esses produtos (cache de preços); o item pendente mostra um parecido.
 const ITENS_PREVIA = [
-  { nome: "Porcelanato Portobello Cimento 90×90", qtd: "24 m², 11 caixas", min: 89.9, med: 104.5, max: 129.0, loja: "Leroy Merlin", status: "definido" },
-  { nome: "Argamassa AC-III Quartzolit 20 kg", qtd: "15 sacos, sugerido", min: 38.9, med: 42.0, max: 49.9, loja: "Telhanorte", status: "definido" },
-  { nome: "Tinta acrílica branca fosca", qtd: "120 m²", min: 0, med: 0, max: 0, loja: "", status: "pendente" },
+  { nome: "Porcelanato Portobello Cimento 90×90", qtd: "24 m², 11 caixas", min: 89.9, med: 104.5, max: 129.0, loja: "Leroy Merlin", status: "definido",
+    foto: "https://cdn.leroymerlin.com.br/products/porcelanato_acetinado_interno_90x90cm_nord_portobello_92308265_88df_1800x1800.png" },
+  { nome: "Argamassa AC-III Quartzolit 20 kg", qtd: "15 sacos, sugerido", min: 38.9, med: 42.0, max: 49.9, loja: "Telhanorte", status: "definido",
+    foto: "https://telhanorte.vtexassets.com/arquivos/ids/1320983-400-auto" },
+  { nome: "Tinta acrílica branca fosca", qtd: "120 m², 2 latas 18 L", min: 289.9, med: 339.9, max: 389.9, loja: "", status: "pendente",
+    foto: "https://telhanorte.vtexassets.com/arquivos/ids/360263/Tinta--acrilica-Prolar-18-litros-branco-Sherwin-Williams-1024327.jpg?v=637069382597770000" },
 ] as const;
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -44,14 +48,21 @@ function Previa() {
         </div>
       </div>
       <div className="in-previa__resumo">
-        <span className="ok">✓ 14 itens com preço</span>
-        <span className="pend">? 2 pendentes de especificação</span>
+        <span className="ok">
+          <i className="in-ico" aria-hidden="true">✓</i>14 itens com preço
+        </span>
+        <span className="pend">
+          <i className="in-ico" aria-hidden="true">?</i>2 com preço aproximado
+        </span>
         <span>Cabe no orçamento do cliente</span>
       </div>
       <ul className="in-previa__itens">
         {ITENS_PREVIA.map((i, n) => (
           <li key={i.nome} style={{ "--i": n } as React.CSSProperties}>
-            <span className="foto" aria-hidden="true" />
+            <span className="foto">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={i.foto} alt={i.nome} loading="lazy" />
+            </span>
             <span className="nome">
               {i.nome}
               <small>{i.qtd}</small>
@@ -66,7 +77,10 @@ function Previa() {
               </>
             ) : (
               <>
-                <span className="pergunta">Qual marca e linha? Sem isso, não há preço.</span>
+                <span className="pergunta">
+                  <strong>≈ {reais.format(i.med)} a lata</strong>, pela média de produtos parecidos. Quer especificar marca
+                  e linha?
+                </span>
                 <span className="loja">
                   <span className="selo pend">? Pendente</span>
                 </span>
@@ -123,20 +137,27 @@ export default function Inicio() {
           <li>
             <span className="n">1</span>
             <h3>Envie a lista da obra</h3>
-            <p>Arraste a planilha ou o TXT do Revit, ou use um exemplo pronto. Informe o CEP e o orçamento do cliente.</p>
+            <p>
+              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit ou PDF)
+              ou use um exemplo. O CEP define a cidade da busca e põe primeiro as lojas com unidade na região.
+            </p>
           </li>
           <li>
             <span className="n">2</span>
-            <h3>Revise o que a IA apontou</h3>
+            <h3>Feche a lista completa de primeira</h3>
             <p>
-              Unidades erradas, itens duplicados e o que costuma ser esquecido, como argamassa e rejunte. Nada entra sem
+              Antes de pesquisar, a IA revisa a lista: aponta unidades erradas e itens duplicados e sugere o que costuma
+              faltar, como argamassa e rejunte para o porcelanato. O orçamento sai completo de primeira, e nada entra sem
               o seu clique.
             </p>
           </li>
           <li>
             <span className="n">3</span>
             <h3>Receba o plano de compra</h3>
-            <p>Preço mínimo, médio e máximo com a loja e o link, onde comprar, se cabe no orçamento e o arquivo em Excel.</p>
+            <p>
+              Preço mínimo, médio e máximo com a loja e o link, quantas embalagens comprar, onde comprar e se cabe no
+              orçamento. O plano de compra também sai em planilha do Excel, para mandar às lojas ou ao cliente.
+            </p>
           </li>
         </ol>
       </section>
@@ -153,7 +174,8 @@ export default function Inicio() {
               <strong>Sem fonte, sem preço.</strong> Todo valor vem com a loja e o link.
             </li>
             <li>
-              <strong>Pergunta em vez de chutar.</strong> Item genérico vira pergunta para você.
+              <strong>Pergunta em vez de chutar.</strong> Item genérico ganha um preço aproximado, marcado como tal, e
+              uma pergunta para você especificar.
             </li>
             <li>
               <strong>Sugere, não aplica.</strong> Correções e complementos esperam o seu aceite.
