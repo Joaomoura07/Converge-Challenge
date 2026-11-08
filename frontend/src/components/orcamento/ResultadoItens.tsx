@@ -10,11 +10,11 @@
 import "@/styles/papeis-de-cor.css";
 import "./orcamento.css";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ItemRow } from "./ItemRow";
 import { reais } from "./formato";
 import {
-  ErroRepesquisa, aplicarResultado, fraseProgresso, ordenarItens, progresso, repesquisarItem,
+  ErroRepesquisa, aplicarResultado, fraseProgresso, ordenarComPosicaoFixa, progresso, repesquisarItem,
   type PedidoRepesquisa, type ResultadoApi, type TrocaAlternativa,
 } from "./resultado";
 import type { ItemOrcamento } from "./tipos";
@@ -29,6 +29,8 @@ interface Props {
 
 export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: Props) {
   // Enquanto a rota trabalha, o item aparece como "buscando" na hora (o Realtime confirma em seguida).
+  // lugar de cada item, guardado assim que ele termina a primeira busca (não pula ao interagir)
+  const fixos = useRef(new Map<string, number>());
   const [locais, setLocais] = useState<Record<string, ItemOrcamento>>({});
   const [erros, setErros] = useState<Record<string, string>>({});
   // Depois de uma alternativa que trocou o produto: o que havia antes, para o arquiteto escolher com qual fica.
@@ -72,7 +74,7 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
         </div>
       )}
       <div className="orc-lista">
-        {ordenarItens(visiveis).map((item) => (
+        {ordenarComPosicaoFixa(visiveis, fixos.current).map((item) => (
           <div key={item.id}>
             <ItemRow item={item}
                      onResponder={(i, texto) => pesquisar(i, texto)}

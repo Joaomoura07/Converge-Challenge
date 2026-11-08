@@ -19,6 +19,19 @@ export function ordenarItens<T extends Pick<ItemOrcamento, "status">>(itens: T[]
     .map(({ item }) => item);
 }
 
+/** Posição fixa (pedido de 08/11 do João): assim que um item termina a busca pela primeira vez, o grupo dele fica
+ *  guardado em `fixos`. Interagir depois (responder, pesquisar de novo, alternativa, aceitar média) volta o status
+ *  para "buscando", mas o item não sai do lugar. `fixos` é mutado: o componente guarda o mesmo Map entre renders. */
+export function ordenarComPosicaoFixa<T extends Pick<ItemOrcamento, "id" | "status">>(itens: T[], fixos: Map<string, number>): T[] {
+  for (const item of itens) {
+    if (item.status !== "buscando" && !fixos.has(item.id)) fixos.set(item.id, ORDEM[item.status]);
+  }
+  return itens
+    .map((item, i) => ({ item, i, grupo: fixos.get(item.id) ?? ORDEM[item.status] }))
+    .sort((a, b) => a.grupo - b.grupo || a.i - b.i)
+    .map(({ item }) => item);
+}
+
 export interface Progresso {
   prontos: number;
   total: number;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ErroRepesquisa, OBJETIVOS, aplicarResultado, fraseProgresso, ordenarItens, progresso, repesquisarItem,
+  ErroRepesquisa, OBJETIVOS, aplicarResultado, fraseProgresso, ordenarComPosicaoFixa, ordenarItens, progresso, repesquisarItem,
 } from "./resultado";
 import type { ItemOrcamento, StatusItem } from "./tipos";
 
@@ -114,5 +114,20 @@ describe("repesquisarItem (rota POST /orcamento-itens/{id}/repesquisar)", () => 
     const r = aplicarResultado(item("7", "buscando"), { item_id: "7", status: "definido", preco_emb_med: 10 } as never);
     expect(r).toMatchObject({ id: "7", status: "definido", preco_emb_med: 10, descricao: "item 7" });
     expect("item_id" in r).toBe(false);
+  });
+});
+
+describe("posição fixa depois de interagir", () => {
+  it("item que já terminou não muda de lugar ao pesquisar de novo", () => {
+    const fixos = new Map<string, number>();
+    const ids = (l: ItemOrcamento[]) => ordenarComPosicaoFixa(l, fixos).map((i) => i.id);
+    expect(ids([item("1", "nao_encontrado"), item("2", "definido"), item("3", "pendente_especificacao")])).toEqual(["2", "1", "3"]);
+    expect(ids([item("1", "buscando"), item("2", "definido"), item("3", "pendente_especificacao")])).toEqual(["2", "1", "3"]);
+    expect(ids([item("1", "definido"), item("2", "definido"), item("3", "buscando")])).toEqual(["2", "1", "3"]);
+  });
+
+  it("na chegada inicial os achados continuam subindo", () => {
+    const fixos = new Map<string, number>();
+    expect(ordenarComPosicaoFixa([item("1", "buscando"), item("2", "definido")], fixos).map((i) => i.id)).toEqual(["2", "1"]);
   });
 });
