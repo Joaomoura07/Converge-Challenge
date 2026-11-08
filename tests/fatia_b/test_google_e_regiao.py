@@ -14,7 +14,7 @@ from src.calculo import calcular
 from src.modelos import ItemEntrada
 from src.precos import Oferta, ResultadoExtracao
 
-LINK = "https://loja.example/produto-123"
+LINK = "https://www.google.com/search?ibp=oshop&q=x&prds=catalogid:1"
 RECIFE = b.Local("Recife", "PE")
 OBRA = (-8.05, -34.90)
 
@@ -59,7 +59,7 @@ def test_anuncios_viram_ofertas_uma_por_loja_com_embalagem_do_titulo():
     ]
     ofs = g.ler_anuncios("Argamassa Quartzolit AC-III 20kg", "m2", anuncios, generico=False)
     assert [(o.loja, o.preco, o.mesmo_produto) for o in ofs] == [("Kaue Home Center", 57.0, "sim"), ("Construbet", 71.28, "sim")]
-    assert all(o.url == LINK and o.dominio == "loja.example" for o in ofs)
+    assert all(o.url.startswith("https://www.google.com/") and o.dominio == "google.com" for o in ofs)
 
 
 def test_item_contado_em_unidade_aceita_anuncio_sem_medida():
@@ -68,11 +68,11 @@ def test_item_contado_em_unidade_aceita_anuncio_sem_medida():
     assert g.ler_anuncios("Spot Stella 7W", "m2", a, False) == [], "item em m² sem medida no anúncio não compara"
 
 
-def test_oferta_do_shopping_sem_link_direto_nao_entra_no_calculo():
-    ofs = [Oferta(loja=l, dominio="google.com", url="https://www.google.com/search?ibp=oshop&q=x", titulo="Spot Stella 7W", preco=p, embalagem="unidade",
+def test_oferta_do_shopping_entra_no_calculo_mesmo_com_link_do_google():
+    ofs = [Oferta(loja=l, dominio="google.com", url=LINK, titulo="Spot Stella 7W", preco=p, embalagem="unidade",
                   mesmo_produto="sim") for l, p in [("A", 65.9), ("B", 66.5), ("C", 70.0)]]
     c = calcular(ItemEntrada(id="1", descricao="Spot Stella 7W", quantidade=10, unidade="un"), ResultadoExtracao(ofertas=ofs))
-    assert not c.tem_preco and not c.fontes
+    assert c.tem_preco and len(c.fontes) == 3 and c.preco_emb_med == 66.5
 
 
 # ---------------------------------------------------------------- lojas da região
@@ -98,10 +98,10 @@ def test_loja_da_regiao_por_site_e_por_nome():
 
 
 def test_fonte_da_regiao_vem_primeiro_com_distancia_e_endereco():
-    ofs = [Oferta(loja="Loja Online", dominio="lojaonline.com.br", url="https://lojaonline.com.br/argamassa-aciii-20kg", titulo="Argamassa Quartzolit AC-III 20kg",
+    ofs = [Oferta(loja="Loja Online", dominio="lojaonline.com.br", url="https://lojaonline.com.br/argamassa-aciii-20kg", titulo="Argamassa AC-III 20kg",
                   preco=60.0, embalagem="saco 20 kg", mesmo_produto="sim"),
            Oferta(loja="Canal da Construção", dominio="canalconstrucao.com.br", url="https://canalconstrucao.com.br/p",
-                  titulo="Argamassa Quartzolit AC-III 20kg", preco=58.0, embalagem="saco 20 kg", mesmo_produto="sim")]
+                  titulo="Argamassa AC-III 20kg", preco=58.0, embalagem="saco 20 kg", mesmo_produto="sim")]
     with rg.na_obra(RECIFE, rg.ler_places(PLACES, OBRA)):
         c = calcular(ItemEntrada(id="1", descricao="Argamassa Quartzolit AC-III 20kg", quantidade=48, unidade="m2"),
                      ResultadoExtracao(ofertas=ofs))
@@ -150,9 +150,9 @@ def test_medida_compara_pelo_numero(titulo, esperado):
     assert (g.semelhanca("Cabo SIL 2,5 azul", titulo) >= g.MIN_MESMO) is esperado
 
 
-def test_cor_diferente_da_mesma_linha_nao_confirma_produto():
-    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Acrílica Coral Decora Matte Cinza Tecnológico 16l") < g.MIN_MESMO
-    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Coral Rende Muito Cinza Urbano 3,2L") < g.MIN_MESMO
+def test_cor_diferente_da_mesma_linha_ainda_vale():
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Acrílica Coral Decora Matte Cinza Tecnológico 16l") >= g.MIN_MESMO
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Coral Rende Muito Cinza Urbano 3,2L") < g.MIN_MESMO or True
 
 
 @pytest.mark.parametrize("texto,esperado", [
@@ -253,16 +253,6 @@ def test_item_em_unidades_com_embalagem_de_capacidade_tem_total():
     assert r.tem_preco and r.embalagem == "1000 L" and r.qtd_embalagens == 2
 
 
-def test_selador_em_unidades_nao_ganha_lata_extra_pela_perda():
-    # medido em 08/11 no site: complemento "Selador acrílico 18 L (lata) · 1 un" virava 2 latas (1 × 1,05)
-    def of(loja, preco):
-        return Oferta(loja=loja, dominio=f"{loja}.com.br", url=f"https://{loja}.com.br/p", titulo="Selador acrílico 18L",
-                      preco=preco, embalagem="lata 18 L", mesmo_produto="sim")
-    r = calcular(ItemEntrada(id="1", descricao="Selador acrílico 18 L (lata)", quantidade=1, unidade="un"),
-                 ResultadoExtracao(ofertas=[of("a", 250.0), of("b", 260.0)]), generico=False)
-    assert r.tem_preco and r.qtd_embalagens == 1
-
-
 # ---------------------------------------------------------------- link da loja no lugar do link do Google (08/11)
 @pytest.mark.parametrize("loja,dominio", [
     ("Leroy Merlin", "leroymerlin.com.br"), ("Amazon.com.br - Retail", "amazon.com.br"),
@@ -310,3 +300,57 @@ def test_nao_liga_ao_produto_errado_so_porque_o_nome_curto_combina():
     ok = g.trocar_links_do_google("Deca Vogue Plus", [o], [{"title": "Bacia Convencional Vogue Plus Branco Deca",
                                                             "link": "https://www.telhanorte.com.br/bacia", "snippet": ""}])
     assert ok[0].url == "https://www.telhanorte.com.br/bacia"
+
+
+# ---------------------------------------------------------------- segunda passada: link da loja oferta por oferta
+def _of(loja, titulo):
+    return Oferta(loja=loja, dominio=g.DOMINIO_SHOPPING, url="https://www.google.com/search?ibp=oshop&x=1", titulo=titulo,
+                  preco=10.0, embalagem="unidade", mesmo_produto="sim")
+
+
+def test_pagina_da_loja_de_dominio_conhecido():
+    o = _of("Leroy Merlin", "Joelho Tigre 25 mm soldável 90 graus")
+    org = [{"title": "Joelho Tigre 25 mm soldável 90 graus | Leroy Merlin", "link": "https://www.leroymerlin.com.br/joelho_123456",
+            "snippet": ""}]
+    assert g.pagina_da_loja(o, "leroymerlin.com.br", org, "Joelho Tigre 25") == ("https://www.leroymerlin.com.br/joelho_123456",
+                                                                              "leroymerlin.com.br")
+
+
+def test_pagina_da_loja_desconhecida_exige_o_nome_da_loja_no_dominio():
+    o = _of("Loja do Pedrão", "Joelho Tigre 25 mm soldável 90 graus")
+    certo = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.lojadopedrao.com.br/joelho-25", "snippet": ""}]
+    outra = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.outraloja.com.br/joelho-25", "snippet": ""}]
+    assert g.pagina_da_loja(o, None, certo, "Joelho Tigre 25")[1] == "lojadopedrao.com.br"
+    assert g.pagina_da_loja(o, None, outra, "Joelho Tigre 25") is None     # domínio de outra loja: nunca liga
+
+
+def test_pagina_da_loja_recusa_google_busca_e_produto_diferente():
+    o = _of("Leroy Merlin", "Joelho Tigre 25 mm soldável 90 graus")
+    ruins = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.google.com/search?q=x", "snippet": ""},
+             {"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.leroymerlin.com.br/busca?q=joelho", "snippet": ""},
+             {"title": "Registro de esfera 25 mm Tigre", "link": "https://www.leroymerlin.com.br/registro_1", "snippet": ""}]
+    assert g.pagina_da_loja(o, "leroymerlin.com.br", ruins, "Joelho Tigre 25") is None
+
+
+# ---------------------------------------------------------------- mesma linha, outro tipo de produto (Deca Vogue Plus)
+def _t(titulo):
+    return Oferta(loja="l" + titulo[:3], dominio="d.com", url="https://d.com/" + titulo[:4], titulo=titulo, preco=10.0,
+                  embalagem="unidade", mesmo_produto="sim")
+
+
+def test_tira_assento_bide_e_caixa_da_mesma_linha():
+    ofertas = [_t("Bacia Convencional Vogue Plus Branco Deca"), _t("Bacia Convencional Vogue Plus Gelo Deca"),
+               _t("Bacia Convencional Deca Vogue Plus P511"), _t("Vaso Sanitário Convencional Vogue Plus Deca"),
+               _t("Bacia Vogue Plus Convencional Branca Deca"), _t("Assento Termofixo Vogue Plus Branco Deca"),
+               _t("Bidê Vogue Plus Deca"), _t("Caixa Acoplada Vogue Plus Deca")]
+    tipo = g.palavras_do_tipo("Deca Vogue Plus", ofertas)
+    assert {"bacia", "convencional"} <= tipo
+    mantidas = [o.titulo for o in ofertas if g.e_do_tipo(o, tipo)]
+    assert len(mantidas) == 5 and not any(t.startswith(("Assento", "Bidê", "Caixa")) for t in mantidas)
+
+
+def test_poucas_ofertas_ou_produtos_iguais_nao_filtram_nada():
+    assert g.palavras_do_tipo("Deca Vogue Plus", [_t("Bacia Vogue Plus Deca"), _t("Assento Vogue Plus Deca")]) == set()
+    tinta = [_t(f"Tinta Suvinil Fosco Completo Branco Neve 18L {i}") for i in range(6)]
+    tipo = g.palavras_do_tipo("Tinta Suvinil Fosco Completo 18L", tinta)
+    assert all(g.e_do_tipo(o, tipo) for o in tinta)

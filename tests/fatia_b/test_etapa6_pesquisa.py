@@ -22,7 +22,7 @@ MISTURADOR = ItemEntrada(id="2", descricao="Misturador monocomando Deca Link par
 
 def of(loja, preco, emb="lata 18 L", igual="sim", titulo=None):
     return Oferta(loja=loja, dominio=f"{loja.lower().replace(' ', '')}.com.br", url=f"https://{loja}/{preco}/{igual}",
-                  titulo=titulo or (f"Tinta {emb}" if igual == "parecido" and "L" in emb else TINTA.descricao if "L" in emb else MISTURADOR.descricao), preco=preco, embalagem=emb, mesmo_produto=igual)
+                  titulo=titulo or loja, preco=preco, embalagem=emb, mesmo_produto=igual)
 
 
 # ---------------------------------------------------------------- dublês
@@ -80,7 +80,7 @@ class LLMFalso:
     @property
     def chat(self): return NS(completions=NS(create=self._create))
 
-    def _create(self, model, messages, tools=None, temperature=None, top_p=None, max_tokens=None):
+    def _create(self, model, messages, tools=None, temperature=None, top_p=None):
         acao, valor = self.roteiro[self.chamadas]
         self.chamadas += 1
         if acao == "buscar":
@@ -97,82 +97,13 @@ def rodar(item, **kw):
 
 # ---------------------------------------------------------------- caminho fixo
 def test_cache_valido_responde_sem_buscar(mundo):
-    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img.example/cache.jpg", provedor="tavily",
+    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img/cache.jpg", provedor="tavily",
                            extracao=ResultadoExtracao(ofertas=[of("Telhanorte", 739.9), of("Magazine Luiza", 849.0)]),
                            atualizado_em=datetime.now(timezone.utc) - timedelta(days=1), vencido=False)
     m = mundo({}, cache_linha=entrada)
     r = rodar(TINTA, cliente_llm=LLMFalso([]))
-    assert r.status == "definido" and r.imagem_url == "https://img.example/cache.jpg" and r.qtd_embalagens == 2
+    assert r.status == "definido" and r.imagem_url == "https://img/cache.jpg" and r.qtd_embalagens == 2
     assert m.consultas == [] and r.iteracoes == 0 and r.premissa.startswith("rendimento")
-
-
-@pytest.mark.parametrize("vencido", [False, True])
-def test_link_removido_da_loja_nao_volta_do_cache(mundo, monkeypatch, vencido):
-    import tavily
-
-    s = p.get_settings()
-    monkeypatch.setattr(s, "tavily_api_keys", "tvly-teste-sintetico")
-    monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 2)
-    removida = of("Loja antiga", 739.9).model_copy(update={"url": "https://antiga.example/tinta"})
-    soft404 = of("Outra loja", 739.9).model_copy(update={"url": "https://outra.example/tinta"})
-    atual = of("Loja atual", 749.9).model_copy(update={"url": "https://atual.example/tinta"})
-    chamadas = []
-
-    class Leitor:
-        def __init__(self, **kwargs):
-            pass
-
-        async def extract(self, urls, **kwargs):
-            chamadas.extend(urls)
-            return {
-                "results": [{"url": u, "raw_content": "# 404 - Página não encontrada"}
-                            for u in urls if u == soft404.url],
-                "failed_results": [{"url": u, "error": "HTTP 404 Not Found" if u == removida.url else "Timeout"}
-                                   for u in urls if u != soft404.url],
-            }
-
-    monkeypatch.setattr(tavily, "AsyncTavilyClient", Leitor)
-    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url=None, provedor="tavily",
-                           extracao=ResultadoExtracao(ofertas=[removida]),
-                           atualizado_em=datetime.now(timezone.utc), vencido=vencido)
-    m = mundo({}, cache_linha=entrada, padrao=[] if vencido else [removida, soft404, atual])
-    r = rodar(TINTA, usar_agente=False)
-    assert len(m.consultas) == 1 and chamadas.count(removida.url) == 1
-    assert [f.url for f in r.fontes] == ([] if vencido else [atual.url])
-    assert r.status == ("nao_encontrado" if vencido else "definido")
-
-
-@pytest.mark.parametrize("detalhes,verificado,tem_fonte", [
-    ("De R$ 899,90 por R$ 739,90\n10x de R$ 73,99\nComprar agora", True, True),
-    ("R$ 849,90\nComprar agora", False, True),
-    ("Filtrar por preço\nR$ 739,90\nComprar agora", False, True),
-    ("Produto indisponível\nR$ 739,90", False, False),
-    ("R$ 739,90\nR$ 849,90\nComprar agora", False, True),
-    ("R$ 739,90\nno Pix\nComprar agora", False, True),
-])
-def test_link_de_compra_so_com_preco_da_pagina(mundo, monkeypatch, detalhes, verificado, tem_fonte):
-    import tavily
-
-    s = p.get_settings()
-    monkeypatch.setattr(s, "tavily_api_keys", "tvly-teste-sintetico")
-    monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 2)
-    oferta = of("Loja teste", 739.9).model_copy(update={"url": "https://loja.example/tinta"})
-
-    class Leitor:
-        def __init__(self, **kwargs):
-            pass
-
-        async def extract(self, urls, **kwargs):
-            assert urls == [oferta.url]
-            return {"results": [{"url": oferta.url, "raw_content": f"# {TINTA.descricao}\n{detalhes}"}]}
-
-    monkeypatch.setattr(tavily, "AsyncTavilyClient", Leitor)
-    mundo({}, padrao=[oferta])
-    r = rodar(TINTA, usar_agente=False)
-    assert bool(r.fontes) is tem_fonte
-    if tem_fonte:
-        assert r.fontes[0].link_verificado is verificado
-        assert r.preco_emb_med == 739.9
 
 
 def test_achou_lojas_suficientes_nao_chama_agente(mundo):

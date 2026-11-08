@@ -5,15 +5,18 @@ passavam de 50% de diferença; nos piores casos o nosso preço vinha de UMA loja
 O Shopping devolve dezenas de anúncios estruturados (título, preço, loja, link) por produto, inclusive de lojas menores.
 Entrar com eles no cálculo (mediana sem outliers, 1 oferta por loja) deixa o preço muito mais perto do mercado.
 
-Anúncios com título abreviado podem servir para estimar, inclusive para itens especificados.
-A embalagem sai do título ("18L", "20kg", "kit 2 latas") ou é unidade para itens contados em unidades.
-Preço e URL precisam vir da mesma oferta. Links do Shopping e de listagens não são fontes de compra.
+Regras para não comparar banana com laranja (anúncio só entra se):
+- o título tem TODAS as medidas do item ("18L", "60x60", "3/4", "25 mm") e a marca/linha (palavras próprias);
+- o título tem a maioria das palavras do item (≥ 75% = mesmo produto; ≥ 55% e o item é genérico = parecido);
+- a embalagem sai do próprio título ("18L", "20kg", "kit 2 latas") ou é unidade, quando o item é contado em unidades.
+O preço é o do anúncio (texto estruturado do Google, não lido por LLM): não há o que alucinar.
 """
 
 from __future__ import annotations
 
 import logging
 import re
+from urllib.parse import quote_plus
 
 from langfuse import observe
 
@@ -23,16 +26,14 @@ from .compra import conteudo_embalagem, normalizar_unidade
 from .config import get_settings
 from .precos import Oferta
 from .regiao import regional_por_nome
-from .especificacao import conflitos_explicitos, nao_confirmados, texto_para_similaridade
-from .busca import dominio_de, link_direto_produto, nome_da_loja
 from .validacao_serper import _buscar, converter_preco
 
 logger = logging.getLogger(__name__)
 
-MIN_MESMO = 0.66            # aplicado somente após confirmar os atributos solicitados
+MIN_MESMO = 0.66            # 2 de 3 palavras: a cor ("Cinza Urbano" x "Cinza Tecnológico") quase não muda o preço da linha
 MIN_PARECIDO = 0.55
 MAX_OFERTAS = 12
-DOMINIO_SHOPPING = "google.com"  # compatibilidade com ofertas antigas
+DOMINIO_SHOPPING = "google.com"   # o link do anúncio abre no Google Shopping
 # palavras que não identificam o produto (a chave do cache já tira as vazias)
 FRACAS = {"preco", "comprar", "branco", "branca", "cinza", "preto", "preta", "cor", "para", "com", "kit", "un",
           "unidade", "unidades", "cozinha", "banheiro", "parede", "piso"}
@@ -61,23 +62,30 @@ def _numeros(tokens: set[str]) -> set[float]:
     return {float(n) for t in tokens for n in re.findall(r"\d+(?:\.\d+)?", t)}
 
 
+_CODIGO = re.compile(r"^ac(?:i{1,3})$")   # classe da argamassa já normalizada: aci / acii / aciii
+
+
+def mesmo_codigo(descricao: str, titulo: str) -> bool:
+    """Se o item tem classe (AC-I/II/III), o título precisa ter exatamente a mesma."""
+    do_item = {t for t in _tokens(descricao) if _CODIGO.match(t)}
+    return not do_item or do_item == {t for t in _tokens(titulo) if _CODIGO.match(t)}
+
+
 def semelhanca(descricao: str, titulo: str) -> float:
-    """Ordena por relevância; um título abreviado pode servir como estimativa."""
-    if conflitos_explicitos(descricao, titulo):
+    """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item.
+    Medida compara pelo NÚMERO: "2,5" do item casa com "2,5mm" ou "2.50mm" do anúncio (medido em 08/11: o cabo SIL
+    2,5 ficava sem preço porque "2.5" ≠ "2.5mm").
+    Código de classe (AC-I/II/III) é obrigatório e precisa ser o MESMO: medido em 08/11, "Argamassa Quartzolit AC-III
+    20kg" aceitava a ACI de R$ 14,90 e a "Cozinhas e Banheiros" de R$ 16,06 como mesmo produto (3 de 4 palavras)."""
+    item = _tokens(descricao) - FRACAS
+    anuncio = _tokens(titulo)
+    if len(item) < 2 or not _numeros(_medidas(item)) <= _numeros(anuncio):
         return 0.0
-    item = _tokens(texto_para_similaridade(descricao)) - FRACAS
-    anuncio = _tokens(texto_para_similaridade(titulo)) - FRACAS
-    medidas = _medidas(item)
-    palavras = item - medidas
-    comuns = len(palavras & anuncio)
-    if not comuns or comuns < min(2, len(palavras)):
+    if not mesmo_codigo(descricao, titulo):
         return 0.0
-    numeros = _numeros(anuncio)
-    medidas_comuns = sum(_numeros({v}) <= numeros for v in medidas)
-    score = min(1.0, (comuns + medidas_comuns) / min(len(item), len(anuncio)))
-    if len(item) == 1 or medidas_comuns < len(medidas) or nao_confirmados(descricao, titulo):
-        return min(score, MIN_MESMO - 0.01)
-    return score
+    palavras = item - _medidas(item)
+    comuns = len(palavras & anuncio) + len(_medidas(item))
+    return comuns / len(item) if len(palavras & anuncio) >= min(2, len(palavras)) else 0.0
 
 
 _ROTULO_UNIDADE = {"l": "L", "kg": "kg", "m2": "m²", "m3": "m³", "m": "m"}
@@ -89,6 +97,7 @@ _CHAPA = re.compile(r"\b(mdf|mdp|compensado|osb|chapa|chapas|granito|marmore|qua
 _LADOS = re.compile(r"\b\d\s*(?:l|f|lados?|faces?)\b", re.I)    # "2l", "2f", "2 faces": lados da chapa, não litros
 _NUM = r"(\d+(?:[.,]\d+)?)"
 _DIMENSOES = re.compile(rf"{_NUM}\s*(mm|cm|m)?\s*[x×]\s*{_NUM}\s*(mm|cm|m)?(?:\s*[x×]\s*{_NUM}\s*(mm|cm|m)?)?", re.I)
+_REVESTIMENTO = re.compile(r"\b(porcelanato|ceramica|piso|revestimento|azulejo|pastilha|laminado|vinilico)\b")
 AREA_MINIMA_M2 = 0.3        # peça menor que isso (pedrinha, batente) não é o material do quantitativo em m²
 AREA_MAXIMA_M2 = 20.0
 
@@ -129,7 +138,10 @@ def area_pelas_dimensoes(titulo: str) -> float | None:
 def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> str | None:
     """Rótulo curto da embalagem lida no título ("20 kg", "18 L", "kit 5 unidades"), que a tela mostra e o cálculo
     relê. Antes ia o título inteiro e a tela mostrava "Compre Produtos QUARTZOLIT em Promoção..." como embalagem."""
-    if normalizar_unidade(unidade_item) == "m2" and _CHAPA.search(_sem_acento(f"{descricao} {titulo}")):
+    # A chapa/pedra é decidida pelo PEDIDO, não pelo título: "Porcelanato Portobello Mármore Bianco 60x60" é piso
+    # (padrão mármore), não pedra; medido em 08/11 virou "0,36 m²" por peça e o total de 18 m² foi a R$ 5.853.
+    eh_revestimento = bool(_REVESTIMENTO.search(_sem_acento(descricao)))
+    if normalizar_unidade(unidade_item) == "m2" and not eh_revestimento and _CHAPA.search(_sem_acento(descricao)):
         area = area_pelas_dimensoes(titulo)
         if area is None:
             return None             # peça pequena ou sem medidas: não dá para comparar em R$/m²
@@ -143,6 +155,8 @@ def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> st
         return f"{q} {_ROTULO_UNIDADE.get(c.unidade, c.unidade)}"
     if normalizar_unidade(unidade_item) in ("un", None):
         return "unidade"
+    if normalizar_unidade(unidade_item) == "m2" and eh_revestimento:
+        return "m²"   # piso/revestimento sem caixa no título: as lojas anunciam o preço por m²
     return None
 
 
@@ -161,16 +175,20 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         if not titulo or not loja or preco is None:
             continue
         s = semelhanca(descricao, titulo)
-        igual = "sim" if s >= MIN_MESMO else "parecido" if s >= MIN_PARECIDO else None
+        igual = "sim" if s >= MIN_MESMO else "parecido" if (generico and s >= MIN_PARECIDO) else None
         emb = _embalagem(titulo, unidade_item, descricao)
         if igual is None or emb is None:
             continue
-        link = str(a.get("link") or "")
-        if not link_direto_produto(link):
+        link = str(a.get("link") or "") or f"https://www.google.com/search?tbm=shop&q={quote_plus(titulo)}"
+        if not link.startswith("http"):
             continue
         regional = regional_por_nome(loja)
+        from .busca import dominio_de
+        host = dominio_de(link) or ""
+        direto = host and "google." not in host     # link que já é da loja (o Shopping às vezes manda): vale como loja
         candidatos.append((s, Oferta(loja=regional.nome if regional else loja,
-                                     dominio=dominio_de(link),
+                                     dominio=host if direto else regional.dominio if regional and regional.dominio
+                                     else DOMINIO_SHOPPING,
                                      url=link, titulo=titulo, preco=preco, embalagem=emb, mesmo_produto=igual,
                                      imagem=_imagem(a))))
     candidatos.sort(key=lambda c: -c[0])
@@ -205,8 +223,7 @@ def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos
         if loja is None or loja.nome in lojas or not achou or eh_pagina_de_busca(link):
             continue
         texto = f"{titulo} {trecho[:achou.start()]}"   # o nome do produto vem antes do preço no trecho
-        score = semelhanca(descricao, texto)
-        if score < MIN_PARECIDO:
+        if semelhanca(descricao, texto) < MIN_MESMO:
             continue
         emb = _embalagem(texto, unidade_item, descricao)
         preco = converter_preco(achou.group(1))
@@ -214,7 +231,7 @@ def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos
             continue
         lojas.add(loja.nome)
         saida.append(Oferta(loja=loja.nome, dominio=loja.dominio, url=link, titulo=texto[:200], preco=preco,
-                            embalagem=emb, mesmo_produto="sim" if score >= MIN_MESMO else "parecido"))
+                            embalagem=emb, mesmo_produto="sim"))
     return saida
 
 
@@ -257,33 +274,7 @@ async def ofertas_google(descricao: str, unidade_item: str | None, generico: boo
     except Exception as exc:  # noqa: BLE001
         logger.warning("Google Shopping falhou para '%s' (%s)", descricao, type(exc).__name__)
         return []
-    diretas = ler_anuncios(descricao, unidade_item, anuncios, generico)
-    # Uma busca adicional em lote, sem LLM: preço e URL vêm da mesma evidência.
-    # Não transplanta preço do Shopping para uma URL de outra variante/loja.
-    if sum(generico or o.mesmo_produto == "sim" for o in diretas) >= get_settings().pesquisa_min_lojas:
-        return diretas
-    import httpx
-    try:
-        async with httpx.AsyncClient(timeout=6.0) as cli:
-            j = await serper.post(cli, URL_BUSCA, {"q": f"{descricao} comprar preço", "gl": "br", "hl": "pt-br", "num": 8})
-        organicos = []
-        for o in (j or {}).get("organic", []):
-            url = str(o.get("link") or "")
-            titulo = str(o.get("title") or "")
-            trecho = str(o.get("snippet") or "")
-            preco = _PRECO_NO_TRECHO.search(trecho)
-            if link_direto_produto(url) and preco:
-                organicos.append({"title": titulo, "link": url, "price": preco.group(1),
-                                  "source": nome_da_loja(dominio_de(url), titulo)})
-        novas = ler_anuncios(descricao, unidade_item, organicos, generico)
-        por_url = {o.url: o for o in diretas}
-        for o in novas:
-            if o.url not in por_url or (por_url[o.url].mesmo_produto == "parecido" and o.mesmo_produto == "sim"):
-                por_url[o.url] = o
-        return list(por_url.values())
-    except Exception as exc:
-        logger.info("Busca de links diretos falhou (%s)", type(exc).__name__)
-        return diretas
+    return ler_anuncios(descricao, unidade_item, anuncios, generico)
 
 
 # ------------------------------------------------------------------ link da LOJA no lugar do link do Google
@@ -315,6 +306,14 @@ def dominio_da_loja(loja: str) -> str | None:
     return regional.dominio if regional and regional.dominio else None
 
 
+def link_do_google(o: Oferta) -> bool:
+    """O link da oferta abre no Google (página do produto no Shopping), não na loja. Vale também para a oferta de loja
+    DA REGIÃO, que já leva o domínio da loja mas continuava com o link do Google: a tela mostrava o nome da loja como
+    link e o clique ia para o Google (medido em 08/11)."""
+    from .busca import dominio_de
+    return "google." in (dominio_de(o.url or "") or "") or o.dominio == DOMINIO_SHOPPING
+
+
 MIN_TITULO_IGUAL = 0.75     # a página da loja precisa ter o título parecido com o do ANÚNCIO do Shopping, não só com o item
 
 
@@ -337,7 +336,7 @@ def trocar_links_do_google(descricao: str, ofertas: list[Oferta], organicos: lis
             paginas.append((dom, link, f"{titulo} {o.get('snippet') or ''}"[:300]))
     saida = []
     for o in ofertas:
-        dom = dominio_da_loja(o.loja) if o.dominio == DOMINIO_SHOPPING else None
+        dom = (o.dominio if o.dominio and o.dominio != DOMINIO_SHOPPING else dominio_da_loja(o.loja)) if link_do_google(o) else None
         melhor, nota = None, 0.0
         for d, link, texto in paginas:
             if dom and (d == dom or d.endswith("." + dom) or dom.endswith("." + d)):
@@ -355,7 +354,7 @@ async def resolver_links_das_lojas(descricao: str, ofertas: list[Oferta]) -> lis
 
     import httpx
     chaves = get_settings().serper_keys
-    pendentes = [o for o in ofertas if o.dominio == DOMINIO_SHOPPING]
+    pendentes = [o for o in ofertas if link_do_google(o)]
     dominios = list(dict.fromkeys(d for d in (dominio_da_loja(o.loja) for o in pendentes) if d))[:MAX_DOMINIOS_RESOLVER]
     if not chaves or not dominios:
         return ofertas
@@ -372,4 +371,105 @@ async def resolver_links_das_lojas(descricao: str, ofertas: list[Oferta]) -> lis
     except Exception as exc:  # noqa: BLE001
         logger.warning("Não deu para achar o link das lojas de '%s' (%s)", descricao, type(exc).__name__)
         return ofertas
-    return trocar_links_do_google(descricao, ofertas, [o for r in respostas for o in r])
+    trocadas = trocar_links_do_google(descricao, ofertas, [o for r in respostas for o in r])
+    return await _resolver_uma_a_uma(descricao, trocadas, chaves)
+
+
+# Segunda passada, oferta por oferta: o título EXATO do anúncio procurado no site da loja (ou, se o site é desconhecido, pelo
+# nome da loja). Só vale página cujo domínio é o da loja e cujo título combina com o do anúncio: o link ou é da loja
+# certa, ou continua sem link (a tela mostra "preço do Google"). Custa 1 busca do Serper por oferta, no máximo 8 por item.
+MAX_UMA_A_UMA = 8
+
+
+def _dominio_combina_com_loja(dominio: str, loja: str) -> bool:
+    from .regiao import _palavras
+    alvo = _palavras(loja)
+    d = re.sub(r"[^a-z0-9]", "", _sem_acento(dominio.split(".")[0]))
+    return bool(alvo) and all(p in d for p in alvo)
+
+
+def pagina_da_loja(oferta: Oferta, dominio_conhecido: str | None, organicos: list[dict], descricao: str) -> tuple[str, str] | None:
+    """Núcleo puro: (link, domínio) da página do MESMO produto na loja da oferta, ou None."""
+    from .busca import dominio_de, eh_pagina_de_busca, fonte_nao_e_loja
+    melhor, nota = None, 0.0
+    for o in organicos:
+        link, titulo = str(o.get("link") or ""), str(o.get("title") or "")
+        dom = dominio_de(link)
+        if not dom or "google." in dom or eh_pagina_de_busca(link) or fonte_nao_e_loja(dom, link):
+            continue
+        da_loja = (dom == dominio_conhecido or dom.endswith("." + dominio_conhecido)) if dominio_conhecido             else _dominio_combina_com_loja(dom, oferta.loja)
+        texto = f"{titulo} {o.get('snippet') or ''}"[:300]
+        if not da_loja or semelhanca(descricao, texto) < MIN_MESMO:
+            continue
+        n = _mesmo_titulo(oferta.titulo, texto)
+        if n > nota:
+            melhor, nota = (link, dom), n
+    return melhor if nota >= MIN_TITULO_IGUAL else None
+
+
+async def _resolver_uma_a_uma(descricao: str, ofertas: list[Oferta], chaves: list[str]) -> list[Oferta]:
+    import asyncio
+
+    import httpx
+    pendentes = [o for o in ofertas if link_do_google(o)][:MAX_UMA_A_UMA]
+    if not pendentes or not chaves:
+        return ofertas
+
+    async def uma(cli: httpx.AsyncClient, o: Oferta):
+        dom = o.dominio if o.dominio and o.dominio != DOMINIO_SHOPPING else dominio_da_loja(o.loja)
+        q = f"{o.titulo} site:{dom}" if dom else f"{o.titulo} {o.loja}"
+        j = await serper.post(cli, URL_BUSCA, {"q": q, "gl": "br", "hl": "pt-br", "num": 10}, chaves)
+        achou = pagina_da_loja(o, dom, [x for x in ((j or {}).get("organic") or []) if isinstance(x, dict)], descricao)
+        return o.url, achou
+
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as cli:
+            resultados = await asyncio.gather(*(uma(cli, o) for o in pendentes))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Segunda passada dos links das lojas falhou para '%s' (%s)", descricao, type(exc).__name__)
+        return ofertas
+    achados = {url: par for url, par in resultados if par}
+    return [o.model_copy(update={"url": achados[o.url][0], "dominio": achados[o.url][1]})
+            if link_do_google(o) and o.url in achados else o for o in ofertas]
+
+
+# ------------------------------------------------------------------ mesma LINHA, outro TIPO de produto
+# Medido em 08/11: "Deca Vogue Plus" (a bacia) trazia o assento, o bidê e a caixa acoplada da mesma linha, porque o nome do
+# item só diz marca e linha. O que a maioria dos anúncios tem em comum além do pedido ("bacia convencional") dá o TIPO;
+# oferta que não tem metade dessas palavras é de outro produto da linha e sai.
+MIN_OFERTAS_PARA_TIPO = 5
+
+
+def palavras_do_tipo(descricao: str, ofertas: list[Oferta]) -> set[str]:
+    """Até 3 palavras fora do pedido que aparecem em 50%+ dos títulos (e em 3+ ofertas). Poucas ofertas: nada a inferir."""
+    if len(ofertas) < MIN_OFERTAS_PARA_TIPO:
+        return set()
+    pedido = _tokens(descricao)
+    contagem: dict[str, int] = {}
+    for o in ofertas:
+        for t in _tokens(o.titulo) - pedido - FRACAS:
+            if not re.search(r"\d", t) and len(t) >= 4:
+                contagem[t] = contagem.get(t, 0) + 1
+    minimo = max(3, len(ofertas) // 2)
+    comuns = sorted((t for t, n in contagem.items() if n >= minimo), key=lambda t: -contagem[t])
+    return set(comuns[:3])
+
+
+def e_do_tipo(oferta: Oferta, tipo: set[str]) -> bool:
+    if not tipo:
+        return True
+    return len(_tokens(oferta.titulo) & tipo) >= (len(tipo) + 1) // 2
+
+
+# ------------------------------------------------------------------ só link DIRETO de loja
+MIN_DIRETAS = 2   # com 2+ lojas de link direto, o anúncio que só abre no Google sai (a média não depende dele)
+
+
+def priorizar_links_diretos(ofertas: list[Oferta], outras_diretas: int = 0) -> list[Oferta]:
+    """Tira as ofertas cujo link continua no Google quando há ofertas suficientes com link da própria loja
+    (`outras_diretas` conta as que vieram da busca na web e das lojas da região). Com poucas, a do Google fica,
+    marcada com domínio google.com: a tela mostra "preço do Google", sem link, e o item não fica sem preço."""
+    diretas = [o for o in ofertas if not link_do_google(o)]
+    if len([o for o in diretas if o.preco]) + outras_diretas >= MIN_DIRETAS:
+        return diretas
+    return [o if not link_do_google(o) else o.model_copy(update={"dominio": DOMINIO_SHOPPING}) for o in ofertas]

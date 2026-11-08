@@ -123,7 +123,7 @@ def test_descartes_aparecem_no_calculo_e_sobra_o_que_presta():
 
 
 # ---------------------------------------------------------------- listagem da loja e bases de licitação (07/11 noite)
-def test_listagem_da_leroy_nao_e_link_de_produto_nem_para_estimativa():
+def test_listagem_da_leroy_vale_so_para_estimativa():
     from src.busca import eh_pagina_de_listagem
     lst = "https://www.leroymerlin.com.br/pedra-britada/peso-do-produto-na-embalagem/1400_Kg_a_1410_Kg"
     prod = "https://www.leroymerlin.com.br/rodape-de-poliestireno-457-branco-240x10cm-santa-luzia_87635415"
@@ -131,10 +131,10 @@ def test_listagem_da_leroy_nao_e_link_de_produto_nem_para_estimativa():
     assert not eh_pagina_de_listagem("telhanorte.com.br", "https://www.telhanorte.com.br/qualquer")
     brita = of("Leroy Merlin", 1450.0, "1 m³", "Pedra Britada | Leroy Merlin", url=lst, dominio="leroymerlin.com.br")
     exato = calcular(ItemEntrada(id="1", descricao="Brita 1", quantidade=14, unidade="m3"), ResultadoExtracao(ofertas=[brita]))
-    assert not exato.tem_preco and exato.descartadas == {"link não abre uma página específica de produto": 1}
+    assert not exato.tem_preco and exato.descartadas == {"página de listagem (vale só para estimativa)": 1}
     estim = calcular(ItemEntrada(id="1", descricao="Brita 1", quantidade=14, unidade="m3"),
                      ResultadoExtracao(ofertas=[brita]), generico=True)
-    assert not estim.tem_preco
+    assert estim.tem_preco and estim.estimativa
 
 
 def test_base_de_preco_de_licitacao_nao_e_loja():
@@ -158,8 +158,8 @@ def test_loja_com_unidade_no_estado_da_obra_vem_primeiro_e_marcada():
     recife = Local("Recife", "PE")
     assert perto_da_obra("ferreiracosta.com", recife) and not perto_da_obra("ferreiracosta.com", Local("Curitiba", "PR"))
     assert not perto_da_obra("leroymerlin.com.br", recife) and not perto_da_obra("ferreiracosta.com", None)
-    ofertas = [of("Telhanorte", 239.9, "lata 18 L", "Selador Coral 18L", dominio="telhanorte.com.br"),
-               of("Ferreira Costa", 259.9, "lata 18 L", "Selador Coral 18L", dominio="ferreiracosta.com")]
+    ofertas = [of("Telhanorte", 239.9, "lata 18 L", "Selador 18L", dominio="telhanorte.com.br"),
+               of("Ferreira Costa", 259.9, "lata 18 L", "Selador 18L", dominio="ferreiracosta.com")]
     item = ItemEntrada(id="1", descricao="Selador Coral", quantidade=180, unidade="m2")
     with na_regiao(recife):
         c = calcular(item, ResultadoExtracao(ofertas=ofertas))

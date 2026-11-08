@@ -3,10 +3,9 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDeCompra, precoDoAnuncio } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
-import { ImagemProduto } from "../imagens/ImagemProduto";
 import type { ItemOrcamento, Objetivo } from "./tipos";
 
 interface Props {
@@ -90,6 +89,16 @@ function useChegou(status: ItemOrcamento["status"]) {
   return chegou;
 }
 
+/** Link que abre no Google (página do Shopping) e não na loja: a tela mostra a loja sem link (08/11). */
+function abreNoGoogle(f: { dominio: string; url: string }): boolean {
+  if (f.dominio === "google.com") return true;
+  try {
+    return /(^|\.)google\./.test(new URL(f.url).hostname);
+  } catch {
+    return true;   // link inválido também não vira link
+  }
+}
+
 export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa, onAceitarMedia }: Props) {
   const carregando = item.status === "buscando";
   const chegou = useChegou(item.status);
@@ -97,6 +106,9 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
   const lojas = item.fontes ?? [];
+  // Foto que não carrega (link quebrado, bloqueio) volta para a hachura cinza em vez do ícone de imagem quebrada.
+  const [fotoFalhou, setFotoFalhou] = useState(false);
+  const temFoto = !!item.imagem_url && !carregando && !fotoFalhou;
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
@@ -113,8 +125,9 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
   return (
     <article className={`orc-item orc-item--${item.status}${chegou ? " orc-item--chegou" : ""}`} aria-busy={carregando}>
-      <div className="orc-item__imagem">
-        <ImagemProduto src={item.imagem_url} nome={nome} carregando={carregando} />
+      <div className={`orc-item__imagem${temFoto ? "" : " orc-item__imagem--hachura"}`}>
+        {temFoto && <img src={item.imagem_url as string} alt={nome} loading="lazy" width={56} height={56}
+                         referrerPolicy="no-referrer" onError={() => setFotoFalhou(true)} />}
       </div>
 
       <div className="orc-item__corpo">
@@ -134,15 +147,13 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         </p>
         {item.premissa && !carregando && <p className="orc-item__premissa">Conta: {item.premissa}</p>}
 
-        {/* A orientação termina em "Sem confirmação, o preço continua sendo uma estimativa": só vale para pendente.
-            Medido em 08/11: aparecia num item já "Definido" logo depois do Responder. */}
-        {!carregando && onResponder && (
+        {item.status === "pendente_especificacao" && item.pergunta && (
           <div className="orc-item__pergunta">
-            <p>{item.pergunta || (item.status === "pendente_especificacao" ? item.pesquisa_detalhes?.orientacao : null) || "Complete marca, modelo/código, medidas, cor, acabamento e embalagem para pesquisar o produto específico."}</p>
+            <p>{item.pergunta}</p>
             {respondendo ? (
               <form onSubmit={enviar} className="orc-item__resposta">
                 <label className="orc-visivel-so-leitor" htmlFor={`resp-${item.id}`}>Especificação do item</label>
-                <textarea id={`resp-${item.id}`} autoFocus required minLength={3} maxLength={2000} rows={3} value={resposta}
+                <input id={`resp-${item.id}`} autoFocus required minLength={3} value={resposta}
                        onChange={(e) => setResposta(e.target.value)}
                        placeholder="Ex.: Suvinil Fosco Completo, Vermelho Cardinal, 3,6 L" />
                 <button type="submit" className="orc-botao orc-botao--principal">Enviar resposta</button>
@@ -150,10 +161,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
               </form>
             ) : (
               <div className="orc-item__acoes">
-                <button type="button" className="orc-botao orc-botao--principal" onClick={() => { setResposta((atual) => atual || item.descricao); setRespondendo(true); }}>
-                  {item.status === "pendente_especificacao" ? "Responder" : "Completar especificação"}
-                </button>
-                {item.status === "pendente_especificacao" && onAceitarMedia && item.preco_emb_med != null && (
+                <button type="button" className="orc-botao orc-botao--principal" onClick={() => setRespondendo(true)}>Responder</button>
+                {onAceitarMedia && item.preco_emb_med != null && (
                   <button type="button" className="orc-botao" onClick={() => onAceitarMedia(item)}
                           title="Não especifica marca e modelo: o item fica com a média de produtos parecidos, como estimativa">
                     Usar a média mesmo assim
@@ -175,17 +184,6 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
       </div>
 
       <div className="orc-item__preco">
-        {!carregando && item.pesquisa_detalhes && (
-          <details className="orc-item__consumo">
-            <summary>Consumo da pesquisa: {(item.pesquisa_detalhes.tokens_entrada + item.pesquisa_detalhes.tokens_saida).toLocaleString("pt-BR")} tokens</summary>
-            <p>{item.pesquisa_detalhes.tokens_entrada.toLocaleString("pt-BR")} de entrada · {item.pesquisa_detalhes.tokens_saida.toLocaleString("pt-BR")} de saída</p>
-            <p>{item.pesquisa_detalhes.chamadas} chamadas · {item.pesquisa_detalhes.paginas_lidas} páginas lidas</p>
-            <p>Custo informado: US$ {item.pesquisa_detalhes.custo_usd.toFixed(6)}</p>
-            {item.pesquisa_detalhes.consumo_incompleto && <p>Consumo parcial: houve chamada sem medição completa. Confira a cobrança na Featherless.</p>}
-            {item.pesquisa_detalhes.limite_atingido && <p>Limite de consumo atingido. Mantivemos as fontes já encontradas.</p>}
-            <p>Valores desta pesquisa do item. Nova pesquisa tem novo consumo.</p>
-          </details>
-        )}
         {item.status === "nao_encontrado" || item.status === "erro" ? null : (
           <PriceDimension min={item.preco_emb_min} med={item.preco_emb_med} max={item.preco_emb_max}
                           carregando={carregando} chegou={chegou}
@@ -211,23 +209,35 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
       {lojas.length > 0 && !carregando && (
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
-          {lojas.map((f) => {
-            const link = linkDeCompra(f);
-            return (
-              <li key={f.url}>
-                {link
-                  ? <a href={link} target="_blank" rel="noopener noreferrer">{f.loja} · Ver produto</a>
-                  : <span>{f.loja} · Link da loja não confirmado</span>}
-                {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
-                  <span className="orc-item__perto" title={f.endereco ?? undefined}>
-                    perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
+          {lojas.map((f) => (
+            <li key={f.url}>
+              {abreNoGoogle(f) ? (
+                // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
+                // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
+                <>
+                  <span>{f.loja}</span>
+                  <span className="orc-item__google" title="Preço do Google Shopping. O link da loja não está disponível">
+                    preço do Google
                   </span>
-                )}
-                {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
-                {link && <span>{precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada)}</span>}
-              </li>
-            );
-          })}
+                </>
+              ) : (
+                <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              )}
+              {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
+                <span className="orc-item__perto" title={f.endereco ?? undefined}>
+                  perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
+                </span>
+              )}
+              {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
+              {/* o preço do anúncio (o mesmo que aparece ao clicar), com a embalagem quando ela é outra */}
+              <span>
+                {reais(f.preco_anunciado ?? f.preco_embalagem)}
+                {f.preco_anunciado != null && f.embalagem_anunciada && f.embalagem_anunciada !== f.embalagem
+                  ? ` · ${f.embalagem_anunciada}`
+                  : ""}
+              </span>
+            </li>
+          ))}
         </ul>
       )}
     </article>

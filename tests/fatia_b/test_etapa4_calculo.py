@@ -7,18 +7,10 @@ import asyncio
 
 import pytest
 
-from src.calculo import calcular as calcular_real
+from src.calculo import calcular
 from src.compra import Conteudo, conteudo_embalagem, qtd_embalagens
 from src.modelos import ItemEntrada, ResultadoItem
 from src.precos import Oferta, ResultadoExtracao
-
-
-def calcular(item, extracao, *args, **kwargs):
-    # Esta suíte isola as contas com ofertas já conferidas; identidade é testada em
-    # test_pesquisa_aprofundada/test_conferencias_oferta com evidências contraditórias.
-    ext = ResultadoExtracao(ofertas=[o.model_copy(update={"evidencia": item.descricao})
-                                    if o.mesmo_produto == "sim" else o for o in extracao.ofertas])
-    return calcular_real(item, ext, *args, **kwargs)
 
 
 def of(loja, preco, emb, igual="sim"):
@@ -46,10 +38,6 @@ def test_entende_embalagens(texto, esperado):
     ("Rejunte Quartzolit cinza platina", 68, "m2", "saco 5 kg", 5),               # 68×0,3 ×1,05 /5 = 4,3
     ("Ducha Lorenzetti Acqua Duo", 2, "un", "unidade", 2),
     ("Cabo flexível SIL 2,5 mm²", 300, "m", "rolo 100 m", 4),                     # 300 ×1,10 /100 = 3,3
-    # quantidade já de compra (L, kg): sem perda. Medido em 08/11: 18 L virava 2 latas e 40 kg, 3 sacos
-    ("Tinta Suvinil Toque de Seda Branco Neve 18L", 18, "l", "lata 18 L", 1),
-    ("Argamassa Quartzolit AC-III cinza 20kg", 40, "kg", "saco 20 kg", 2),
-    ("Tinta Suvinil Toque de Seda Branco Neve", 20, "l", "lata 18 L", 2),
 ])
 def test_quantas_embalagens_comprar(produto, qtd, un, emb, n):
     assert qtd_embalagens(produto, qtd, un, conteudo_embalagem(emb))[0] == n

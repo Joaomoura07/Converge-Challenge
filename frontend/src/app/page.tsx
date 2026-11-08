@@ -160,7 +160,7 @@ export default function Inicio() {
           <div>
             <h3>A solução</h3>
             <p>
-              Um AI Agent que lê a lista ou a planta (Excel, CSV, Revit, PDF ou DXF), aponta erros e itens esquecidos,
+              Um AI Agent que lê a lista ou a planta (Excel, CSV, Revit, PDF, DXF ou SketchUp), aponta erros e itens esquecidos,
               busca preços reais com link da loja e entrega o plano de compra pronto — mostrando na hora se cabe no
               bolso do cliente.
             </p>

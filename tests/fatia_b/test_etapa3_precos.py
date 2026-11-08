@@ -15,7 +15,7 @@ from src.busca import ResultadoWeb, buscar, montar_consulta
 from src.modelos import ItemEntrada
 
 ANUNCIOS = [
-    ResultadoWeb("Tinta acrílica acetinada Toque de Seda Suvinil Branco Neve 18L", "https://www.telhanorte.com.br/a", "telhanorte.com.br", "Telhanorte",
+    ResultadoWeb("Tinta Toque de Seda Suvinil 18L", "https://www.telhanorte.com.br/a", "telhanorte.com.br", "Telhanorte",
                  "Ref: 2533111 R$ 739,90 Pix R$ 702,90"),
     ResultadoWeb("Tinta Suvinil Toque de Seda 18l Branco Neve", "https://www.magazineluiza.com.br/b", "magazineluiza.com.br",
                  "Magazine Luiza", "5.0 (4) R$ 849,00 ou 10x de R$ 84,90 sem juros"),

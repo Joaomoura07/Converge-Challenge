@@ -47,7 +47,7 @@ def test_sugere_produto_e_manda_o_objetivo_ao_modelo():
     assert alt == Alternativa("Tinta Coral Rende Muito fosco branco 18 L", "Linha de entrada da Coral.")
     pedido = json.loads(c.chamadas[0]["messages"][1]["content"])
     assert pedido == {"produto_atual": "Tinta Suvinil Toque de Seda branco 18 L", "objetivo": "preco", "categoria": "Pintura"}
-    assert c.chamadas[0]["max_tokens"] == 400   # proposta curta com limite explícito
+    assert c.chamadas[0]["max_tokens"] >= 2000   # GLM pensa antes: limite baixo devolve vazio
 
 
 @pytest.mark.parametrize("conteudo", [

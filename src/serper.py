@@ -21,17 +21,13 @@ logger = logging.getLogger(__name__)
 SIMULTANEAS = 4
 TENTATIVAS_429 = 3
 _semaforos: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
-# Chaves que responderam "Not enough credits": vão para o fim da fila (medido em 08/11: a 1ª chave com saldo -27
-# devolvia HTTP 400 e a função desistia sem tentar as outras duas, que tinham ~2.500 créditos cada; Shopping, Maps
-# e fotos de reserva ficavam vazios).
-_sem_credito: set[str] = set()
+# Medido em 08/11: chave sem crédito responde HTTP 400 {"message":"Not enough credits"} (não 401/403). O código antigo
+# desistia no 400 sem tentar as outras chaves, e TODA chamada ao Serper falhava: sem anúncio do Shopping (preço), sem
+# foto (imageUrl) e sem troca do link do Google pelo da loja. Chave esgotada fica de lado até o processo reiniciar.
+_esgotadas: set[str] = set()
 
 
-def _sem_credito_na_resposta(r: httpx.Response) -> bool:
-    if r.status_code == 402:
-        return True
-    if r.status_code != 400:
-        return False
+def _sem_credito(r: httpx.Response) -> bool:
     try:
         return "credit" in r.text.lower()
     except Exception:  # noqa: BLE001
@@ -48,10 +44,9 @@ def _porteiro() -> asyncio.Semaphore:
 async def post(cli: httpx.AsyncClient, url: str, corpo: dict, chaves: list[str] | None = None) -> dict | None:
     """JSON da resposta (HTTP 200) ou None. Tenta cada chave; 429 espera e tenta de novo."""
     chaves = get_settings().serper_keys if chaves is None else chaves
-    chaves = [k for k in chaves if k not in _sem_credito] + [k for k in chaves if k in _sem_credito]
     for tentativa in range(TENTATIVAS_429):
         limite = False
-        for k in chaves:
+        for k in [c for c in chaves if c not in _esgotadas]:
             try:
                 async with _porteiro():
                     r = await cli.post(url, headers={"X-API-KEY": k, "Content-Type": "application/json"}, json=corpo)
@@ -66,11 +61,12 @@ async def post(cli: httpx.AsyncClient, url: str, corpo: dict, chaves: list[str] 
             if r.status_code == 429:
                 limite = True
                 continue
+            if r.status_code == 400 and _sem_credito(r):
+                logger.warning("Serper: uma chave ficou sem crédito; seguindo com as outras")
+                _esgotadas.add(k)
+                continue
             if r.status_code in (401, 403):
-                continue   # chave inválida ou sem crédito: próxima
-            if _sem_credito_na_resposta(r):
-                _sem_credito.add(k)
-                continue   # "Not enough credits" (HTTP 400): próxima chave
+                continue   # chave inválida: próxima
             logger.warning("Serper respondeu HTTP %s", r.status_code)
             return None
         if not limite:

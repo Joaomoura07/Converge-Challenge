@@ -291,7 +291,7 @@ async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) ->
     for r in resultados:
         contagem[r.status] = contagem.get(r.status, 0) + 1
     return {"orcamento_id": orcamento_id, "status": "concluida", "itens": len(resultados),
-            "por_status": contagem, "fatia_c": fatia_c, "consumo": custo.resumo()}
+            "por_status": contagem, "fatia_c": fatia_c}
 
 
 async def pesquisar_orcamento(orcamento_id: str, banco: Banco | None = None, **opcoes) -> dict:
@@ -348,7 +348,7 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
 async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None, nova_descricao: str | None,
                        banco: Banco, objetivo: Objetivo | None, opcoes: dict,
                        aceitar_media: bool = False) -> ResultadoItem:
-    with acumular_custo(item=True) as custo:
+    with acumular_custo() as custo:
         anterior = alt = None
         busca = item
         if objetivo:
@@ -365,11 +365,12 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
         with na_obra(*(await _local_da_obra(banco, orcamento_id))):
             # "Usar a média" quer a média que já foi pesquisada (rápida e sem custo); os demais pedem preço novo.
             resultado = await pesquisar_item(busca, usar_cache=aceitar_media, **opcoes)
-        if aceitar_media:
+        if nova_descricao:
+            resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
+        elif aceitar_media:
             resultado = aceitar_media_estimada(resultado)   # dispensou a especificação: fica como estimativa
         if alt is not None:
             resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
-    resultado.pesquisa_detalhes = {**(resultado.pesquisa_detalhes or {}), **custo.resumo()}
     await _gravar_e_conferir(banco, resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
     if orcamento_id:
