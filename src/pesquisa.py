@@ -33,7 +33,9 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .google_shopping import ofertas_google, ofertas_regionais, resolver_links_das_lojas
+from .medida import aviso_de_medida
+from .google_shopping import (e_do_tipo, mesmo_codigo, ofertas_google, ofertas_regionais, palavras_do_tipo, priorizar_links_diretos,
+                             resolver_links_das_lojas)
 from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -329,6 +331,9 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
 
     # ① cache válido
     anterior = await cache.ler(item.descricao, aceitar_vencido=True) if usar_cache else None
+    if anterior:   # resultado pronto do cache passa pelas mesmas regras de hoje: classe AC certa e link direto da loja
+        anterior.extracao.ofertas = priorizar_links_diretos(
+            [o for o in anterior.extracao.ofertas if mesmo_codigo(item.descricao, o.titulo)])
     if anterior and not anterior.vencido:
         calc = calcular(item, anterior.extracao, generico)
         if calc.tem_preco:
@@ -344,8 +349,15 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     (b, ext), google, regionais = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
                                                        ofertas_google(item.descricao, item.unidade, generico),
                                                        ofertas_regionais(item.descricao, item.unidade))
+    tipo = palavras_do_tipo(item.descricao, google)   # mesma linha, outro produto (assento × bacia) fica de fora
+    google = [o for o in google if e_do_tipo(o, tipo)]
+    regionais = [o for o in regionais if e_do_tipo(o, tipo)]
     google = await resolver_links_das_lojas(item.descricao, google)   # link da loja, não o da página do Google
-    coleta = Coleta(imagem=b.imagem, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
+    foto_do_shopping = imagem_das_ofertas(google)   # antes de tirar os anúncios do Google: a foto deles continua valendo
+    ext.ofertas = [o for o in ext.ofertas if mesmo_codigo(item.descricao, o.titulo)]
+    diretas = sum(1 for o in [*regionais, *ext.ofertas] if o.preco and o.mesmo_produto == "sim")
+    google = priorizar_links_diretos(google, diretas)   # link que abre no Google só fica se faltar loja com link direto
+    coleta = Coleta(imagem=b.imagem or foto_do_shopping, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
     coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
@@ -383,7 +395,10 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
         if generico:
             return _resultado(item, calc, "pendente_especificacao", imagem, agora, iteracoes,
                               pergunta=pergunta_para(item.descricao))
-        return _resultado(item, calc, "definido", imagem, agora, iteracoes)
+        r = _resultado(item, calc, "definido", imagem, agora, iteracoes)
+        # A IA confere se a medida do pedido combina com a embalagem achada (ex.: "Fortlev 1000" sem unidade)
+        aviso = await aviso_de_medida(item, calc.embalagem, calc.conteudo, calc.medida_assumida)
+        return r.model_copy(update={"motivo": aviso}) if aviso else r
 
     # sem o produto exato: se há parecidos com preço, vira estimativa + pergunta (a B "rebaixa")
     if not generico:

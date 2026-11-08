@@ -48,6 +48,7 @@ class Calculo:
     fontes: list[Fonte] = field(default_factory=list)
     descartadas: dict[str, int] = field(default_factory=dict)   # motivo -> quantas
     motivo: str | None = None
+    medida_assumida: bool = False   # contou cada unidade como uma embalagem de capacidade (ex.: "1000 L"): vale conferir
 
 
 @dataclass
@@ -286,12 +287,14 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     ui = normalizar_unidade(item.unidade)
     mesma_unidade = ui == unidade_base
     n_emb, perda, premissa = qtd_embalagens(item.descricao, item.quantidade, item.unidade, ref)
+    medida_assumida = False
     if n_emb is None:
         premissa = None   # o motivo da falha ("não sei converter m2 em l") não é conta: a tela mostrava como se fosse
         # Peça contada em unidades cuja embalagem é a CAPACIDADE ("Caixa d'água Fortlev 1000", 1 un, "1000 L"):
         # cada unidade é uma embalagem. Antes ficava sem total e a tela dizia "1 item sem preço" (medido em 08/11).
         if ui == "un" and ref.unidade != "un" and item.quantidade:
             n_emb = max(math.ceil(item.quantidade * (1 + perda) - 1e-9), 1)
+            medida_assumida = True
 
     lojas = len({n.oferta.loja for n in validas})
     todos = [n.unitario for n in validas]   # a confiança olha TODAS as lojas, não só as da embalagem exata
@@ -305,4 +308,4 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         premissa=premissa, preco_emb_min=emb(u_min), preco_emb_med=emb(u_med), preco_emb_max=emb(u_max),
         preco_un_min=round(u_min, 4) if mesma_unidade else None, preco_un_med=round(u_med, 4) if mesma_unidade else None,
         preco_un_max=round(u_max, 4) if mesma_unidade else None, unidade_preco=ui if mesma_unidade else None,
-        confianca=confianca, fontes=fontes, descartadas=dict(descartadas))
+        confianca=confianca, fontes=fontes, descartadas=dict(descartadas), medida_assumida=medida_assumida)

@@ -300,3 +300,57 @@ def test_nao_liga_ao_produto_errado_so_porque_o_nome_curto_combina():
     ok = g.trocar_links_do_google("Deca Vogue Plus", [o], [{"title": "Bacia Convencional Vogue Plus Branco Deca",
                                                             "link": "https://www.telhanorte.com.br/bacia", "snippet": ""}])
     assert ok[0].url == "https://www.telhanorte.com.br/bacia"
+
+
+# ---------------------------------------------------------------- segunda passada: link da loja oferta por oferta
+def _of(loja, titulo):
+    return Oferta(loja=loja, dominio=g.DOMINIO_SHOPPING, url="https://www.google.com/search?ibp=oshop&x=1", titulo=titulo,
+                  preco=10.0, embalagem="unidade", mesmo_produto="sim")
+
+
+def test_pagina_da_loja_de_dominio_conhecido():
+    o = _of("Leroy Merlin", "Joelho Tigre 25 mm soldável 90 graus")
+    org = [{"title": "Joelho Tigre 25 mm soldável 90 graus | Leroy Merlin", "link": "https://www.leroymerlin.com.br/joelho_123456",
+            "snippet": ""}]
+    assert g.pagina_da_loja(o, "leroymerlin.com.br", org, "Joelho Tigre 25") == ("https://www.leroymerlin.com.br/joelho_123456",
+                                                                              "leroymerlin.com.br")
+
+
+def test_pagina_da_loja_desconhecida_exige_o_nome_da_loja_no_dominio():
+    o = _of("Loja do Pedrão", "Joelho Tigre 25 mm soldável 90 graus")
+    certo = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.lojadopedrao.com.br/joelho-25", "snippet": ""}]
+    outra = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.outraloja.com.br/joelho-25", "snippet": ""}]
+    assert g.pagina_da_loja(o, None, certo, "Joelho Tigre 25")[1] == "lojadopedrao.com.br"
+    assert g.pagina_da_loja(o, None, outra, "Joelho Tigre 25") is None     # domínio de outra loja: nunca liga
+
+
+def test_pagina_da_loja_recusa_google_busca_e_produto_diferente():
+    o = _of("Leroy Merlin", "Joelho Tigre 25 mm soldável 90 graus")
+    ruins = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.google.com/search?q=x", "snippet": ""},
+             {"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.leroymerlin.com.br/busca?q=joelho", "snippet": ""},
+             {"title": "Registro de esfera 25 mm Tigre", "link": "https://www.leroymerlin.com.br/registro_1", "snippet": ""}]
+    assert g.pagina_da_loja(o, "leroymerlin.com.br", ruins, "Joelho Tigre 25") is None
+
+
+# ---------------------------------------------------------------- mesma linha, outro tipo de produto (Deca Vogue Plus)
+def _t(titulo):
+    return Oferta(loja="l" + titulo[:3], dominio="d.com", url="https://d.com/" + titulo[:4], titulo=titulo, preco=10.0,
+                  embalagem="unidade", mesmo_produto="sim")
+
+
+def test_tira_assento_bide_e_caixa_da_mesma_linha():
+    ofertas = [_t("Bacia Convencional Vogue Plus Branco Deca"), _t("Bacia Convencional Vogue Plus Gelo Deca"),
+               _t("Bacia Convencional Deca Vogue Plus P511"), _t("Vaso Sanitário Convencional Vogue Plus Deca"),
+               _t("Bacia Vogue Plus Convencional Branca Deca"), _t("Assento Termofixo Vogue Plus Branco Deca"),
+               _t("Bidê Vogue Plus Deca"), _t("Caixa Acoplada Vogue Plus Deca")]
+    tipo = g.palavras_do_tipo("Deca Vogue Plus", ofertas)
+    assert {"bacia", "convencional"} <= tipo
+    mantidas = [o.titulo for o in ofertas if g.e_do_tipo(o, tipo)]
+    assert len(mantidas) == 5 and not any(t.startswith(("Assento", "Bidê", "Caixa")) for t in mantidas)
+
+
+def test_poucas_ofertas_ou_produtos_iguais_nao_filtram_nada():
+    assert g.palavras_do_tipo("Deca Vogue Plus", [_t("Bacia Vogue Plus Deca"), _t("Assento Vogue Plus Deca")]) == set()
+    tinta = [_t(f"Tinta Suvinil Fosco Completo Branco Neve 18L {i}") for i in range(6)]
+    tipo = g.palavras_do_tipo("Tinta Suvinil Fosco Completo 18L", tinta)
+    assert all(g.e_do_tipo(o, tipo) for o in tinta)

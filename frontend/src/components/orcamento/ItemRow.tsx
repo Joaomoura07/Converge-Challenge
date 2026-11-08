@@ -89,6 +89,16 @@ function useChegou(status: ItemOrcamento["status"]) {
   return chegou;
 }
 
+/** Link que abre no Google (página do Shopping) e não na loja: a tela mostra a loja sem link (08/11). */
+function abreNoGoogle(f: { dominio: string; url: string }): boolean {
+  if (f.dominio === "google.com") return true;
+  try {
+    return /(^|\.)google\./.test(new URL(f.url).hostname);
+  } catch {
+    return true;   // link inválido também não vira link
+  }
+}
+
 export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa, onAceitarMedia }: Props) {
   const carregando = item.status === "buscando";
   const chegou = useChegou(item.status);
@@ -96,7 +106,9 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
   const lojas = item.fontes ?? [];
-  const linkGoogle = lojas.find((f) => f.dominio === "google.com" && f.url.startsWith("http"))?.url ?? null;
+  // Foto que não carrega (link quebrado, bloqueio) volta para a hachura cinza em vez do ícone de imagem quebrada.
+  const [fotoFalhou, setFotoFalhou] = useState(false);
+  const temFoto = !!item.imagem_url && !carregando && !fotoFalhou;
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
@@ -113,8 +125,9 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
   return (
     <article className={`orc-item orc-item--${item.status}${chegou ? " orc-item--chegou" : ""}`} aria-busy={carregando}>
-      <div className={`orc-item__imagem${item.imagem_url && !carregando ? "" : " orc-item__imagem--hachura"}`}>
-        {item.imagem_url && !carregando && <img src={item.imagem_url} alt={nome} loading="lazy" width={56} height={56} />}
+      <div className={`orc-item__imagem${temFoto ? "" : " orc-item__imagem--hachura"}`}>
+        {temFoto && <img src={item.imagem_url as string} alt={nome} loading="lazy" width={56} height={56}
+                         referrerPolicy="no-referrer" onError={() => setFotoFalhou(true)} />}
       </div>
 
       <div className="orc-item__corpo">
@@ -198,7 +211,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
           {lojas.map((f) => (
             <li key={f.url}>
-              {f.dominio === "google.com" ? (
+              {abreNoGoogle(f) ? (
                 // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
                 // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
                 <>
@@ -225,11 +238,6 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
               </span>
             </li>
           ))}
-          {linkGoogle && (
-            <li>
-              <a href={linkGoogle} target="_blank" rel="noopener noreferrer">Comparar no Google Shopping ↗</a>
-            </li>
-          )}
         </ul>
       )}
     </article>
