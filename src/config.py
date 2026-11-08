@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     def featherless_keys(self) -> list[str]:
         """FEATHERLESS_API_KEYS (vírgula, como o Tavily) + FEATHERLESS_API_KEY (nome antigo), sem repetir e sem aspas.
         Quem trocou a variável antiga pela nova no .env/Vercel não quebra nada: as duas valem."""
-        brutas = self.featherless_api_keys.split(",") + [self.featherless_api_key]
+        brutas = self.featherless_api_keys.split(",") + self.featherless_api_key.split(",")
         limpas = [k.strip().strip('"').strip("'") for k in brutas]
         return list(dict.fromkeys(k for k in limpas if k))
 
