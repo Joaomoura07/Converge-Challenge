@@ -372,11 +372,11 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
     coleta.ofertas = await _conferir_links(item, coleta.ofertas)
-    if lojas_confirmadas(coleta.ofertas) < MIN_LOJAS_CONFIRMADAS:
+    if lojas_confirmadas(coleta.ofertas, generico) < MIN_LOJAS_CONFIRMADAS:
         # poucas lojas com link confirmado: procura em OUTROS sites (nunca nos que já foram tentados)
         tentados = {o.dominio for o in coleta.ofertas if o.dominio}
         coleta.juntar(await ofertas_em_outras_lojas(item.descricao, item.unidade, tentados,
-                                                    referencia_de(coleta.ofertas)))
+                                                    referencia_de(coleta.ofertas), generico))
         coleta.consultas.append(f"{item.descricao} (outras lojas)")
     calc = calcular(item, coleta.extracao(), generico)
 

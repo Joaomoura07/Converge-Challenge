@@ -203,3 +203,17 @@ def test_busca_extra_nao_aceita_produto_fora_da_faixa_ja_vista():
     assert not na_faixa(of("https://c.com.br/x", "Spot para Trilho Stella 7W", 239.1), ref)
     assert na_faixa(of("https://d.com.br/x", "Spot Stella 7W", 59.9), ref)
     assert na_faixa(of("https://e.com.br/x", "Spot", 239.1), None)
+
+
+
+def test_generico_aceita_a_mesma_peca_em_outra_medida_como_parecido_confirmado():
+    """Medido em 08/11: "Azulejo português azul 60x60" (fora dos exemplos) ficava sem nenhum preço real; as lojas de
+    azulejo vendem em 15x15/20x20 e a medida barrava todas."""
+    from src.outras_lojas import oferta_da_pagina, sem_medidas
+    assert sem_medidas("Azulejo português azul 60x60") == "Azulejo português azul"
+    pg = pagina("Azulejo Português Azul Escuro - Port 018", (245.0,))
+    url = "https://www.taiazulejos.com.br/azulejo-portugues-azul-escuro-port-018"
+    o = oferta_da_pagina("Azulejo português azul 60x60", "m2", url, "taiazulejos.com.br", "Taiazulejos", pg, generico=True)
+    assert o and o.mesmo_produto == "parecido" and o.link_verificado and o.preco == 245.0
+    # item ESPECIFICADO continua exigindo a medida
+    assert oferta_da_pagina("Azulejo português azul 60x60", "m2", url, "taiazulejos.com.br", "T", pg) is None
