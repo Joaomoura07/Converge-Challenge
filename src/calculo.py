@@ -252,11 +252,15 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     validas = list(por_loja.values())
     descartadas = Counter({k: v for k, v in descartadas.items() if v})
 
-    unitarios = sorted(n.unitario for n in validas)
-    u_min, u_med, u_max = unitarios[0], statistics.median(unitarios), unitarios[-1]
-
     # 3. embalagem de referência e faixa em R$ por embalagem
     ref = _referencia(validas, item)
+    # Desconto por volume (medido em 08/11, Nivelador Cortag): kits de 500 e 1000 saem a R$ 0,14 a unidade e os de 50
+    # a R$ 0,38; a mediana por unidade dava R$ 9,99 o "kit 50" quando as lojas cobram R$ 19. Havendo 2+ lojas com
+    # EXATAMENTE a embalagem de referência, a faixa sai delas (preço da embalagem real), não de uma conversão linear.
+    exatas = [n for n in validas if n.conteudo == ref]
+    base = exatas if len(exatas) >= 2 else validas
+    unitarios = sorted(n.unitario for n in base)
+    u_min, u_med, u_max = unitarios[0], statistics.median(unitarios), unitarios[-1]
     rotulo = next((n.oferta.embalagem for n in validas if n.conteudo == ref and n.oferta.embalagem), None) \
         or f"{ref.quantidade:g} {ref.unidade}"
 
@@ -285,7 +289,9 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         premissa = None   # o motivo da falha ("não sei converter m2 em l") não é conta: a tela mostrava como se fosse
 
     lojas = len({n.oferta.loja for n in validas})
-    confianca = _confianca(lojas, (u_max - u_min) / u_med if u_med else 1.0)
+    todos = [n.unitario for n in validas]   # a confiança olha TODAS as lojas, não só as da embalagem exata
+    mediana_geral = statistics.median(todos)
+    confianca = _confianca(lojas, (max(todos) - min(todos)) / mediana_geral if mediana_geral else 1.0)
     if generico and confianca == "alta":
         confianca = "media"   # estimativa de item genérico nunca é "alta"
 

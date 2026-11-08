@@ -77,10 +77,59 @@ def semelhanca(descricao: str, titulo: str) -> float:
 
 _ROTULO_UNIDADE = {"l": "L", "kg": "kg", "m2": "m²", "m3": "m³", "m": "m"}
 
+# Material vendido em CHAPA ou PEÇA de pedra, cujo anúncio traz as medidas ("275cmx183cm", "1850 x 2750 mm") e não a
+# área. Medido em 08/11 (Cozinha Graças): "Mdf Branco 18mm 2l Tx 275cmx183cm" saiu como "2 L" (o "2l" é "2 lados") e
+# "Granito Branco Itaúnas 0,50x0,15m" como "0,15 m" (a 2ª medida da peça lida como comprimento).
+_CHAPA = re.compile(r"\b(mdf|mdp|compensado|osb|chapa|chapas|granito|marmore|quartzo|ardosia|tampo|bancada|pedra)\b")
+_LADOS = re.compile(r"\b\d\s*(?:l|f|lados?|faces?)\b", re.I)    # "2l", "2f", "2 faces": lados da chapa, não litros
+_NUM = r"(\d+(?:[.,]\d+)?)"
+_DIMENSOES = re.compile(rf"{_NUM}\s*(mm|cm|m)?\s*[x×]\s*{_NUM}\s*(mm|cm|m)?(?:\s*[x×]\s*{_NUM}\s*(mm|cm|m)?)?", re.I)
+AREA_MINIMA_M2 = 0.3        # peça menor que isso (pedrinha, batente) não é o material do quantitativo em m²
+AREA_MAXIMA_M2 = 20.0
 
-def _embalagem(titulo: str, unidade_item: str | None) -> str | None:
+
+def _sem_acento(s: str) -> str:
+    import unicodedata
+    return unicodedata.normalize("NFKD", (s or "").lower()).encode("ascii", "ignore").decode()
+
+
+def _unidade_comum(pares: list[tuple[str, str | None]]) -> str:
+    """"185 x 275cm": a unidade escrita vale para todas as medidas; sem nenhuma escrita, pela maior ("90x90x2" = cm,
+    "1850x2750" = mm, "1,2x0,6" = m). Decidir medida por medida lia a espessura "2" de "90x90x2" como 2 metros."""
+    escrita = next((u.lower() for _, u in pares if u), "")
+    if escrita:
+        return escrita
+    maior = max(float(v.replace(",", ".")) for v, _ in pares)
+    return "mm" if maior >= 1000 else "cm" if maior >= 10 else "m"
+
+
+def _em_metros(valor: str, unidade: str | None, comum: str) -> float:
+    return float(valor.replace(",", ".")) / {"mm": 1000, "cm": 100, "m": 1}[(unidade or comum).lower()]
+
+
+def area_pelas_dimensoes(titulo: str) -> float | None:
+    """Área (m²) de uma chapa/peça pelas duas MAIORES medidas do título (a menor é a espessura): "18 x 1850 x 2750 mm"
+    = 5,09 m²; "0,50x0,15m" = 0,075 m². Sem medidas, fora de 0,3 a 20 m² ou ambíguo: None."""
+    achou = _DIMENSOES.search(titulo or "")
+    if not achou:
+        return None
+    g = achou.groups()
+    pares = [(g[0], g[1]), (g[2], g[3])] + ([(g[4], g[5])] if g[4] else [])
+    comum = _unidade_comum(pares)
+    medidas = sorted((_em_metros(v, u, comum) for v, u in pares), reverse=True)
+    area = medidas[0] * medidas[1]
+    return round(area, 2) if AREA_MINIMA_M2 <= area <= AREA_MAXIMA_M2 else None
+
+
+def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> str | None:
     """Rótulo curto da embalagem lida no título ("20 kg", "18 L", "kit 5 unidades"), que a tela mostra e o cálculo
     relê. Antes ia o título inteiro e a tela mostrava "Compre Produtos QUARTZOLIT em Promoção..." como embalagem."""
+    if normalizar_unidade(unidade_item) == "m2" and _CHAPA.search(_sem_acento(f"{descricao} {titulo}")):
+        area = area_pelas_dimensoes(titulo)
+        if area is None:
+            return None             # peça pequena ou sem medidas: não dá para comparar em R$/m²
+        return f"{area:g} m²".replace(".", ",")
+    titulo = _DIMENSOES.sub(" ", _LADOS.sub(" ", titulo)) if _CHAPA.search(_sem_acento(titulo)) else titulo
     c = conteudo_embalagem(titulo)
     if c:
         q = f"{c.quantidade:g}".replace(".", ",")
@@ -102,7 +151,7 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
             continue
         s = semelhanca(descricao, titulo)
         igual = "sim" if s >= MIN_MESMO else "parecido" if (generico and s >= MIN_PARECIDO) else None
-        emb = _embalagem(titulo, unidade_item)
+        emb = _embalagem(titulo, unidade_item, descricao)
         if igual is None or emb is None:
             continue
         link = str(a.get("link") or "") or f"https://www.google.com/search?tbm=shop&q={quote_plus(titulo)}"
@@ -127,7 +176,7 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
 # ------------------------------------------------------------------ lojas da região: busca do Google nos sites delas
 URL_BUSCA = "https://google.serper.dev/search"
 SITES_POR_CONSULTA = 4          # medido em 08/11: com 12 "site:" o Serper responde 400
-MAX_LOJAS_REGIONAIS = 8         # as mais perto da obra (2 consultas)
+MAX_LOJAS_REGIONAIS = 12        # as mais perto da obra (3 consultas de 4 sites; medido em 08/11: com 8 só 4 de 24 itens tinham loja da região)
 _PRECO_NO_TRECHO = re.compile(r"R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})")
 
 
@@ -146,7 +195,7 @@ def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos
         texto = f"{titulo} {trecho[:achou.start()]}"   # o nome do produto vem antes do preço no trecho
         if semelhanca(descricao, texto) < MIN_MESMO:
             continue
-        emb = _embalagem(texto, unidade_item)
+        emb = _embalagem(texto, unidade_item, descricao)
         preco = converter_preco(achou.group(1))
         if emb is None or preco is None:
             continue
