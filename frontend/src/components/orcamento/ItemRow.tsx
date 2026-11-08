@@ -97,6 +97,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
+  // Total do item: sem ele, "médio R$ 95,00 por kit 50" para 200 folhas parecia o preço das 200 (relato de 08/11).
+  const total = item.qtd_embalagens && item.preco_emb_med != null ? item.qtd_embalagens * item.preco_emb_med : null;
 
   function enviar(e: FormEvent) {
     e.preventDefault();
@@ -120,6 +122,12 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <p className="orc-item__compra">
           {quantidade(item.quantidade, item.unidade)}
           {compra && <> → <strong>{compra}</strong></>}
+          {total != null && !carregando && (
+            <span className="orc-item__total">
+              {" · "}total {item.estimativa ? "≈ " : ""}<strong>{reais(total)}</strong>
+              {item.qtd_embalagens && item.qtd_embalagens > 1 ? ` (${item.qtd_embalagens} × ${reais(item.preco_emb_med as number)})` : ""}
+            </span>
+          )}
         </p>
         {item.premissa && !carregando && <p className="orc-item__premissa">Conta: {item.premissa}</p>}
 
