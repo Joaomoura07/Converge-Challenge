@@ -1,8 +1,7 @@
 // Arquivos de exemplo da página /demo: 2 por formato, para o jurado baixar e arrastar para dentro como um arquiteto
-// faria. Todos são obras sintéticas do acervo (docs/arquivos-teste e tests/importacao/fixtures/modelos), curtos
-// (3 a 15 itens) para a pesquisa terminar rápido. Os .xlsx foram gerados com o SheetJS e o teste_2.skp com a openskp.
-// Cada teste traz de propósito um erro típico (unidade trocada, item repetido), um material que puxa complementos e
-// um item genérico, para a revisão e a pergunta ao arquiteto aparecerem (garantido em exemplos.test.ts).
+// faria. São casos sintéticos de 3 a 5 itens, gerados por scripts/gerar_demo_jurados.py e gerar_demo_skp.mjs.
+// Teste 1: materiais especificados. Teste 2: revisão, complementos e dados que precisam do arquiteto.
+// Os resultados de pesquisa dependem das fontes disponíveis; os exemplos não contêm preços prontos.
 // Para acrescentar um formato (ex.: IFC), basta incluir aqui e pôr os arquivos em public/exemplos/demo/.
 
 import type { ModoEntrada } from "@/lib/lista";
@@ -23,26 +22,17 @@ export const FORMATOS_DEMO: FormatoDemo[] = [
 ];
 
 export const EXEMPLOS_DEMO: ExemploDemo[] = [
-  { arquivo: "teste_1.csv", modo: "csv", obra: "Pintura de fachada, Madalena" },
-  { arquivo: "teste_2.csv", modo: "csv", obra: "Banheiro social, Casa Forte (SketchUp)" },
-  { arquivo: "teste_1.xlsx", modo: "excel", obra: "Orçamento de materiais, escritório Ilha do Leite" },
-  { arquivo: "teste_2.xlsx", modo: "excel", obra: "Restaurante, Recife Antigo" },
-  // Tabela agregada (louças por contagem). A de louças do apto Boa Viagem listava as mesmas peças em 2 banheiros e
-  // o revisor apontava 5 "duplicados" falsos (a lista do site não guarda o ambiente): trocada em 08/11.
-  { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, casa térrea em Aldeia" },
-  { arquivo: "teste_2.txt", modo: "revit", obra: "Pintura, casa térrea em Aldeia" },
-  { arquivo: "teste_1.pdf", modo: "pdf", obra: "Quadro de acabamentos, fachada Madalena" },
-  { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, restaurante Recife Antigo" },
-  { arquivo: "teste_1.dxf", modo: "dxf", obra: "Planta baixa simples (cm)" },
-  { arquivo: "teste_2.dxf", modo: "dxf", obra: "Planta exportada do AutoCAD" },
-  { arquivo: "teste_1.ifc", modo: "ifc", obra: "Apartamento mínimo (IFC4)" },
-  { arquivo: "teste_2.ifc", modo: "ifc", obra: "Casa com materiais (IFC4, mm)" },
-  { arquivo: "teste_1.skp", modo: "skp", obra: "Banheiro social (SketchUp)" },
-  { arquivo: "teste_2.skp", modo: "skp", obra: "Escritório, Ilha do Leite (SketchUp)" },
+  ...FORMATOS_DEMO.flatMap(({ modo }) => {
+    const ext = modo === "excel" ? "xlsx" : modo === "revit" ? "txt" : modo;
+    return [
+      { arquivo: `teste_1.${ext}`, modo, obra: "Pesquisa de materiais especificados — Boa Viagem" },
+      { arquivo: `teste_2.${ext}`, modo, obra: "Revisão e especificação de uma reforma — Casa Forte" },
+    ];
+  }),
 ];
 
 /** Um MODELO por formato: o arquivo-padrão que mostra ao usuário como montar a lista para enviar ao sistema.
- *  Aparece destacado, antes dos testes. CSV, Excel, TXT e PDF trazem uma lista genérica de 5 materiais; o DXF é a planta simples do teste_1. */
+ *  Tabelas e IFC têm cinco materiais genéricos; DXF mostra áreas/contagens e SKP mostra componentes de compra. */
 export const MODELOS_DEMO: ExemploDemo[] = [
   { arquivo: "MODELO.csv", modo: "csv", obra: "Modelo de lista em CSV" },
   { arquivo: "MODELO.xlsx", modo: "excel", obra: "Modelo de lista em Excel" },

@@ -1,0 +1,35 @@
+{
+  "orcamento_id": "11111111-1111-4111-8111-111111111111",
+  "obra": {
+    "nome": "Teste sintético de importação",
+    "cep": "51020000",
+    "orcamento_cliente": 10000
+  },
+  "origem": {
+    "tipo": "arquivo",
+    "modo": "ifc"
+  },
+  "itens": [
+    {
+      "id": "item-1",
+      "linha": 1,
+      "categoria": "Estrutura",
+      "descricao": "Laje de concreto (área)",
+      "quantidade": 7.5,
+      "unidade": "m2",
+      "origem_item": "arquivo",
+      "descricao_original": "Laje de concreto (área)",
+      "nivel": null,
+      "extras": {
+        "origem_ifc": {
+          "classe": "IFCSLAB",
+          "elementos": 1,
+          "global_ids": [
+            "slab"
+          ],
+          "esquema": "IFC4"
+        }
+      }
+    }
+  ]
+}

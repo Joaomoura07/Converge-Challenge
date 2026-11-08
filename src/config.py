@@ -4,6 +4,7 @@ import logging
 import os
 from functools import lru_cache
 from pathlib import Path
+from pydantic import Field
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,8 +20,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # LLM (Featherless)
-    featherless_api_key: str = ""          # nome antigo (1 chave); continua aceito
-    featherless_api_keys: str = ""         # várias chaves do time separadas por vírgula (cada uma tem a própria cota)
+    featherless_api_key: str = Field(default="", repr=False)  # nome antigo (1 chave); continua aceito
+    featherless_api_keys: str = Field(default="", repr=False)  # várias chaves separadas por vírgula
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_model: str = "zai-org/GLM-5.2"
     featherless_model_fast: str = ""
@@ -36,20 +37,21 @@ class Settings(BaseSettings):
 
     # Supabase
     supabase_url: str = ""
-    supabase_key: str = ""
+    supabase_key: str = Field(default="", repr=False)
 
     # Langfuse (o SDK também lê estas variáveis direto do ambiente)
     langfuse_enabled: bool = True          # interruptor: false desliga o tracing sem mexer no código
     langfuse_public_key: str = ""
-    langfuse_secret_key: str = ""
+    langfuse_secret_key: str = Field(default="", repr=False)
     langfuse_host: str = "https://cloud.langfuse.com"   # nome antigo (deprecated no SDK)
     langfuse_base_url: str = ""                          # nome atual; tem prioridade
 
     # Busca de preços (Fatia B): várias chaves Tavily separadas por vírgula (1 conta por integrante)
-    tavily_api_keys: str = ""
+    tavily_api_keys: str = Field(default="", repr=False)
     # Segunda fonte de preço (Google Shopping via serper.dev) e lojas próximas. Vazio = recurso desligado.
-    serper_api_keys: str = ""              # várias chaves separadas por vírgula (rodízio, como o Tavily)
-    ors_api_key: str = ""                  # OpenRouteService: rota de carro (km e minutos) até as lojas
+    serper_api_keys: str = Field(default="", repr=False)  # várias chaves em rodízio
+    serper_debug_json: bool = False  # diagnóstico temporário do primeiro anúncio do Shopping
+    ors_api_key: str = Field(default="", repr=False)  # OpenRouteService: rota até as lojas
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
     pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
@@ -58,11 +60,21 @@ class Settings(BaseSettings):
     pesquisa_max_anuncios: int = 8          # total que vai para a extração (fixas primeiro)
     pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
-    pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
+    pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"
     # "Pesquisar de novo" com alternativa. Medido em 07/11 (3 casos): Gemma 4–10 s e US$ 0,00007, mantendo cor e
     # acabamento; Qwen3-32B 12–24 s; GLM-5.2 48–125 s (com a busca depois, estourava os 120 s da tela).
     pesquisa_modelo_alternativa: str = "google/gemma-4-31B-it"
-    pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
+    pesquisa_modelo_agente: str = "Qwen/Qwen3-32B"
+    pesquisa_paginas_por_rodada: int = Field(default=2, ge=0, le=3)
+    pesquisa_pagina_timeout_s: float = Field(default=8, gt=0, le=20)
+    pesquisa_max_tokens_saida: int = Field(default=400, ge=100, le=1200)
+    pesquisa_hedge_ativo: bool = False
+    pesquisa_max_chamadas_item: int = Field(default=6, ge=1, le=12)
+    pesquisa_max_tokens_item: int = Field(default=30000, ge=1000)
+    pesquisa_max_chamadas_execucao: int = Field(default=120, ge=1)
+    pesquisa_max_tokens_execucao: int = Field(default=200000, ge=1000)
+    pesquisa_limite_usd_item: float = Field(default=0.03, gt=0)
+    pesquisa_limite_usd_execucao: float = Field(default=0.25, gt=0)
     pesquisa_hedge_s: float = 8             # extração sem resposta nesse tempo → reserva em paralelo (outra chave)
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
     pesquisa_max_refazer: int = 2           # buscas extras que o agente pode fazer por item
@@ -75,6 +87,9 @@ class Settings(BaseSettings):
     # Prazo do orçamento inteiro (fases 1 e 2), abaixo dos 300 s da função: sobra tempo para gravar, concluir e
     # chamar a Fatia C. Item que não termina a tempo vira "erro" com "Pesquisar de novo" (não fica "buscando").
     pesquisa_prazo_total_s: float = 240
+    # Itens por envio. Medido em 08/11: 53 itens em ~110 s; 321 itens estouraram o prazo (94 em "erro" por tempo,
+    # total R$ 0). Com 80 a conta fica perto de 200 s. A tela usa o mesmo número (LIMITE_ITENS_PESQUISA em tipos.ts).
+    pesquisa_max_itens: int = 80
 
     @property
     def langfuse_url(self) -> str:

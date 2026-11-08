@@ -3,7 +3,8 @@
 // Tela de estimativa (Figma 05 Materiais, 06 Fontes, 08 Documento): só desenha. Recebe o orçamento e os itens já lidos
 // (do useOrcamento na página real, de dados de exemplo na prévia).
 import { useEffect, useMemo, useState } from "react";
-import { reais } from "../orcamento/formato";
+import { reais, linkDiretoProduto } from "../orcamento/formato";
+import { ImagemProduto } from "../imagens/ImagemProduto";
 import { CabecalhoPagina } from "../shell/CabecalhoPagina";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 import { BlocoViabilidade } from "./BlocoViabilidade";
@@ -105,7 +106,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
               {lista.map((i) => (
                 <button key={i.id} type="button" className="sh-item" aria-pressed={item?.id === i.id} onClick={() => setSelecionado(i.id)}>
                   <span className="foto">
-                    {i.imagem ? <img src={i.imagem} alt={i.nome} loading="lazy" className="rs-foto" /> : i.situacao === "precificado" ? "" : <span aria-hidden="true">?</span>}
+                    <ImagemProduto src={i.imagem} nome={i.nome} carregando={i.situacao === "buscando"} />
                   </span>
                   <span>
                     <span className={`nome${item?.id === i.id ? " sel" : ""}`}>{i.nome}</span>
@@ -136,7 +137,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
                   <span>
                     {f.loja}
                     <small style={{ display: "block" }}>
-                      {f.item} · {f.url ? <a className="sh-link" href={f.url} target="_blank" rel="noopener noreferrer">{f.dominio}</a> : f.dominio}
+                      {f.item} · {f.url && linkDiretoProduto(f.url) ? <a className="sh-link" href={f.url} target="_blank" rel="noopener noreferrer">Ver produto em {f.dominio}</a> : "Link direto indisponível. Pesquise este item novamente."}
                     </small>
                     {f.data && <small style={{ display: "block" }}>{f.data}</small>}
                   </span>
@@ -153,7 +154,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
               <p className="sh-etiqueta" style={{ marginTop: 0 }}>
                 Referência selecionada <span style={{ float: "right" }}>{String(lista.indexOf(item) + 1).padStart(2, "0")} / {String(lista.length).padStart(2, "0")}</span>
               </p>
-              <div className="imagem">{item.imagem && <img src={item.imagem} alt={item.nome} className="rs-foto" />}</div>
+              <div className="imagem"><ImagemProduto src={item.imagem} nome={item.nome} carregando={item.situacao === "buscando"} destaque /></div>
               <h3>{item.nome}</h3>
               <p className="sh-apoio">{item.loja}</p>
               {item.situacao === "precificado" ? (

@@ -212,7 +212,7 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
 
             {demo && <ExemplosDownload />}
 
-            <div className="modos" role="tablist" aria-label="Como adicionar materiais">
+            {!demo && <div className="modos" role="tablist" aria-label="Como adicionar materiais">
               {MODOS.map((m) => (
                 <button
                   key={m.id}
@@ -227,10 +227,14 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
                   {m.rotulo}
                 </button>
               ))}
-            </div>
+            </div>}
 
-            <div id="painel-modo" role="tabpanel" aria-labelledby={`modo-${lista.modo}`} className="painel-modo">
-              {modoAtual.etapa ? (
+            <div id="painel-modo" role={demo ? undefined : "tabpanel"} aria-labelledby={demo ? undefined : `modo-${lista.modo}`} className="painel-modo">
+              {demo ? (
+                <p className="apoio">
+                  Envie a lista do jeito que ela estiver: planilha, CSV, TXT do Revit, PDF, planta DXF, modelo IFC ou SketchUp. Pode mandar vários arquivos de uma vez. Depois, confira e edite os itens na tabela abaixo.
+                </p>
+              ) : modoAtual.etapa ? (
                 <p className="apoio">
                   A importação de <strong>{modoAtual.rotulo}</strong> chega na etapa {modoAtual.etapa}. Os materiais já digitados
                   continuam na lista abaixo e serão a mesma lista quando a importação existir.
@@ -276,6 +280,7 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
                 novoId={gerarUuid}
                 onAplicar={aplicarImportacao}
                 semExemplos={demo}
+                unificado={demo}
                 onArquivoSolto={(nome) => {
                   const modo = modoPeloArquivo(nome);
                   if (modo && modo !== lista.modo && MODOS.some((m) => m.id === modo)) despachar({ tipo: "alternar_modo", modo });

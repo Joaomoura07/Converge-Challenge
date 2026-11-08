@@ -15,3 +15,4 @@ def _sem_servicos_opcionais(request, monkeypatch):
     s = get_settings()
     monkeypatch.setattr(s, "serper_api_keys", "")
     monkeypatch.setattr(s, "ors_api_key", "")
+    monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 0)

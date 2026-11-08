@@ -17,21 +17,25 @@ type Props = {
   semExemplos?: boolean;
   /** Avisado quando um arquivo é solto, para a aba acompanhar a extensão (o leitor já escolhe pela extensão). */
   onArquivoSolto?: (nome: string) => void;
+  /** Uma área só para todos os formatos (na /demo): aceita qualquer extensão lida e vários arquivos de uma vez. */
+  unificado?: boolean;
 };
 
-type Pendente = { importacao: Importacao; linhas: Linha[]; nome: string };
+const TODOS_FORMATOS = ".csv,.xlsx,.xls,.xlsm,.txt,.pdf,.dxf,.ifc,.ifczip,.skp";
+
+type Pendente = { importacao?: Importacao; linhas: Linha[]; nome: string };
 type EscolhaAba = { nome: string; bytes: Uint8Array; abas: string[]; selecionada: string };
 type Situacao =
   | { tipo: "livre" }
   | { tipo: "lendo"; nome: string }
   | { tipo: "erro"; mensagem: string; nome: string }
-  | { tipo: "pronto"; resumo: string; avisos: string[] };
+  | { tipo: "pronto"; resumo: string; avisos: string[]; arquivo: string };
 
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
-export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemplos, onArquivoSolto }: Props) {
-  const mostrarArquivo = modo !== "manual";
-  const aceita = modo === "skp" ? ".skp" : modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
+export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemplos, onArquivoSolto, unificado = false }: Props) {
+  const mostrarArquivo = unificado || modo !== "manual";
+  const aceita = unificado ? TODOS_FORMATOS : modo === "skp" ? ".skp" : modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
@@ -109,10 +113,10 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
     const avisos = resumoAvisos(resultado).linhas;
     if (linhasAtuais.current > 0) {
       setPendente({ importacao: resultado, linhas, nome });
-      setSituacao({ tipo: "pronto", resumo, avisos });
+      setSituacao({ tipo: "pronto", resumo, avisos, arquivo: nome });
     } else {
       onAplicar(linhas, "substituir");
-      setSituacao({ tipo: "pronto", resumo, avisos });
+      setSituacao({ tipo: "pronto", resumo, avisos, arquivo: nome });
     }
   }
 
@@ -128,19 +132,69 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
   }
 
   async function aoEscolherArquivo(e: React.ChangeEvent<HTMLInputElement>) {
-    const arquivo = e.target.files?.[0];
+    const arquivos = Array.from(e.target.files ?? []);
     // Permite escolher de novo o mesmo arquivo depois de corrigi-lo.
     e.target.value = "";
-    if (!arquivo) return;
-    await receberArquivo(arquivo);
+    if (arquivos.length === 0) return;
+    if (unificado && arquivos.length > 1) return receberVarios(arquivos);
+    await receberArquivo(arquivos[0]);
+  }
+
+  /** Vários arquivos de uma vez (modo unificado): cada um passa pelo leitor da sua extensão e as linhas são somadas.
+   *  Planilha com várias abas usa a aba principal. Arquivos com erro são listados e não mexem na lista. */
+  async function receberVarios(arquivos: File[]) {
+    setPendente(null);
+    setEscolhaAba(null);
+    const linhas: Linha[] = [];
+    const falhas: string[] = [];
+    const lidos: string[] = [];
+    let total = 0;
+    for (const arquivo of arquivos) {
+      setSituacao({ tipo: "lendo", nome: arquivo.name });
+      if (arquivo.size > LIMITE_BYTES) {
+        falhas.push(`${arquivo.name}: passa de ${LIMITE_BYTES / 1024 / 1024} MB.`);
+        continue;
+      }
+      try {
+        const bytes = new Uint8Array(await arquivo.arrayBuffer());
+        const r = await lerArquivo({ nome: arquivo.name, bytes, aba: null });
+        if (ehErro(r)) falhas.push(`${arquivo.name}: ${r.erro.mensagem}`);
+        else if (r.itens.length === 0) falhas.push(`${arquivo.name}: sem itens para importar.`);
+        else {
+          linhas.push(...importacaoParaLinhas(r, novoId));
+          total += r.itens.length;
+          lidos.push(arquivo.name);
+        }
+      } catch {
+        falhas.push(`${arquivo.name}: não consegui ler o arquivo.`);
+      }
+    }
+    if (linhas.length === 0) {
+      setSituacao({ tipo: "erro", nome: "arquivos", mensagem: `Nenhum arquivo pôde ser lido. ${falhas.join(" ")} A lista atual foi mantida.` });
+      return;
+    }
+    if (total > LIMITE_ITENS_ORCAMENTO) {
+      setSituacao({ tipo: "erro", nome: "arquivos", mensagem: `Os arquivos somam ${total.toLocaleString("pt-BR")} itens e um orçamento aceita até ${LIMITE_ITENS_ORCAMENTO.toLocaleString("pt-BR")}. Envie menos arquivos. A lista atual foi mantida.` });
+      return;
+    }
+    const nome = `${lidos.length} arquivos`;
+    const resumo = `${total.toLocaleString("pt-BR")} ${total === 1 ? "item lido" : "itens lidos"} de ${lidos.join(", ")}.`;
+    if (linhasAtuais.current > 0) {
+      setPendente({ linhas, nome });
+    } else {
+      onAplicar(linhas, "substituir");
+    }
+    setSituacao({ tipo: "pronto", resumo, avisos: falhas, arquivo: nome });
   }
 
   /** Arrastar e soltar: o mesmo caminho do botão (mesmo leitor, mesmos limites, mesma pergunta acrescentar/substituir). */
   async function aoSoltar(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setArrastando(false);
-    const arquivo = e.dataTransfer.files?.[0];
+    const arquivos = Array.from(e.dataTransfer.files ?? []);
+    const arquivo = arquivos[0];
     if (!arquivo || situacao.tipo === "lendo") return;
+    if (unificado && arquivos.length > 1) return receberVarios(arquivos);
     onArquivoSolto?.(arquivo.name);
     await receberArquivo(arquivo);
   }
@@ -171,9 +225,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
     });
   }
 
+  // Arquivo lido e aplicado à lista: a caixa grande de upload cede lugar a um cartão de confirmação.
+  const concluido = situacao.tipo === "pronto" && !pendente && mostrarArquivo;
+
   return (
     <div
-      className={`importador${arrastando ? " importador--arrastando" : ""}`}
+      className={`importador${arrastando ? " importador--arrastando" : ""}${concluido ? " importador--concluido" : ""}`}
       onDragOver={(e) => {
         if (!Array.from(e.dataTransfer.types).includes("Files")) return;
         e.preventDefault();
@@ -185,10 +242,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       }}
       onDrop={aoSoltar}
     >
-      <p className="importador-soltar" aria-hidden="true">
-        {arrastando ? "Solte para ler a lista" : "Arraste o arquivo para cá ou escolha abaixo"}
-      </p>
-      <div className="importador-acoes">
+      {!concluido && (
+        <p className="importador-soltar" aria-hidden="true">
+          {arrastando ? "Solte para ler a lista" : unificado ? "Arraste um ou vários arquivos para cá, de qualquer formato" : "Arraste o arquivo para cá ou escolha abaixo"}
+        </p>
+      )}
+      <div className="importador-acoes" hidden={concluido}>
         {mostrarArquivo && (
           <>
             <input
@@ -197,12 +256,13 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
               className="somente-leitor"
               type="file"
               accept={aceita}
+              multiple={unificado}
               disabled={situacao.tipo === "lendo"}
               onChange={aoEscolherArquivo}
               aria-describedby={idAviso}
             />
             <button type="button" className="botao-primario" disabled={situacao.tipo === "lendo"} onClick={() => entrada.current?.click()}>
-              {modo === "skp" ? "Escolher modelo SketchUp" : modo === "ifc" ? "Escolher modelo IFC" : modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
+              {unificado ? "Escolher arquivos" : modo === "skp" ? "Escolher modelo SketchUp" : modo === "ifc" ? "Escolher modelo IFC" : modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
             </button>
           </>
         )}
@@ -219,7 +279,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
         )}
       </div>
 
-      {modo === "manual" && (
+      {modo === "manual" && !unificado && (
         <div className="importador-colar">
           <label htmlFor={idColar} className="importador-colar__rotulo">
             Já tem a lista pronta? Cole aqui, um material por linha
@@ -243,7 +303,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
         </div>
       )}
 
-      {exemplosAbertos && (
+      {exemplosAbertos && !concluido && (
         <ul id="lista-exemplos" className="exemplos">
           {EXEMPLOS.map((ex) => (
             <li key={ex.id}>
@@ -259,7 +319,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       <p id={idAviso} className="nota" role="status" aria-live="polite">
         {situacao.tipo === "livre" &&
           (mostrarArquivo
-            ? modo === "skp"
+            ? unificado
+              ? "Aceita CSV, Excel, TXT do Revit, PDF com texto, DXF, IFC e SketchUp, de até 20 MB cada. Pode mandar vários de uma vez: os itens são somados na lista. O formato é reconhecido pela extensão."
+              : modo === "skp"
               ? "Aceita arquivos .skp de até 20 MB. O modelo é lido neste navegador. Confira os componentes e as medidas na revisão."
               : modo === "ifc"
               ? "Aceita o modelo exportado como .ifc (IFC2x3 ou IFC4) de até 20 MB. Exporte com as quantidades base ligadas para trazer as áreas. A lista só muda depois da leitura."
@@ -316,7 +378,22 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       )}
 
       {situacao.tipo === "pronto" && (
-        <div className="aviso-ok" role="status">
+        <div className={concluido ? "arquivo-ok" : "aviso-ok"} role="status">
+          {concluido && (
+            <div className="arquivo-ok__topo">
+              <svg className="arquivo-ok__icone" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="11" fill="currentColor" />
+                <path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className="arquivo-ok__texto">
+                <p className="arquivo-ok__nome">{situacao.arquivo}</p>
+                <p className="arquivo-ok__sub">{unificado ? "Leitura concluída" : "Arquivo lido"}</p>
+              </div>
+              <button type="button" className="botao-link" onClick={() => entrada.current?.click()}>
+                {unificado ? "Enviar outros arquivos" : "Trocar arquivo"}
+              </button>
+            </div>
+          )}
           <p className="aviso-titulo">{situacao.resumo}</p>
           {situacao.avisos.length > 0 && (
             <details>

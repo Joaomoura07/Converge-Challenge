@@ -1,11 +1,16 @@
 // Formatação para a tela: moeda, unidades e a frase de compra ("180 m² → 2 latas 18 L").
 
-import type { Objetivo } from "./tipos";
+import type { Fonte, Objetivo } from "./tipos";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
 export const reais = (v: number) => moeda.format(v);
+
+export function precoDoAnuncio(preco?: number | null, embalagem?: string | null): string {
+  if (preco == null || !Number.isFinite(preco) || preco <= 0) return "Preço anunciado indisponível";
+  return `${reais(preco)}${embalagem ? ` / ${embalagem}` : ""}`;
+}
 
 /** Valor curto para as pontas da cota: R$ 659 (sem centavos quando passa de R$ 100). */
 export const reaisCurto = (v: number) =>
@@ -47,4 +52,20 @@ export const OBJETIVOS: { objetivo: Objetivo; rotulo: string; dica: string }[] =
 export function distanciaDaLoja(km: number | null | undefined): string | null {
   if (km == null || !Number.isFinite(km) || km <= 0) return null;
   return `a ${km.toFixed(1).replace(".", ",")} km de carro (aprox.)`;
+}
+/** Fontes antigas podem conter Shopping; não oferecer um buscador como link do produto. */
+export function linkDiretoProduto(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
+      && !/(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\./i.test(u.hostname)
+      && u.pathname.replaceAll("/", "").length > 0
+      && !/\/(busca|search|pesquisa|categoria|category|catalogo|collections?)(\/|$)/i.test(u.pathname)
+      && !["q", "query", "busca", "ft"].some((k) => u.searchParams.has(k));
+  } catch { return false; }
+}
+
+export function linkDeCompra(fonte: Fonte): string | null {
+  return fonte.link_verificado === true && fonte.preco_anunciado != null && fonte.preco_anunciado > 0
+    && linkDiretoProduto(fonte.url) ? fonte.url : null;
 }

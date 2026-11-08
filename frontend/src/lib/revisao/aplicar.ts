@@ -22,6 +22,22 @@ export function paraItensRevisao(linhas: Linha[]): ItemParaRevisao[] {
   return itens;
 }
 
+/**
+ * Número que a pessoa VÊ na coluna "#" da tabela para uma linha da revisão. O revisor fala na linha do arquivo
+ * (linhaOrigem: o CSV conta o cabeçalho), então "linha 6" apontava para o 5º material (medido em 08/11, teste_1.csv).
+ * Linha que não está mais na tabela continua com o número original.
+ */
+export function numeroNaTabela(linhas: Linha[], linha: number): number {
+  const doArquivo = linhas.findIndex((l) => l.linhaOrigem === linha);
+  if (doArquivo >= 0) return doArquivo + 1;
+  const pelaPosicao = linhas.findIndex((l, i) => l.linhaOrigem === undefined && i + 1 === linha);
+  return pelaPosicao >= 0 ? pelaPosicao + 1 : linha;
+}
+
+export function numerosNaTabela(linhas: Linha[], ns: number[]): number[] {
+  return ns.map((n) => numeroNaTabela(linhas, n));
+}
+
 /** Identifica o conteúdo da lista: qualquer edição muda a versão e invalida o que foi calculado antes. */
 export function versaoDaLista(linhas: Linha[]): string {
   return linhas.map((l) => [l.id, l.descricao, l.quantidade, l.unidade, l.categoria].join("␟")).join("␞");

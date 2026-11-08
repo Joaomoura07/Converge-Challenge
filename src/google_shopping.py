@@ -177,8 +177,12 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         if not link.startswith("http"):
             continue
         regional = regional_por_nome(loja)
+        from .busca import dominio_de
+        host = dominio_de(link) or ""
+        direto = host and "google." not in host     # link que já é da loja (o Shopping às vezes manda): vale como loja
         candidatos.append((s, Oferta(loja=regional.nome if regional else loja,
-                                     dominio=regional.dominio if regional and regional.dominio else DOMINIO_SHOPPING,
+                                     dominio=host if direto else regional.dominio if regional and regional.dominio
+                                     else DOMINIO_SHOPPING,
                                      url=link, titulo=titulo, preco=preco, embalagem=emb, mesmo_produto=igual,
                                      imagem=_imagem(a))))
     candidatos.sort(key=lambda c: -c[0])

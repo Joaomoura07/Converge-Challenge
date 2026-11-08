@@ -8,6 +8,7 @@ import {
   type ErrosLinha,
   type EstadoLista,
 } from "@/lib/lista";
+import { numerosNaTabela } from "@/lib/revisao/aplicar";
 import { UNIDADES } from "@/lib/validacao";
 
 type Props = {
@@ -46,6 +47,7 @@ export function TabelaMateriais({ estado, erros, despachar, novoId }: Props) {
 
   return (
     <div className="tabela" role="group" aria-label="Materiais da obra">
+      <p className="apoio">Para encontrar o produto certo, inclua na descrição marca, linha ou código do fabricante, medidas, cor, acabamento, aplicação e embalagem. Em itens elétricos, informe também tensão e potência/corrente. Quanto mais detalhes agora, menos novas pesquisas.</p>
       <datalist id="unidades-validas">
         {UNIDADES.map((u) => (
           <option key={u} value={u} />
@@ -193,7 +195,7 @@ export function TabelaMateriais({ estado, erros, despachar, novoId }: Props) {
                       )}
                       <span className="nota">
                         {l.sugerida.motivo} (linha{l.sugerida.origemLinhas.length === 1 ? "" : "s"} de origem:{" "}
-                        {l.sugerida.origemLinhas.join(", ")})
+                        {numerosNaTabela(linhas, l.sugerida.origemLinhas).join(", ")})
                       </span>
                     </div>
                   )}
