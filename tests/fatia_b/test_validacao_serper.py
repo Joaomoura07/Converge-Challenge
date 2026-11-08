@@ -170,3 +170,44 @@ def test_mesma_consulta_nao_gasta_credito_duas_vezes():
 
     asyncio.run(rodar())
     assert len(chamadas) == 1
+
+
+def test_chave_sem_credito_http_400_tenta_a_proxima():
+    # medido em 08/11: a 1ª chave com saldo negativo respondia 400 "Not enough credits" e Shopping, Maps e fotos
+    # de reserva ficavam vazios, embora as outras chaves tivessem crédito
+    from src import serper
+    serper._sem_credito.clear()
+    usadas = []
+
+    def handler(req):
+        usadas.append(req.headers["X-API-KEY"])
+        if req.headers["X-API-KEY"] == "sem":
+            return httpx.Response(400, json={"message": "Not enough credits", "statusCode": 400})
+        return httpx.Response(200, json={"ok": 1})
+
+    async def rodar():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            a = await serper.post(c, "https://google.serper.dev/images", {"q": "x"}, ["sem", "boa"])
+            b = await serper.post(c, "https://google.serper.dev/images", {"q": "x"}, ["sem", "boa"])
+            return a, b
+
+    a, b = asyncio.run(rodar())
+    assert a == {"ok": 1} and b == {"ok": 1}
+    assert usadas == ["sem", "boa", "boa"]   # na 2ª chamada a chave sem crédito já vai para o fim da fila
+    serper._sem_credito.clear()
+
+
+def test_http_400_de_consulta_invalida_nao_troca_de_chave():
+    from src import serper
+    serper._sem_credito.clear()
+    usadas = []
+
+    def handler(req):
+        usadas.append(req.headers["X-API-KEY"])
+        return httpx.Response(400, json={"message": "Query is required", "statusCode": 400})
+
+    async def rodar():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await serper.post(c, "https://google.serper.dev/images", {"q": ""}, ["a", "b"])
+
+    assert asyncio.run(rodar()) is None and usadas == ["a"]

@@ -8,6 +8,7 @@ import {
   type ErrosLinha,
   type EstadoLista,
 } from "@/lib/lista";
+import { numerosNaTabela } from "@/lib/revisao/aplicar";
 import { UNIDADES } from "@/lib/validacao";
 
 type Props = {
@@ -194,7 +195,7 @@ export function TabelaMateriais({ estado, erros, despachar, novoId }: Props) {
                       )}
                       <span className="nota">
                         {l.sugerida.motivo} (linha{l.sugerida.origemLinhas.length === 1 ? "" : "s"} de origem:{" "}
-                        {l.sugerida.origemLinhas.join(", ")})
+                        {numerosNaTabela(linhas, l.sugerida.origemLinhas).join(", ")})
                       </span>
                     </div>
                   )}

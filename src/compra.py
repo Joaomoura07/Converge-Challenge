@@ -143,8 +143,12 @@ def necessidade_na_unidade(produto: str, quantidade: float, unidade_item: str | 
 
 def qtd_embalagens(produto: str, quantidade: float | None, unidade_item: str | None, conteudo: Conteudo | None):
     """Número de embalagens a comprar (arredonda para cima) com a perda do material.
-    Devolve (n, perda, premissa) ou (None, perda, motivo) quando a conversão não é possível."""
-    perda = perda_para(produto)
+    Devolve (n, perda, premissa) ou (None, perda, motivo) quando a conversão não é possível.
+
+    A perda só entra quando o quantitativo é MEDIDA do projeto (m², m, m³). Em litros, kg ou unidades o arquiteto
+    já informou quanto comprar: medido em 08/11 no site, "Tinta ... 18L, 18 L" virava 2 latas de 18 L
+    (18 × 1,05 = 18,9 L) e "Argamassa ... 20kg, 40 kg" virava 3 sacos, dobrando/inflando o total."""
+    perda = perda_para(produto) if normalizar_unidade(unidade_item) in ("m2", "m", "m3") else 0.0
     if quantidade is None or conteudo is None or conteudo.quantidade <= 0:
         return None, perda, "sem quantidade ou embalagem conhecida"
     nec = necessidade_na_unidade(produto, quantidade, unidade_item, conteudo.unidade)

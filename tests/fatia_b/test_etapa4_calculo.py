@@ -46,6 +46,10 @@ def test_entende_embalagens(texto, esperado):
     ("Rejunte Quartzolit cinza platina", 68, "m2", "saco 5 kg", 5),               # 68×0,3 ×1,05 /5 = 4,3
     ("Ducha Lorenzetti Acqua Duo", 2, "un", "unidade", 2),
     ("Cabo flexível SIL 2,5 mm²", 300, "m", "rolo 100 m", 4),                     # 300 ×1,10 /100 = 3,3
+    # quantidade já de compra (L, kg): sem perda. Medido em 08/11: 18 L virava 2 latas e 40 kg, 3 sacos
+    ("Tinta Suvinil Toque de Seda Branco Neve 18L", 18, "l", "lata 18 L", 1),
+    ("Argamassa Quartzolit AC-III cinza 20kg", 40, "kg", "saco 20 kg", 2),
+    ("Tinta Suvinil Toque de Seda Branco Neve", 20, "l", "lata 18 L", 2),
 ])
 def test_quantas_embalagens_comprar(produto, qtd, un, emb, n):
     assert qtd_embalagens(produto, qtd, un, conteudo_embalagem(emb))[0] == n
