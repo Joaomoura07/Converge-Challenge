@@ -66,7 +66,7 @@ def _cliente(handler):
 @pytest.fixture(autouse=True)
 def _limpa(monkeypatch):
     v._cache.clear()
-    monkeypatch.setattr(v, "get_settings", lambda: NS(serper_keys=["k1"]))
+    monkeypatch.setattr(v, "get_settings", lambda: NS(serper_keys=["k1"], serper_debug_json=False))
 
 
 def test_validar_confirma_e_manda_a_chave_e_o_pais():
@@ -122,7 +122,7 @@ def test_rede_fora_do_ar_devolve_o_resultado_intacto():
 
 
 def test_chave_recusada_tenta_a_proxima(monkeypatch):
-    monkeypatch.setattr(v, "get_settings", lambda: NS(serper_keys=["ruim", "boa"]))
+    monkeypatch.setattr(v, "get_settings", lambda: NS(serper_keys=["ruim", "boa"], serper_debug_json=False))
     usadas = []
 
     def handler(req):

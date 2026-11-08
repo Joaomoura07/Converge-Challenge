@@ -14,6 +14,7 @@ texto ou número) e o teste com chave real está no plano (docs/VALIDACAO-E-LOJA
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 import statistics
@@ -84,11 +85,16 @@ async def _buscar(consulta: str, cliente: httpx.AsyncClient | None = None) -> li
     proprio = cliente is None
     cli = cliente or httpx.AsyncClient(timeout=TIMEOUT_S)
     try:
+        settings = get_settings()
         j = await serper.post(cli, URL_SHOPPING, {"q": consulta, "gl": "br", "hl": "pt-br", "num": 10},
-                             get_settings().serper_keys)
-        if j is None:
+                             settings.serper_keys)
+        if not isinstance(j, dict):
             return []
-        lista = [a for a in (j.get("shopping") or []) if isinstance(a, dict)]
+        anuncios = j.get("shopping")
+        if settings.serper_debug_json:
+            amostra = anuncios[0] if isinstance(anuncios, list) and anuncios else {"shopping": []}
+            logger.info("🔥 JSON PURO: %s", json.dumps(amostra, ensure_ascii=False, indent=2))
+        lista = [a for a in anuncios if isinstance(a, dict)] if isinstance(anuncios, list) else []
         _cache[consulta] = (agora, lista)
         return lista
     finally:
