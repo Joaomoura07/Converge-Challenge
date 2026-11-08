@@ -35,7 +35,6 @@ export function embalagens(n: number, emb: string): string {
   return `${n} × ${limpa}`;
 }
 
-export const CONFIANCA: Record<string, string> = { alta: "Confiança alta", media: "Confiança média", baixa: "Confiança baixa" };
 
 /** Opções de alternativa do "Pesquisar de novo", na ordem em que aparecem. */
 export const OBJETIVOS: { objetivo: Objetivo; rotulo: string; dica: string }[] = [

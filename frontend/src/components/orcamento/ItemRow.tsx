@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { CONFIANCA, OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import type { ItemOrcamento, Objetivo } from "./tipos";
@@ -178,12 +178,14 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         {!carregando && item.preco_emb_med != null && (
           <p className="orc-item__confianca">
             {item.estimativa && <span className="orc-item__estimativa">Estimativa</span>}
-            {item.confianca && <span>{CONFIANCA[item.confianca]}</span>}
             <span>{lojas.length === 1 ? "1 loja" : `${lojas.length} lojas`}</span>
             {item.preco_un_med != null && item.unidade_preco && (
               <span>{reais(item.preco_un_med)}/{item.unidade_preco === "m2" ? "m²" : item.unidade_preco}</span>
             )}
           </p>
+        )}
+        {!carregando && item.preco_emb_med != null && (
+          <p className="orc-item__dica">Média dos preços encontrados para o que você pediu. Quanto mais especificações (marca, modelo, medida), melhor a pesquisa.</p>
         )}
         {!carregando && item.status === "definido" && item.motivo && <p className="orc-item__aviso">{item.motivo}</p>}
         {!carregando && (item.iteracoes ?? 0) > 0 && (
