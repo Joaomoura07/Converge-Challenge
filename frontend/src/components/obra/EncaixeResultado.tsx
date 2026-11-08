@@ -25,7 +25,7 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
         <p className="obra-bloco__texto" role="status" aria-live="polite">
           {orcamento.status_pesquisa === "falhou"
             ? "A pesquisa não terminou, por isso o resultado ainda não foi calculado."
-            : "Calculando frete, viabilidade e ganho de tempo quando a pesquisa terminar…"}
+            : "Calculando viabilidade e ganho de tempo quando a pesquisa terminar…"}
         </p>
       ) : (
         <>

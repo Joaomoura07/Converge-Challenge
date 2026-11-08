@@ -57,12 +57,14 @@ describe("linhasDocumento e subtotal", () => {
 });
 
 describe("notaDocumento", () => {
-  it("só frete quando tudo está precificado", () => {
-    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Frete não incluído\. Estimativa sujeita/);
+  it("tudo precificado: só o aviso, sem citar frete (em pausa na demo)", () => {
+    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Estimativa sujeita/);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).not.toMatch(/frete/i);
   });
-  it("singular e plural, como no Figma ('Frete e 1 item pendente não incluídos')", () => {
-    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^Frete e 1 item pendente não incluídos\./);
-    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^Frete, 4 itens pendentes e 2 itens sem preço não incluídos\./);
+  it("singular e plural ('1 item pendente não incluído')", () => {
+    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^1 item pendente não incluído\./);
+    expect(notaDocumento({ pendentes: 3, semPreco: 0, total: 3 })).toMatch(/^3 itens pendentes não incluídos\./);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^4 itens pendentes e 2 itens sem preço não incluídos\./);
   });
   it("não diz que os preços são fictícios (vêm de pesquisa real, com fonte)", () => {
     expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).not.toMatch(/fictíci/i);

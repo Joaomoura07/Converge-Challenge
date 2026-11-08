@@ -46,7 +46,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
             </p>
             <span className="valor">{reais(subtotal(linhas))}</span>
             <p className="sh-apoio" style={{ fontSize: 10, marginBottom: 8 }}>
-              {contagem(linhas.length, "material", "materiais").replace(/^0/, "")} · frete ainda não incluído
+              {contagem(linhas.length, "material", "materiais").replace(/^0/, "")}
             </p>
             <button type="button" className="sh-botao" onClick={() => setDocumento(true)}>
               Prévia do documento <span aria-hidden="true">↗</span>
@@ -75,7 +75,6 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
       <p className="sh-resumo">
         <span className="ok">{contagem(linhas.length, "item precificado", "itens precificados")}</span>
         <span className="pend">{contagem(fora.total, "item pendente", "itens pendentes")}</span>
-        <span>Frete a confirmar</span>
       </p>
 
       <div className="sh-duas">
