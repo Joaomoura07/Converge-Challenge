@@ -245,6 +245,36 @@ def test_so_complementos_recusados_nao_envia(falso, cliente):
     assert falso.gravacoes == []
 
 
+def _itens(n):
+    return [{"id": f"i{k}", "linha": k + 2, "descricao": f"Tinta acrílica Suvinil {k}", "quantidade": 1, "unidade": "un"}
+            for k in range(n)]
+
+
+def test_lista_acima_do_teto_da_pesquisa_e_recusada_sem_gravar_nem_pesquisar(falso, cliente):
+    from src.config import get_settings
+    teto = get_settings().pesquisa_max_itens
+    r = cliente.post("/orcamentos", json=corpo(itens=_itens(teto + 1)))
+    assert r.status_code == 422
+    d = r.json()["detail"]
+    assert d["codigo"] == "LISTA_GRANDE_PARA_PESQUISA" and d["limite"] == teto
+    assert f"até {teto} itens" in d["mensagem"] and str(teto + 1) in d["mensagem"]
+    assert falso.gravacoes == [] and falso.pesquisas == []
+
+
+def test_lista_no_teto_da_pesquisa_passa(falso, cliente):
+    from src.config import get_settings
+    teto = get_settings().pesquisa_max_itens
+    r = cliente.post("/orcamentos", json=corpo(itens=_itens(teto)))
+    assert r.status_code == 200 and len(falso.gravacoes[0]["itens"]) == teto
+
+
+def test_complemento_recusado_nao_conta_para_o_teto(falso, cliente):
+    from src.config import get_settings
+    teto = get_settings().pesquisa_max_itens
+    r = cliente.post("/orcamentos", json=corpo(itens=_itens(teto) + [_complemento(False)]))
+    assert r.status_code == 200
+
+
 # ------------------------------------------------------------------ paridade com o contrato publicado
 
 
