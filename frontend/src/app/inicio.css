@@ -399,6 +399,15 @@
 .in-hero__conteudo > :nth-child(4) { animation-delay: 0.7s; }
 .in-hero__conteudo > :nth-child(5) { animation-delay: 0.85s; }
 @keyframes in-sobe { to { opacity: 1; transform: none; } }
+/* Título e subtítulo entram fora de foco e ganham nitidez (efeito "desfoque que resolve"); o botão segue subindo. */
+.in-hero__conteudo > h1, .in-hero__conteudo > .in-sub {
+  filter: blur(14px);
+  transform: scale(1.04);
+  animation-name: in-desfoque;
+  animation-duration: 1.1s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes in-desfoque { to { opacity: 1; filter: blur(0); transform: none; } }
 
 /* Botão principal: brilho que passa ao parar o mouse */
 .in .oa-botao--principal { position: relative; overflow: hidden; transition: background-color 200ms ease, transform 200ms ease; }
@@ -552,6 +561,7 @@
   .in-hero__conteudo > *, [data-revelar], .in-passos > li, .in-numeros > div, .in-fontes li, .in-regras li,
   .in-previa__itens li, .in-cota-preco .ponto, .in-previa .selo { opacity: 1; transform: none; transition: none; animation: none; }
   .in-cota-preco .trilho::before { transform: none; transition: none; }
+  .in-hero__conteudo > h1, .in-hero__conteudo > .in-sub { filter: none; transform: none; opacity: 1; animation: none; }
   .in-previa__itens li::before { animation: none; }
   .in .oa-botao--principal::after { display: none; }
 }

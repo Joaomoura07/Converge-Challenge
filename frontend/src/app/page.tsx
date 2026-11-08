@@ -313,7 +313,7 @@ export default function Inicio() {
       </section>
 
       <section className="in-faixa in-final" data-revelar aria-labelledby="in-final">
-        <h2 id="in-final">Mais tempo para projetar.</h2>
+        <h2 id="in-final">Veja o agente cotando ao vivo.</h2>
         <p>Deixe a busca de preços com o agente e chegue à reunião com o orçamento pronto.</p>
         <Link href="/demo" className="oa-botao oa-botao--principal">
           Visualizar Demo

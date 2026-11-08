@@ -19,7 +19,7 @@ import { NovaObra, type Obra, type RascunhoObra } from "./NovaObra";
 import { iniciarEnvio } from "@/lib/envio/armazem";
 import { conteudoDoEnvio, montarCorpo } from "@/lib/envio/corpo";
 import { lerRascunho, salvarRascunho } from "@/lib/envio/rascunho";
-import { LIMITE_ITENS_ORCAMENTO } from "@/lib/importar/tipos";
+import { LIMITE_ITENS_ORCAMENTO, LIMITE_ITENS_PESQUISA } from "@/lib/importar/tipos";
 import { Importador } from "./Importador";
 import { ExemplosDownload } from "./demo/ExemplosDownload";
 import { PassosDemo, type PassoDemo } from "./demo/PassosDemo";
@@ -39,6 +39,9 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
         { id: "skp" as ModoEntrada, rotulo: "SketchUp (SKP)", etapa: null },
       ] : []),
 ];
+
+const contarPreenchidos = (linhas: Linha[]) =>
+  linhas.filter((l) => l.descricao || l.quantidade || l.unidade || l.categoria).length;
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -70,12 +73,23 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
     ultimoEnvio.current = r.ultimoEnvio;
   }, []);
 
+  // Demo em andamento: avisa antes de recarregar ou fechar, porque nada fica salvo (o envio usa o router, sem aviso).
+  const temProgresso = Boolean(obra) || contarPreenchidos(lista.linhas) > 0 ||
+    Boolean(rascunho.nome || rascunho.cep || rascunho.orcamento);
+  useEffect(() => {
+    if (!demo || !temProgresso) return;
+    const avisar = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [demo, temProgresso]);
+
   const { estado: revisor, repetir: repetirRevisao } = useSugestoes(lista.linhas);
   const erros = useMemo(() => errosPorId(lista.linhas), [lista.linhas]);
   const totalErros = contarErros(erros);
   const semItens = lista.linhas.length === 0;
   const grandeDemais = lista.linhas.length > LIMITE_ITENS_ORCAMENTO;
-  const envioBloqueado = semItens || totalErros > 0 || grandeDemais;
+  const grandeParaPesquisa = !grandeDemais && lista.linhas.length > LIMITE_ITENS_PESQUISA;
+  const envioBloqueado = semItens || totalErros > 0 || grandeDemais || grandeParaPesquisa;
   const itensPreenchidos = lista.linhas.filter((l) => l.descricao || l.quantidade || l.unidade || l.categoria).length;
 
   function aplicarImportacao(linhas: Linha[], como: "acrescentar" | "substituir") {
@@ -108,6 +122,14 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
     salvarRascunho({ obra, orcamentoId: id, modo: lista.modo, linhas: lista.linhas, ultimoEnvio: ultimoEnvio.current });
     void iniciarEnvio(corpo);
     router.push(`/obra/${id}`);
+  }
+
+  /** Corta a lista no teto da pesquisa. As linhas cortadas voltam importando o arquivo de novo. */
+  function manterPrimeiras() {
+    const cortadas = lista.linhas.length - LIMITE_ITENS_PESQUISA;
+    if (cortadas <= 0) return;
+    if (!window.confirm(`Remover as ${cortadas.toLocaleString("pt-BR")} linhas depois da ${LIMITE_ITENS_PESQUISA}ª? Para recuperá-las, importe o arquivo de novo.`)) return;
+    despachar({ tipo: "manter_primeiras", quantidade: LIMITE_ITENS_PESQUISA });
   }
 
   function irParaPrimeiroErro() {
@@ -278,11 +300,18 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
                   ? "Adicione ao menos um material para enviar."
                   : grandeDemais
                     ? `A lista passa de ${LIMITE_ITENS_ORCAMENTO.toLocaleString("pt-BR")} itens, o máximo de um orçamento. Divida em partes.`
+                  : grandeParaPesquisa
+                    ? `A IA pesquisa até ${LIMITE_ITENS_PESQUISA} itens por envio e esta lista tem ${lista.linhas.length.toLocaleString("pt-BR")}. Remova linhas ou divida a obra em mais de um orçamento.`
                   : totalErros > 0
                     ? `Corrija ${totalErros} ${totalErros === 1 ? "campo" : "campos"} para liberar o envio.`
                     : "Lista válida. Ao enviar, a pesquisa começa e você acompanha o resultado ao vivo."}
               </p>
             </div>
+            {grandeParaPesquisa && (
+              <button type="button" className="botao-link" onClick={manterPrimeiras}>
+                Manter só os {LIMITE_ITENS_PESQUISA} primeiros itens
+              </button>
+            )}
             {totalErros > 0 && (
               <button type="button" className="botao-link" onClick={irParaPrimeiroErro}>
                 Ir para o primeiro erro

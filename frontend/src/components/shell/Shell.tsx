@@ -28,6 +28,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const site = caminho === "/";
   const [rolou, setRolou] = useState(false);
 
+  // Recarregar a página recomeça do início: o navegador não volta para a altura onde a pessoa estava.
+  useEffect(() => {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     if (!site) return;
     const aoRolar = () => setRolou(window.scrollY > 24);
