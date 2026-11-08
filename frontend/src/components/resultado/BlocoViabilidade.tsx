@@ -48,7 +48,17 @@ export function BlocoViabilidade({ orcamento }: { orcamento: Orcamento }) {
               <li key={l.id}>
                 <span>
                   {l.nome}
-                  <small>{plural(l.itens.length, "item", "itens")}</small>
+                  <small>
+                    {[
+                      plural(l.itens.length, "item", "itens"),
+                      l.tempo_min != null && l.tempo_min > 0 && l.distancia_km != null && l.distancia_km > 0
+                        ? `${l.distancia_km.toFixed(1).replace(".", ",")} km`
+                        : null,
+                      l.tempo_min != null && l.tempo_min > 0 ? `${l.tempo_min} min` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </small>
                 </span>
                 <strong>{reais(l.subtotal)}</strong>
               </li>

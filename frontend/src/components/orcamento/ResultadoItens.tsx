@@ -66,7 +66,8 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
             <ItemRow item={item}
                      onResponder={(i, texto) => pesquisar(i, texto)}
                      onPesquisarDeNovo={(i) => pesquisar(i)}
-                     onPesquisarAlternativa={(i, objetivo) => pesquisar(i, { objetivo })} />
+                     onPesquisarAlternativa={(i, objetivo) => pesquisar(i, { objetivo })}
+                     onAceitarMedia={(i) => pesquisar(i, { aceitarMedia: true })} />
             {erros[item.id] && <p className="orc-resultado__erro" role="alert">{erros[item.id]}</p>}
           </div>
         ))}

@@ -15,6 +15,9 @@ export interface Fonte {
   embalagem_anunciada?: string | null;
   /** Rede com loja física no estado da obra. */
   perto_da_obra?: boolean;
+  /** Loja da região da obra (Google Maps pelo CEP): distância de carro aproximada e endereço. */
+  distancia_km?: number | null;
+  endereco?: string | null;
 }
 
 export interface Validacao {

@@ -24,6 +24,7 @@ from langfuse import observe
 
 from .cache import chave_cache
 from .compra import Conteudo, conteudo_embalagem
+from . import serper
 from .config import get_settings
 from .modelos import ResultadoItem, Validacao
 
@@ -80,31 +81,16 @@ async def _buscar(consulta: str, cliente: httpx.AsyncClient | None = None) -> li
     guardado = _cache.get(consulta)
     if guardado and agora - guardado[0] < CACHE_S:
         return guardado[1]
-    chaves = get_settings().serper_keys
     proprio = cliente is None
     cli = cliente or httpx.AsyncClient(timeout=TIMEOUT_S)
     try:
-        for chave in chaves:
-            try:
-                r = await cli.post(URL_SHOPPING, headers={"X-API-KEY": chave, "Content-Type": "application/json"},
-                                   json={"q": consulta, "gl": "br", "hl": "pt-br", "num": 10})
-            except Exception as exc:  # noqa: BLE001 — rede, timeout
-                logger.warning("Serper falhou (%s): sem conferência neste item", type(exc).__name__)
-                return []
-            if r.status_code in ERROS_DA_CHAVE:
-                logger.warning("Serper: chave recusada (HTTP %s); tentando a próxima", r.status_code)
-                continue
-            if r.status_code != 200:
-                logger.warning("Serper respondeu HTTP %s: sem conferência neste item", r.status_code)
-                return []
-            try:
-                lista = r.json().get("shopping") or []
-            except Exception:  # noqa: BLE001
-                return []
-            lista = [a for a in lista if isinstance(a, dict)]
-            _cache[consulta] = (agora, lista)
-            return lista
-        return []
+        j = await serper.post(cli, URL_SHOPPING, {"q": consulta, "gl": "br", "hl": "pt-br", "num": 10},
+                             get_settings().serper_keys)
+        if j is None:
+            return []
+        lista = [a for a in (j.get("shopping") or []) if isinstance(a, dict)]
+        _cache[consulta] = (agora, lista)
+        return lista
     finally:
         if proprio:
             await cli.aclose()

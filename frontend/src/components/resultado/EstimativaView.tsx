@@ -45,8 +45,21 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
               Subtotal estimado
             </p>
             <span className="valor">{reais(subtotal(linhas))}</span>
+            {/* Junto do valor que a IA calculou: é o registro das buscas e fontes por trás desse número. */}
+            {raciocinio ? (
+              <a
+                className="sh-link"
+                href={raciocinio}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
+                style={{ display: "block", marginTop: 4 }}
+              >
+                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
             <p className="sh-apoio" style={{ fontSize: 10, marginBottom: 8 }}>
-              {contagem(linhas.length, "material", "materiais").replace(/^0/, "")} · frete ainda não incluído
+              {contagem(linhas.length, "material", "materiais").replace(/^0/, "")}
             </p>
             <button type="button" className="sh-botao" onClick={() => setDocumento(true)}>
               Prévia do documento <span aria-hidden="true">↗</span>
@@ -56,18 +69,6 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
                 Baixar plano em Excel ↓
               </a>
             ) : null}
-            {raciocinio ? (
-              <a
-                className="sh-link"
-                href={raciocinio}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
-                style={{ display: "block", marginTop: 6 }}
-              >
-                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
-              </a>
-            ) : null}
           </div>
         }
       />
@@ -75,7 +76,6 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
       <p className="sh-resumo">
         <span className="ok">{contagem(linhas.length, "item precificado", "itens precificados")}</span>
         <span className="pend">{contagem(fora.total, "item pendente", "itens pendentes")}</span>
-        <span>Frete a confirmar</span>
       </p>
 
       <div className="sh-duas">

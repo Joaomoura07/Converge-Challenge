@@ -57,12 +57,14 @@ describe("linhasDocumento e subtotal", () => {
 });
 
 describe("notaDocumento", () => {
-  it("só frete quando tudo está precificado", () => {
-    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Frete não incluído\. Estimativa sujeita/);
+  it("tudo precificado: só o aviso, sem citar frete (em pausa na demo)", () => {
+    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Estimativa sujeita/);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).not.toMatch(/frete/i);
   });
-  it("singular e plural, como no Figma ('Frete e 1 item pendente não incluídos')", () => {
-    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^Frete e 1 item pendente não incluídos\./);
-    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^Frete, 4 itens pendentes e 2 itens sem preço não incluídos\./);
+  it("singular e plural ('1 item pendente não incluído')", () => {
+    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^1 item pendente não incluído\./);
+    expect(notaDocumento({ pendentes: 3, semPreco: 0, total: 3 })).toMatch(/^3 itens pendentes não incluídos\./);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^4 itens pendentes e 2 itens sem preço não incluídos\./);
   });
   it("não diz que os preços são fictícios (vêm de pesquisa real, com fonte)", () => {
     expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).not.toMatch(/fictíci/i);
@@ -72,12 +74,23 @@ describe("notaDocumento", () => {
 describe("veredito", () => {
   const v = (p: Partial<Viabilidade>): Viabilidade => ({ completo: true, cabe: false, cabe_no_minimo: false, ...p });
   it("cabe, só no mínimo, não cabe", () => {
-    expect(veredito(v({ cabe: true })).titulo).toBe("Cabe no orçamento");
+    expect(veredito(v({ cabe: true }))).toMatchObject({ tom: "sim", titulo: "Dentro do orçamento" });
     expect(veredito(v({ cabe_no_minimo: true })).titulo).toBe("Cabe só no menor preço");
     expect(veredito(v({})).titulo).toBe("Não cabe no orçamento");
   });
-  it("nunca afirma 'cabe' com itens sem preço", () => {
-    expect(veredito(v({ completo: false, cabe: true }))).toMatchObject({ tom: "talvez", titulo: "Ainda não dá para afirmar" });
+  it("com itens sem preço que já cabem: verde, 'Dentro do orçamento' e a ressalva 'até agora'", () => {
+    expect(veredito(v({ completo: false, cabe: true, itens_sem_preco: [1, 4] })))
+      .toMatchObject({ tom: "sim", icone: "✓", titulo: "Dentro do orçamento", nota: "Até agora: 2 itens sem preço ficaram fora da conta." });
+    expect(veredito(v({ completo: false, cabe: true, itens_sem_preco: [3] })).nota).toBe("Até agora: 1 item sem preço ficou fora da conta.");
+    expect(veredito(v({ completo: false, cabe: true })).nota).toMatch(/^Até agora: há itens sem preço/);
+  });
+  it("item sem preço só aumenta a conta: se nem o menor preço cabe, já não cabe", () => {
+    expect(veredito(v({ completo: false, cabe: false, cabe_no_minimo: false, itens_sem_preco: [0] })))
+      .toMatchObject({ tom: "nao", titulo: "Não cabe no orçamento", nota: "1 item sem preço ficou fora da conta; a diferença tende a ser maior." });
+  });
+  it("com itens sem preço e só o menor preço cabendo, ou sem os dados, continua incerto", () => {
+    expect(veredito(v({ completo: false, cabe: false, cabe_no_minimo: true }))).toMatchObject({ tom: "talvez", titulo: "Ainda não dá para afirmar" });
+    expect(veredito({ completo: false })).toMatchObject({ tom: "talvez", titulo: "Ainda não dá para afirmar" });
   });
   it("status nunca só por cor: sempre tem ícone", () => {
     for (const x of [v({ cabe: true }), v({}), v({ completo: false })]) expect(veredito(x).icone).toBeTruthy();

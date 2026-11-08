@@ -22,8 +22,9 @@ ddgs>=9.0             # DuckDuckGo, reserva sem chave
 # --- Persistência ---
 supabase>=2.6
 
-# --- Exportação (E11: plano de compra em Excel) ---
+# --- Exportação (E11: plano de compra em Excel e em PDF) ---
 openpyxl>=3.1
+reportlab>=4.2        # PDF do plano de compra (puro Python, sem binário nativo)
 
 # --- Utilitários ---
 tzdata>=2024.1        # fusos horários no Windows (zoneinfo)

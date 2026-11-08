@@ -25,10 +25,10 @@ from typing import Protocol
 from langfuse import observe, propagate_attributes
 
 from .alternativas import Objetivo, decidir, sugerir_alternativa
-from .busca import local_do_cep, na_regiao
+from .regiao import na_obra, preparar_obra
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
-from .pesquisa import aceitar_mais_proximo, pesquisar_item, pesquisar_itens
+from .pesquisa import aceitar_media_estimada, aceitar_mais_proximo, pesquisar_item, pesquisar_itens
 from .validacao_serper import validar as validar_preco
 
 logger = logging.getLogger(__name__)
@@ -298,20 +298,20 @@ async def pesquisar_orcamento(orcamento_id: str, banco: Banco | None = None, **o
     """Ponto de entrada da fatia A. Pesquisa só os itens com status 'buscando' e grava cada um ao ficar pronto.
     Langfuse: 1 árvore por orçamento (session_id = orcamento_id), 1 galho por item."""
     banco = banco or BancoSupabase()
-    local = await _local_da_obra(banco, str(orcamento_id))
-    with propagate_attributes(trace_name="orcamento", session_id=str(orcamento_id), tags=["fatia-b"]), na_regiao(local):
+    local, lojas = await _local_da_obra(banco, str(orcamento_id))
+    with propagate_attributes(trace_name="orcamento", session_id=str(orcamento_id), tags=["fatia-b"]),             na_obra(local, lojas):
         return await _pesquisar_orcamento(str(orcamento_id), banco, opcoes)
 
 
 async def _local_da_obra(banco: Banco, orcamento_id: str | None):
-    """CEP do orçamento → cidade/UF para a busca aberta achar lojas da região. Qualquer falha = busca sem local."""
+    """CEP do orçamento → (cidade/UF, lojas da região pelo Google Maps). Qualquer falha = busca sem região."""
     if not orcamento_id or not hasattr(banco, "cep"):
-        return None
+        return None, []
     try:
-        return await local_do_cep(await banco.cep(orcamento_id))
+        return await preparar_obra(await banco.cep(orcamento_id))
     except Exception:  # noqa: BLE001
         logger.warning("Não deu para ler o CEP do orçamento %s: busca sem cidade", orcamento_id)
-        return None
+        return None, []
 
 
 async def _resultado_atual(banco: Banco, item_id: str) -> ResultadoItem | None:
@@ -325,8 +325,11 @@ async def _resultado_atual(banco: Banco, item_id: str) -> ResultadoItem | None:
 
 @observe(name="repesquisar_item")
 async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banco: Banco | None = None,
-                           objetivo: Objetivo | None = None, **opcoes) -> ResultadoItem | None:
+                           objetivo: Objetivo | None = None, aceitar_media: bool = False,
+                           **opcoes) -> ResultadoItem | None:
     """Botão "Pesquisar de novo" ou resposta do arquiteto à pergunta (nova_descricao = item especificado).
+    Com `aceitar_media` ("Usar a média mesmo assim"), o arquiteto dispensa a especificação: pesquisa o item como está
+    (usando o cache, que já guarda a média dos parecidos) e, se houver preço, ele deixa de ser pendente.
     Com `objetivo` (qualidade | preco | semelhante), pesquisa uma ALTERNATIVA sugerida pelo LLM e só troca se ela
     for achada à venda (e, no "preco", sair mais barata); senão o item volta ao que era, com o motivo.
     A descrição do arquiteto nunca muda: a alternativa vai para `produto_normalizado`.
@@ -339,11 +342,12 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
     orcamento_id = await banco.orcamento_do_item(item_id)
     # Mesma sessão do orçamento no Langfuse: "Pesquisar de novo"/"Responder" aparecem junto da pesquisa original.
     with propagate_attributes(session_id=str(orcamento_id or item_id), tags=["fatia-b", "repesquisar"]):
-        return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes)
+        return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes, aceitar_media)
 
 
 async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None, nova_descricao: str | None,
-                       banco: Banco, objetivo: Objetivo | None, opcoes: dict) -> ResultadoItem:
+                       banco: Banco, objetivo: Objetivo | None, opcoes: dict,
+                       aceitar_media: bool = False) -> ResultadoItem:
     with acumular_custo() as custo:
         anterior = alt = None
         busca = item
@@ -358,10 +362,13 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
             item = busca = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
             campos |= {"descricao": nova_descricao, "classificacao": "definido"}
         await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
-        with na_regiao(await _local_da_obra(banco, orcamento_id)):
-            resultado = await pesquisar_item(busca, usar_cache=False, **opcoes)
+        with na_obra(*(await _local_da_obra(banco, orcamento_id))):
+            # "Usar a média" quer a média que já foi pesquisada (rápida e sem custo); os demais pedem preço novo.
+            resultado = await pesquisar_item(busca, usar_cache=aceitar_media, **opcoes)
         if nova_descricao:
             resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
+        elif aceitar_media:
+            resultado = aceitar_media_estimada(resultado)   # dispensou a especificação: fica como estimativa
         if alt is not None:
             resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
     await _gravar_e_conferir(banco, resultado)

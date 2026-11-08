@@ -13,6 +13,10 @@ type Props = {
   linhasExistentes: number;
   novoId: () => string;
   onAplicar: (linhas: Linha[], como: "acrescentar" | "substituir") => void;
+  /** Esconde "Usar arquivo de exemplo" (na /demo o jurado baixa e arrasta o arquivo, como um arquiteto). */
+  semExemplos?: boolean;
+  /** Avisado quando um arquivo é solto, para a aba acompanhar a extensão (o leitor já escolhe pela extensão). */
+  onArquivoSolto?: (nome: string) => void;
 };
 
 type Pendente = { importacao: Importacao; linhas: Linha[]; nome: string };
@@ -25,13 +29,16 @@ type Situacao =
 
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
-export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props) {
+export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemplos, onArquivoSolto }: Props) {
   const mostrarArquivo = modo !== "manual";
   const aceita = modo === "skp" ? ".skp" : modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
   const [exemplosAbertos, setExemplosAbertos] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
+  const [colado, setColado] = useState("");
+  const idColar = useId();
   const entrada = useRef<HTMLInputElement>(null);
   const linhasAtuais = useRef(linhasExistentes);
   linhasAtuais.current = linhasExistentes;
@@ -60,7 +67,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
   async function avaliar(nome: string, bytes: Uint8Array, aba: string | null) {
     let resultado;
     try {
-      resultado = await lerArquivo({ nome, bytes, aba });
+      resultado = await lerArquivo({ nome: nome === "lista colada" ? "lista-colada.txt" : nome, bytes, aba });
     } catch {
       setSituacao({ tipo: "erro", nome, mensagem: "Não consegui carregar o leitor deste arquivo. Tente de novo. A lista atual foi mantida." });
       return;
@@ -79,7 +86,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       setSituacao({
         tipo: "erro",
         nome,
-        mensagem: `${resultado.erro.mensagem} A lista atual foi mantida. Corrija o arquivo, exporte como CSV ou digite os materiais.`,
+        mensagem: /Cadastro manual/.test(resultado.erro.mensagem)
+          ? `${resultado.erro.mensagem} A lista atual foi mantida.`
+          : `${resultado.erro.mensagem} A lista atual foi mantida. Se preferir, cole a lista na aba Cadastro manual, um material por linha.`,
       });
       return;
     }
@@ -123,12 +132,34 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
     // Permite escolher de novo o mesmo arquivo depois de corrigi-lo.
     e.target.value = "";
     if (!arquivo) return;
+    await receberArquivo(arquivo);
+  }
+
+  /** Arrastar e soltar: o mesmo caminho do botão (mesmo leitor, mesmos limites, mesma pergunta acrescentar/substituir). */
+  async function aoSoltar(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setArrastando(false);
+    const arquivo = e.dataTransfer.files?.[0];
+    if (!arquivo || situacao.tipo === "lendo") return;
+    onArquivoSolto?.(arquivo.name);
+    await receberArquivo(arquivo);
+  }
+
+  async function receberArquivo(arquivo: File) {
     if (arquivo.size > LIMITE_BYTES) {
       setPendente(null);
       setSituacao({ tipo: "erro", nome: arquivo.name, mensagem: `O arquivo passa de ${LIMITE_BYTES / 1024 / 1024} MB. Divida a lista em partes.` });
       return;
     }
     await processar(arquivo.name, async () => new Uint8Array(await arquivo.arrayBuffer()));
+  }
+
+  /** Lista colada (WhatsApp, bloco de notas, células copiadas do Excel): o mesmo leitor do .txt. Texto solto vira
+   * um material por linha; células do Excel chegam separadas por tabulação e são lidas como tabela. */
+  async function lerColado() {
+    const texto = colado.trim();
+    if (!texto) return;
+    await processar("lista colada", async () => new TextEncoder().encode(texto));
   }
 
   async function usarExemplo(ex: Exemplo) {
@@ -141,7 +172,22 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
   }
 
   return (
-    <div className="importador">
+    <div
+      className={`importador${arrastando ? " importador--arrastando" : ""}`}
+      onDragOver={(e) => {
+        if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        if (!arrastando) setArrastando(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setArrastando(false);
+      }}
+      onDrop={aoSoltar}
+    >
+      <p className="importador-soltar" aria-hidden="true">
+        {arrastando ? "Solte para ler a lista" : "Arraste o arquivo para cá ou escolha abaixo"}
+      </p>
       <div className="importador-acoes">
         {mostrarArquivo && (
           <>
@@ -160,6 +206,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
             </button>
           </>
         )}
+        {!semExemplos && (
         <button
           type="button"
           className="botao-secundario"
@@ -169,7 +216,32 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
         >
           Usar arquivo de exemplo
         </button>
+        )}
       </div>
+
+      {modo === "manual" && (
+        <div className="importador-colar">
+          <label htmlFor={idColar} className="importador-colar__rotulo">
+            Já tem a lista pronta? Cole aqui, um material por linha
+          </label>
+          <textarea
+            id={idColar}
+            rows={5}
+            value={colado}
+            onChange={(e) => setColado(e.target.value)}
+            placeholder={"10 sacos de cimento\n2 m³ de areia\n15 caixas de porcelanato 60x60\ntinta acrílica branca 18 litros"}
+          />
+          <p className="nota">
+            Serve a lista do WhatsApp, do bloco de notas ou células copiadas do Excel. Nada muda na tabela até você
+            clicar em &quot;Ler a lista&quot;.
+          </p>
+          <div className="importador-acoes">
+            <button type="button" className="botao-primario" onClick={() => void lerColado()} disabled={!colado.trim() || situacao.tipo === "lendo"}>
+              Ler a lista
+            </button>
+          </div>
+        </div>
+      )}
 
       {exemplosAbertos && (
         <ul id="lista-exemplos" className="exemplos">
@@ -198,8 +270,8 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
               : modo === "revit"
               ? "Aceita a tabela exportada do Revit em .txt (colunas separadas por tabulação), de até 20 MB. A lista só muda depois da leitura."
               : modo === "excel"
-              ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Macros nunca são executadas. A lista só muda depois da leitura."
-              : "Aceita CSV de até 20 MB, em UTF-8 ou Windows-1252, com ponto e vírgula, vírgula ou tabulação. A lista só muda depois da leitura."
+              ? "Aceita .xlsx, .xls e .xlsm de até 20 MB. Não precisa de modelo: basta uma coluna com o material e outra com a quantidade (com ou sem cabeçalho). Macros nunca são executadas. A lista só muda depois da leitura."
+              : "Aceita CSV de até 20 MB. Não precisa de modelo: basta uma coluna com o material e outra com a quantidade (com ou sem cabeçalho), ou um material por linha. A lista só muda depois da leitura."
             : "Os exemplos usam o mesmo leitor dos arquivos enviados.")}
         {situacao.tipo === "lendo" && `Lendo ${situacao.nome}…`}
       </p>
@@ -298,6 +370,15 @@ function montarResumo(r: Importacao): string {
   }
   if (r.origem.formato !== "csv" && r.origem.aba) {
     return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · aba "${r.origem.aba}"`;
+  }
+  // Lista colada ou lida como texto (um material por linha): sem detalhe técnico de codificação e separador.
+  const comoLista = r.avisos.some((a) => a.codigo === "LISTA_TEXTO");
+  const fonte = r.origem.arquivo === "lista-colada.txt" ? "da lista colada" : `de ${r.origem.arquivo}`;
+  if (comoLista || r.origem.arquivo === "lista-colada.txt") {
+    return `${r.itens.length} ${r.itens.length === 1 ? "material lido" : "materiais lidos"} ${fonte}, um por linha`;
+  }
+  if (r.avisos.some((a) => a.codigo === "SEM_CABECALHO")) {
+    return `${r.itens.length} ${r.itens.length === 1 ? "material lido" : "materiais lidos"} de ${r.origem.arquivo} (sem cabeçalho: confira as colunas)`;
   }
   const cod = ROTULO_CODIFICACAO[r.origem.codificacao ?? ""] ?? r.origem.codificacao ?? "?";
   const sep = r.origem.delimitador === "\t" ? "tabulação" : r.origem.delimitador === ";" ? "ponto e vírgula" : r.origem.delimitador === "," ? "vírgula" : r.origem.delimitador;

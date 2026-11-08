@@ -25,7 +25,7 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
         <p className="obra-bloco__texto" role="status" aria-live="polite">
           {orcamento.status_pesquisa === "falhou"
             ? "A pesquisa não terminou, por isso o resultado ainda não foi calculado."
-            : "Calculando frete, viabilidade e ganho de tempo quando a pesquisa terminar…"}
+            : "Calculando viabilidade e ganho de tempo quando a pesquisa terminar…"}
         </p>
       ) : (
         <>
@@ -38,6 +38,20 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
                   ? "Todos os itens com preço"
                   : `${foraDoSubtotal(itens).total} ${foraDoSubtotal(itens).total === 1 ? "item fora" : "itens fora"} do subtotal`}
               </dd>
+              {/* O link fica junto do valor que a IA calculou: é o registro das buscas e fontes por trás desse número. */}
+              {raciocinio ? (
+                <dd className="obra-resumo__nota">
+                  <a
+                    className="sh-link"
+                    href={raciocinio}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
+                  >
+                    Ver o raciocínio da IA <span aria-hidden="true">↗</span>
+                  </a>
+                </dd>
+              ) : null}
             </div>
             {ver && (
               <div data-tom={ver.tom}>
@@ -45,6 +59,7 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
                 <dd className="obra-resumo__veredito">
                   <span aria-hidden="true">{ver.icone}</span> {ver.titulo}
                 </dd>
+                {ver.nota && <dd className="obra-resumo__nota">{ver.nota}</dd>}
               </div>
             )}
             {ganho?.resumo && (
@@ -58,17 +73,6 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
             <Link href={`/estimativa/${orcamento.id}`} className="sh-botao">
               Ver estimativa completa <span aria-hidden="true">↗</span>
             </Link>
-            {raciocinio ? (
-              <a
-                className="sh-link"
-                href={raciocinio}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
-              >
-                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
-              </a>
-            ) : null}
           </div>
         </>
       )}

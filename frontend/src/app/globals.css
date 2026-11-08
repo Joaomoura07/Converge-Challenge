@@ -654,3 +654,17 @@ button:disabled {
   background: var(--papel);
   font: inherit;
 }
+
+/* Colar a lista pronta (Cadastro manual): para quem tem a lista no WhatsApp ou no bloco de notas */
+.importador-colar { display: grid; gap: 8px; }
+.importador-colar__rotulo { font-weight: 500; }
+.importador-colar textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+.importador-colar textarea::placeholder { color: var(--tinta-fraca, #777); }
+.importador-colar textarea:focus-visible { outline: 2px solid var(--foco, #4c6fff); outline-offset: 2px; }

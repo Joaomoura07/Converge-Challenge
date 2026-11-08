@@ -59,6 +59,17 @@ describe("repesquisarItem (rota POST /orcamento-itens/{id}/repesquisar)", () => 
     expect(corpos).toEqual([{ objetivo: "qualidade" }, { objetivo: "preco" }, { objetivo: "semelhante" }]);
   });
 
+  it("'Usar a média mesmo assim' leva só aceitar_media", async () => {
+    const corpos: unknown[] = [];
+    const buscar = (async (_url: string, init?: RequestInit) => {
+      corpos.push(JSON.parse(String(init?.body)));
+      expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
+      return new Response(JSON.stringify({ item_id: "a", status: "definido" }), { status: 200 });
+    }) as typeof fetch;
+    await repesquisarItem("a", { aceitarMedia: true }, "http://api", buscar);
+    expect(corpos).toEqual([{ aceitar_media: true }]);
+  });
+
   it("503 da alternativa mostra a frase do servidor; sem frase, o texto padrão", async () => {
     const detalhe = "Não consegui sugerir uma alternativa para este item agora. O item ficou como estava.";
     const com = (async () => new Response(JSON.stringify({ detail: detalhe }), { status: 503 })) as typeof fetch;

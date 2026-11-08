@@ -108,11 +108,12 @@ describe("o resultado do fluxo A→B→C chega íntegro à tela", () => {
     expect(linhasDocumento([...itens, semAceite]).map((l) => l.id)).not.toContain("x");
   });
 
-  it("não afirma que cabe quando há itens sem preço (completo = false)", async () => {
+  it("com itens sem preço que já cabem, mostra 'Dentro do orçamento' mas avisa quantos ficaram fora da conta", async () => {
     const { painel } = await carregar();
     const v = painel.estado.orcamento!.viabilidade!;
     expect(v.completo).toBe(false);
-    expect(veredito(v).tom).toBe("talvez");
+    expect(v.cabe).toBe(true);
+    expect(veredito(v)).toMatchObject({ tom: "sim", titulo: "Dentro do orçamento", nota: "Até agora: 2 itens sem preço ficaram fora da conta." });
   });
 
   it("as posições da logística apontam para a lista ordenada por linha (a ordem do useOrcamento)", async () => {

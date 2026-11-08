@@ -45,7 +45,7 @@
 .rs-veredito span:last-child {
   color: var(--cor-texto, var(--tinta));
 }
-.rs-sim span:first-child { color: var(--cor-definido, #1e6b43); }
+.rs-sim span:first-child, .rs-sim span:last-child { color: var(--cor-definido, #1e6b43); }
 .rs-talvez span:first-child { color: var(--cor-pendente, #9a5b00); }
 .rs-nao span:first-child { color: var(--cor-erro, var(--erro)); }
 .rs-lista {

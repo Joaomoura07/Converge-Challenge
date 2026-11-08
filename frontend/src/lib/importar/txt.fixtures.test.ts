@@ -54,10 +54,21 @@ describe("casos próprios do TXT do Revit", () => {
     expect(r.origem).toMatchObject({ formato: "txt", software: "revit", delimitador: "\t" });
   });
 
-  it("um .txt que não é tabela (lista do WhatsApp) é recusado com orientação", () => {
+  // Decisão de 08/11 (teste "como leigo"): uma lista do WhatsApp salva em .txt é LIDA como lista, um item por linha,
+  // em vez de recusada. Conversa e títulos ficam de fora; embalagem vira "un" com a embalagem na descrição.
+  it("um .txt que não é tabela (lista do WhatsApp) é lido como lista, sem a conversa", () => {
     const r = importarTxt({ nome: "lista.txt", bytes: enc("Oi, preciso de:\n- 3 sacos de cimento\n- 2 latas de tinta\n") });
+    if ("erro" in r) throw new Error(r.erro.mensagem);
+    expect(r.itens.map((i) => [i.descricao, i.quantidade, i.unidade])).toEqual([
+      ["cimento (saco)", 3, "un"],
+      ["tinta (lata)", 2, "un"],
+    ]);
+    expect(r.avisos.some((a) => a.codigo === "LISTA_TEXTO")).toBe(true);
+  });
+
+  it("um .txt sem nenhum material continua recusado com orientação", () => {
+    const r = importarTxt({ nome: "nada.txt", bytes: enc("Oi, tudo bem?\nObrigado!\n") });
     expect("erro" in r && r.erro.codigo).toBe("CABECALHO_NAO_ENCONTRADO");
-    expect("erro" in r && r.erro.mensagem).toMatch(/Revit|\.csv/);
   });
 
   it("o nível de grupo não sobrescreve o nível que a própria linha traz", () => {

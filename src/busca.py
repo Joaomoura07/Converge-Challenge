@@ -403,6 +403,8 @@ def _filtra_aberto(brutos: list[tuple[str, str, str]], limite: int, local: Local
     return saida[:limite]
 
 
+MAX_DOMINIOS_REGIONAIS = 15   # o Tavily aceita uma lista curta de domínios por busca
+MAX_REGIONAIS = 4             # anúncios de lojas da região por item (1 por loja)
 MIN_COM_PRECO_SEM_ABERTA = 2   # a lista fixa já basta (mesmo número que faz o agente refazer: pesquisa_min_lojas)
 
 
@@ -410,20 +412,59 @@ def consulta_regional(consulta: str, local: Local | None) -> str:
     return f"{consulta} {local.cidade} {local.uf}" if local else consulta
 
 
+MOTIVOS_TAVILY = {"UsageLimitExceededError": "limite de requisições por minuto (429)",
+                  "ForbiddenError": "plano esgotado ou sem permissão (403/432/433)",
+                  "InvalidAPIKeyError": "chave inválida (401)"}
+ESFRIAR_S = 20.0   # 429 do Tavily é limite por minuto: passa sozinho, a chave volta depois de alguns segundos
+
+
 class _RodizioChaves:
-    """Usa uma chave Tavily por vez; pula para a próxima se esgotar créditos ou for inválida."""
+    """Usa uma chave Tavily por vez. Chave inválida ou de plano esgotado sai DE VEZ; chave que só bateu no limite por
+    minuto (429) descansa `ESFRIAR_S` segundos e volta. Antes, qualquer erro tirava a chave para sempre: uma rajada de
+    buscas (16 simultâneas por orçamento) bastava para o processo da Vercel ficar "sem chave válida" até reiniciar."""
 
     def __init__(self, chaves: list[str]):
         self.chaves = list(chaves)
         self.i = 0
+        self._ate: dict[int, float] = {}      # índice -> instante (monotonic) em que a chave volta; inf = definitivo
+        self._motivo: dict[int, str] = {}
 
     @property
     def atual(self) -> str | None:
-        return self.chaves[self.i] if self.i < len(self.chaves) else None
+        agora = time.monotonic()
+        for passo in range(len(self.chaves)):
+            idx = (self.i + passo) % len(self.chaves)
+            if self._ate.get(idx, 0.0) <= agora:
+                self.i = idx
+                return self.chaves[idx]
+        return None
 
     def descartar_atual(self, motivo: str) -> None:
         logger.warning("Tavily: chave %d/%d descartada (%s)", self.i + 1, len(self.chaves), motivo)
-        self.i += 1
+        self._ate[self.i] = float("inf")
+        self._motivo[self.i] = MOTIVOS_TAVILY.get(motivo, motivo)
+        self.i = (self.i + 1) % max(len(self.chaves), 1)
+
+    def esfriar_atual(self, motivo: str, segundos: float = ESFRIAR_S) -> None:
+        logger.warning("Tavily: chave %d/%d em pausa por %.0f s (%s)", self.i + 1, len(self.chaves), segundos, motivo)
+        self._ate[self.i] = time.monotonic() + segundos
+        self._motivo[self.i] = MOTIVOS_TAVILY.get(motivo, motivo)
+        self.i = (self.i + 1) % max(len(self.chaves), 1)
+
+    def espera_s(self) -> float | None:
+        """Quanto falta para a primeira chave que está só em pausa voltar (None = nenhuma volta sozinha)."""
+        agora = time.monotonic()
+        pausas = [t - agora for t in self._ate.values() if t != float("inf")]
+        return max(0.0, min(pausas)) if pausas else None
+
+    def resumo(self) -> str:
+        """Por que não há chave: aparece no motivo do item, para o diagnóstico não depender dos logs da Vercel."""
+        if not self.chaves:
+            return "nenhuma chave configurada: TAVILY_API_KEYS vazia neste servidor"
+        return "; ".join(f"chave {i + 1}: {self._motivo.get(i, 'ok')}" for i in range(len(self.chaves)))
+
+    async def sem_chave(self, consulta: str) -> "RespostaBusca":
+        return RespostaBusca(consulta, "nenhum", erro=f"sem chave Tavily válida ({self.resumo()})")
 
 
 _rodizio: _RodizioChaves | None = None
@@ -548,13 +589,20 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
         tarefa_aberta = asyncio.ensure_future(
             _com_prazo(lambda: _buscar_aberta(consulta, s.pesquisa_max_abertas, rodizio, local),
                        s.pesquisa_prazo_aberta_s, consulta))
+        # Lojas da REGIÃO da obra (Google Maps pelo CEP): busca DENTRO dos sites delas. É o diferencial (comprar perto
+        # de quem compra), então o item sempre espera essa busca, com prazo.
+        tarefa_regional = asyncio.ensure_future(
+            _com_prazo(lambda: _buscar_regional(consulta, rodizio), s.pesquisa_prazo_aberta_s, consulta))
         resp = await _buscar_fixa(consulta, limite, rodizio)
         if sum(tem_preco(r.titulo, r.trecho) for r in resp.resultados) >= MIN_COM_PRECO_SEM_ABERTA:
             tarefa_aberta.cancel()
             aberta = RespostaBusca(consulta, "nenhum")
         else:
             aberta = await tarefa_aberta
-        resp.resultados = (resp.resultados + aberta.resultados)[: s.pesquisa_max_anuncios]
+        regional = await tarefa_regional
+        urls = {r.url for r in regional.resultados}
+        juntos = regional.resultados + [r for r in resp.resultados + aberta.resultados if r.url not in urls]
+        resp.resultados = juntos[: s.pesquisa_max_anuncios]
         if resp.resultados:
             resp.erro = None
         if not resp.imagens:
@@ -564,6 +612,34 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
     resp.imagem = await escolher_imagem_verificada(resp.imagens, consulta)
     resp.ms = int((time.perf_counter() - t0) * 1000)
     return resp
+
+
+async def _buscar_regional(consulta: str, rodizio: _RodizioChaves) -> RespostaBusca:
+    """Produto procurado DENTRO dos sites das lojas da região da obra (src/regiao.py). Só anúncio com preço escrito.
+    Sem lojas da região (sem CEP, sem chave do Serper): resposta vazia, sem gastar busca."""
+    from tavily import AsyncTavilyClient
+
+    from .regiao import dominios_regionais, regional_por_dominio
+    dominios = dominios_regionais()[:MAX_DOMINIOS_REGIONAIS]
+    if not dominios or not rodizio.atual:
+        return RespostaBusca(consulta, "nenhum")
+    try:
+        r = await AsyncTavilyClient(api_key=rodizio.atual).search(
+            consulta, search_depth="basic", max_results=10, include_domains=dominios, timeout=20)
+    except Exception as exc:  # noqa: BLE001 — a busca regional nunca derruba a busca do item
+        logger.info("Busca nas lojas da região falhou (%s)", type(exc).__name__)
+        return RespostaBusca(consulta, "nenhum")
+    saida, vistos = [], set()
+    for x in r.get("results", []):
+        titulo, url, trecho = x.get("title") or "", x.get("url") or "", x.get("content") or ""
+        dom = dominio_de(url)
+        loja = regional_por_dominio(dom)
+        if (loja is None or dom in vistos or eh_pagina_de_busca(url) or fonte_nao_e_loja(dom, url)
+                or not tem_preco(titulo, trecho)):
+            continue
+        vistos.add(dom)
+        saida.append(ResultadoWeb(titulo=titulo, url=url, dominio=dom, loja=loja.nome, trecho=trecho[:1200]))
+    return RespostaBusca(consulta, "tavily", saida[:MAX_REGIONAIS])
 
 
 async def _buscar_fixa(consulta: str, limite: int, rodizio: _RodizioChaves) -> RespostaBusca:

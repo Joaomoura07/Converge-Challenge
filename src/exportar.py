@@ -66,7 +66,13 @@ def gerar_xlsx(obra: dict[str, Any], itens: list[dict[str, Any]], fornecedores: 
     atribuidos: set[int] = set()
     for loja in (logistica.lojas if logistica else []):
         f = forn.get(loja.id)
-        ws.cell(row=r, column=1, value=f"{loja.nome} — {loja.distancia_km} km").font = NEGRITO
+        if loja.distancia_km is not None and loja.tempo_min is not None:
+            rotulo_loja = f"{loja.nome} — {loja.distancia_km} km ({loja.tempo_min} min)"
+        elif loja.distancia_km is not None:
+            rotulo_loja = f"{loja.nome} — {loja.distancia_km} km"
+        else:
+            rotulo_loja = loja.nome
+        ws.cell(row=r, column=1, value=rotulo_loja).font = NEGRITO
         for c in range(1, 8):
             ws.cell(row=r, column=c).fill = LOJA
         r += 1

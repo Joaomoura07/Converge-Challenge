@@ -65,7 +65,7 @@ export function NovaObra({ rascunho, onRascunho, onIniciar, editando }: Props) {
       <h2 id="titulo-obra" className="titulo-secao">
         {editando ? "Dados da obra" : "Comece pela obra"}
       </h2>
-      <p className="apoio">O CEP da obra define o frete; o orçamento do cliente serve de teto para a viabilidade.</p>
+      <p className="apoio">O CEP da obra define a cidade da busca; o orçamento do cliente serve de teto para a viabilidade.</p>
 
       <div className="campos-obra">
         <div className="campo campo-nome">

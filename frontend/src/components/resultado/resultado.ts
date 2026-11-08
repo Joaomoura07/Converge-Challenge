@@ -52,17 +52,18 @@ export function foraDoSubtotal(itens: ItemLinha[]): ForaDoSubtotal {
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
-/** Nota do rodapé do documento. Frete está em pausa: o texto diz que ele não está incluído. */
+/** Nota do rodapé do documento: o que ficou fora do subtotal (frete não é citado na demo: está em pausa). */
 export function notaDocumento(fora: ForaDoSubtotal): string {
-  const partes = ["Frete"];
+  const aviso =
+    "Estimativa sujeita à confirmação de preços e disponibilidade. " +
+    "Os preços vêm de uma pesquisa automática em lojas on-line, com a fonte em cada item: confirme com o fornecedor antes de comprar.";
+  const partes: string[] = [];
   if (fora.pendentes) partes.push(plural(fora.pendentes, "item pendente", "itens pendentes"));
   if (fora.semPreco) partes.push(plural(fora.semPreco, "item sem preço", "itens sem preço"));
+  if (!partes.length) return aviso;
   const quais = partes.length > 1 ? `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}` : partes[0];
-  const verbo = partes.length > 1 || fora.total ? "não incluídos" : "não incluído";
-  return (
-    `${quais} ${verbo}. Estimativa sujeita à confirmação de preços e disponibilidade. ` +
-    "Os preços vêm de uma pesquisa automática em lojas on-line, com a fonte em cada item: confirme com o fornecedor antes de comprar."
-  );
+  const verbo = partes.length > 1 || fora.total > 1 ? "não incluídos" : "não incluído";
+  return `${quais} ${verbo}. ${aviso}`;
 }
 
 export type Tom = "sim" | "talvez" | "nao";
@@ -70,17 +71,33 @@ export interface Veredito {
   tom: Tom;
   icone: string;
   titulo: string;
+  /** Ressalva curta sob o título quando há itens sem preço fora da conta. */
+  nota?: string;
 }
 
-/** Nunca afirma "cabe" sem avisar quando há itens sem preço (`completo === false`). */
+/**
+ * Com itens sem preço (`completo === false`) o total é só um piso: item sem preço só pode AUMENTAR a conta.
+ * Então, se já cabe, é "Dentro do orçamento" (verde) com a ressalva "até agora"; se nem o menor preço cabe, já
+ * não cabe; só o resto (cabe apenas no menor preço, ou sem esses dados) continua "Ainda não dá para afirmar".
+ */
 export function veredito(v: Viabilidade): Veredito {
-  if (v.completo === false) return { tom: "talvez", icone: "⚠", titulo: "Ainda não dá para afirmar" };
-  if (v.cabe) return { tom: "sim", icone: "✓", titulo: "Cabe no orçamento" };
+  if (v.completo === false) {
+    const n = v.itens_sem_preco?.length ?? 0;
+    const fora = n === 0 ? "há itens sem preço fora da conta"
+      : n === 1 ? "1 item sem preço ficou fora da conta" : `${n} itens sem preço ficaram fora da conta`;
+    if (v.cabe === true) return { tom: "sim", icone: "✓", titulo: "Dentro do orçamento", nota: `Até agora: ${fora}.` };
+    if (v.cabe === false && v.cabe_no_minimo === false) {
+      return { tom: "nao", icone: "✕", titulo: "Não cabe no orçamento", nota: `${fora.charAt(0).toUpperCase()}${fora.slice(1)}; a diferença tende a ser maior.` };
+    }
+    return { tom: "talvez", icone: "⚠", titulo: "Ainda não dá para afirmar" };
+  }
+  if (v.cabe) return { tom: "sim", icone: "✓", titulo: "Dentro do orçamento" };
   if (v.cabe_no_minimo) return { tom: "talvez", icone: "⚠", titulo: "Cabe só no menor preço" };
   return { tom: "nao", icone: "✕", titulo: "Não cabe no orçamento" };
 }
 
-/** O título do veredito já diz "Ainda não dá para afirmar": tira essa frase do início do resumo para não repetir. */
+/** O resumo do servidor começa com "Ainda não dá para afirmar: ..." quando faltam preços; a tela já mostra o veredito
+ *  e a ressalva em outro lugar, então tira essa frase do início para não repetir. */
 export function resumoParaTela(v: Viabilidade): string {
   const r = v.resumo ?? "";
   const prefixo = "Ainda não dá para afirmar: ";

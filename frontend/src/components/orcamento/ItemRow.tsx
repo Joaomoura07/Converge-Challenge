@@ -16,6 +16,8 @@ interface Props {
   onPesquisarDeNovo?: (item: ItemOrcamento) => void;
   /** "Pesquisar de novo" → maior qualidade / menor preço / semelhante → repesquisar_item(item_id, objetivo). */
   onPesquisarAlternativa?: (item: ItemOrcamento, objetivo: Objetivo) => void;
+  /** Item pendente → "Usar a média mesmo assim" → repesquisar_item(item_id, aceitar_media): sem marca, fica a média. */
+  onAceitarMedia?: (item: ItemOrcamento) => void;
 }
 
 /** Botão "Pesquisar de novo" que abre as opções. Nada muda sem o clique do arquiteto numa delas. */
@@ -87,7 +89,7 @@ function useChegou(status: ItemOrcamento["status"]) {
   return chegou;
 }
 
-export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa }: Props) {
+export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa, onAceitarMedia }: Props) {
   const carregando = item.status === "buscando";
   const chegou = useChegou(item.status);
   const [respondendo, setRespondendo] = useState(false);
@@ -97,6 +99,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
+  // Total do item: sem ele, "médio R$ 95,00 por kit 50" para 200 folhas parecia o preço das 200 (relato de 08/11).
+  const total = item.qtd_embalagens && item.preco_emb_med != null ? item.qtd_embalagens * item.preco_emb_med : null;
 
   function enviar(e: FormEvent) {
     e.preventDefault();
@@ -120,6 +124,12 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <p className="orc-item__compra">
           {quantidade(item.quantidade, item.unidade)}
           {compra && <> → <strong>{compra}</strong></>}
+          {total != null && !carregando && (
+            <span className="orc-item__total">
+              {" · "}total {item.estimativa ? "≈ " : ""}<strong>{reais(total)}</strong>
+              {item.qtd_embalagens && item.qtd_embalagens > 1 ? ` (${item.qtd_embalagens} × ${reais(item.preco_emb_med as number)})` : ""}
+            </span>
+          )}
         </p>
         {item.premissa && !carregando && <p className="orc-item__premissa">Conta: {item.premissa}</p>}
 
@@ -136,7 +146,15 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
                 <button type="button" className="orc-botao" onClick={() => setRespondendo(false)}>Cancelar</button>
               </form>
             ) : (
-              <button type="button" className="orc-botao orc-botao--principal" onClick={() => setRespondendo(true)}>Responder</button>
+              <div className="orc-item__acoes">
+                <button type="button" className="orc-botao orc-botao--principal" onClick={() => setRespondendo(true)}>Responder</button>
+                {onAceitarMedia && item.preco_emb_med != null && (
+                  <button type="button" className="orc-botao" onClick={() => onAceitarMedia(item)}
+                          title="Não especifica marca e modelo: o item fica com a média de produtos parecidos, como estimativa">
+                    Usar a média mesmo assim
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

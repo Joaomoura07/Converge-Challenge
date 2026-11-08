@@ -44,7 +44,9 @@ class Fonte(_Base):
     # em 18 L): ao clicar, o preço "não batia".
     preco_anunciado: float | None = Field(default=None, gt=0)
     embalagem_anunciada: str | None = None
-    perto_da_obra: bool = False   # rede com loja física no estado da obra (src/busca.py, REDES_REGIONAIS)
+    perto_da_obra: bool = False   # loja da região da obra (Google Maps pelo CEP) ou rede com loja no estado
+    distancia_km: float | None = None   # de carro, aproximada, da obra até a loja (só lojas da região)
+    endereco: str | None = None         # endereço da loja da região (Google Maps)
 
 
 class Validacao(_Base):

@@ -89,6 +89,10 @@ class Settings(BaseSettings):
         return [k.strip().strip('"').strip("'") for k in self.tavily_api_keys.split(",") if k.strip().strip('"\'')]
 
     @property
+    def ors_key(self) -> str:
+        return self.ors_api_key.strip().strip('"').strip("'")
+
+    @property
     def featherless_keys(self) -> list[str]:
         """FEATHERLESS_API_KEYS (vírgula, como o Tavily) + FEATHERLESS_API_KEY (nome antigo), sem repetir e sem aspas.
         Quem trocou a variável antiga pela nova no .env/Vercel não quebra nada: as duas valem."""

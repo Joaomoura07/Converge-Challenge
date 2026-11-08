@@ -16,6 +16,12 @@ async function repesquisaSimulada(itemId: string, pedido?: PedidoRepesquisa): Pr
   await new Promise((r) => setTimeout(r, 1800));
   const base = reais.find((i) => i.status === "definido")!;
   const { id: _id, descricao: _d, quantidade: _q, unidade: _u, ...campos } = base;
+  if (typeof pedido === "object" && "aceitarMedia" in pedido) {   // "Usar a média": o pendente vira estimativa definida
+    const proprio = reais.find((i) => i.id === itemId) ?? base;   // no real, o item continua sendo ele mesmo
+    const { id: _pid, descricao: _pd, quantidade: _pq, unidade: _pu, ...dele } = proprio;
+    return { ...dele, item_id: itemId, status: "definido", pergunta: null, estimativa: true,
+             motivo: "Sem marca nem modelo: o preço é a média de produtos parecidos, aceita por você (simulação)." };
+  }
   if (typeof pedido === "object") {   // alternativa simulada: no real, a IA sugere e as lojas confirmam o preço
     const rotulo = OBJETIVOS.find((o) => o.objetivo === pedido.objetivo)!.rotulo.toLowerCase();
     return { ...campos, item_id: itemId, produto_normalizado: `${base.produto_normalizado} (simulação: ${rotulo})`,

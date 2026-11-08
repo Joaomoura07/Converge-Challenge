@@ -45,6 +45,10 @@ from .rotas_orcamentos import router as orcamentos_router  # noqa: E402  (Fatia 
 
 app.include_router(orcamentos_router)
 
+from .rotas_exportar_pdf import router as exportar_pdf_router  # noqa: E402  (plano de compra em PDF)
+
+app.include_router(exportar_pdf_router)
+
 from .rotas_proximidade import router as proximidade_router  # noqa: E402  (lojas próximas, distância e tempo)
 
 app.include_router(proximidade_router)
@@ -77,14 +81,16 @@ def health() -> dict:
 
 class RepesquisarRequest(BaseModel):
     """Corpo opcional: vazio = "Pesquisar de novo"; com texto = resposta do arquiteto à pergunta do item;
-    com `objetivo` = pesquisar uma alternativa (maior qualidade, menor preço ou semelhante de outra marca)."""
+    com `objetivo` = pesquisar uma alternativa (maior qualidade, menor preço ou semelhante de outra marca);
+    com `aceitar_media` = "Usar a média mesmo assim": o item pendente fica com a média dos produtos parecidos."""
     nova_descricao: str | None = Field(default=None, min_length=3, max_length=300)
     objetivo: Literal["qualidade", "preco", "semelhante"] | None = None
+    aceitar_media: bool = False
 
     @model_validator(mode="after")
     def _um_so(self) -> "RepesquisarRequest":
-        if self.nova_descricao and self.objetivo:
-            raise ValueError("envie a especificação OU o objetivo da alternativa, não os dois")
+        if sum(bool(x) for x in (self.nova_descricao, self.objetivo, self.aceitar_media)) > 1:
+            raise ValueError("envie só um pedido: a especificação, o objetivo da alternativa ou aceitar_media")
         return self
 
 
@@ -98,6 +104,8 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
     from .alternativas import AlternativaIndisponivel
     from .orcamento import repesquisar_item   # import tardio: /health não depende da pesquisa
     kw = {"objetivo": req.objetivo} if req and req.objetivo else {}
+    if req and req.aceitar_media:
+        kw["aceitar_media"] = True
     try:
         resultado = await repesquisar_item(item_id, req.nova_descricao if req else None, **kw)
     except AlternativaIndisponivel:
