@@ -1,17 +1,22 @@
-"Tabela de louças e metais"
-"Família e tipo"	"Ambiente"	"Contagem"
+Tabela de louças e metais
+Família e tipo	Ambiente	Contagem
 
-"Bacia com caixa acoplada Deca Vogue Plus branca : Padrão"	"Banho social"	"1"
-"Válvula de descarga Deca Hydra Max 1 1/2"" : Padrão"	"Banho social"	"1"
-"Cuba de apoio retangular Deca branca : Padrão"	"Banho social"	"1"
-"Torneira de mesa bica alta Docol cromada : Padrão"	"Banho social"	"1"
-"Ducha eletrônica Lorenzetti Acqua Duo Ultra 220 V : Padrão"	"Banho social"	"1"
-"Bacia com caixa acoplada Deca Vogue Plus branca : Padrão"	"Banho suíte"	"1"
-"Válvula de descarga Deca Hydra Max 1 1/2"" : Padrão"	"Banho suíte"	"1"
-"Cuba de apoio retangular Deca branca : Padrão"	"Banho suíte"	"1"
-"Torneira de mesa bica alta Docol cromada : Padrão"	"Banho suíte"	"1"
-"Ducha eletrônica Lorenzetti Acqua Duo Ultra 220 V : Padrão"	"Banho suíte"	"1"
-"Misturador monocomando de cozinha Deca com ducha extensível : Padrão"	"Cozinha"	"1"
-"Cuba de embutir inox Tramontina Morgana 56x34 cm : Padrão"	"Cozinha"	"1"
-"Registro de gaveta Deca base 3/4"" : Padrão"	"Geral"	"6"
-"Total geral: 18"
+Ambiente: Banheiros
+Deca Vogue Plus : Padrão	Banheiros	2
+Hydra Max : Padrão	Banheiros	3
+Lorenzetti Acqua Duo : Padrão	Banheiros	2
+Caixa sifonada Tigre 150 : Padrão	Banheiros	4
+		11
+
+Ambiente: Cobertura
+Caixa d'água Fortlev 1000 : Padrão	Cobertura	1
+		1
+
+Ambiente: Hidráulica
+Joelho Tigre 25 : Padrão	Hidráulica	40
+		40
+
+Ambiente: Lavabo
+Celite Azalea : Padrão	Lavabo	1
+		1
+Total geral: 53

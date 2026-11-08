@@ -12,6 +12,18 @@
   escritório Ilha do Leite), para o jurado ver tudo rápido e igual ao vídeo.
 - Um orçamento real já rodou pelo site: 16 itens em 49 s (11 definidos, 4 pedindo especificação, 1 não encontrado).
 
+## Conferido em 08/11, madrugada (Enzo + Claude)
+- **Site publicado:** https://orcaai-agent.vercel.app (o endereço antigo redireciona). Landing com "Visualizar Demo"
+  (/demo) e "Conhecer projeto" (#sobre); topo só com a marca (`NEXT_PUBLIC_NAV_COMPLETA=1` volta a navegação).
+- **Cota do Tavily (consultada em /usage, sem gastar crédito):** chave 1 esgotada (1006/1000); chave 2 com 979 e
+  chave 3 com 912 buscas sobrando. O rodízio pula a esgotada sozinho. Não precisa desligar a busca aberta.
+- **Revisão publicada** (`/revisao/sugestoes/completo`) respondeu aos 8 arquivos da /demo com a C ligada. O
+  `teste_1.txt` antigo dava 5 "duplicados" falsos (mesmas louças em 2 banheiros; a lista do site não guarda o
+  ambiente): trocado pela tabela de louças da casa térrea (0 avisos). `teste_1.csv` e `teste_1.pdf` mostram 1 aviso
+  legítimo (concreto em m² / un, esperado m³), bom para a demo.
+- **Cache aquecido também para os 8 arquivos da /demo** (CSV, Excel, Revit e PDF; DXF não pesquisa nada: a planta
+  só traz medidas e o jurado descreve o material).
+
 ## Para o time dividir (manual)
 | Tarefa | Quem | Quando |
 |---|---|---|

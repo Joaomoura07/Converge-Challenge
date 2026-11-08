@@ -8,6 +8,7 @@ import { CabecalhoPagina } from "../shell/CabecalhoPagina";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 import { BlocoViabilidade } from "./BlocoViabilidade";
 import { DocumentoOrcamento } from "./DocumentoOrcamento";
+import { LojasProximas } from "./LojasProximas";
 import { contagem, foraDoSubtotal, itensParaTela, linhasDocumento, linkRaciocinio, mesAno, subtotal, tituloEditorial, urlExportar } from "./resultado";
 import "./resultado.css";
 
@@ -83,6 +84,8 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
         <span className="ok">{contagem(linhas.length, "item precificado", "itens precificados")}</span>
         <span className="pend">{contagem(fora.total, "item pendente", "itens pendentes")}</span>
       </p>
+
+      <LojasProximas cep={orcamento.cep} />
 
       <div className="sh-duas">
         <div>

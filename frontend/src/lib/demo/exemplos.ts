@@ -23,7 +23,9 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
   { arquivo: "teste_2.csv", modo: "csv", obra: "Banheiro social, Casa Forte (SketchUp)" },
   { arquivo: "teste_1.xlsx", modo: "excel", obra: "Escritório corporativo, Ilha do Leite" },
   { arquivo: "teste_2.xlsx", modo: "excel", obra: "Restaurante, Recife Antigo" },
-  { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, apto Boa Viagem" },
+  // Tabela agregada (louças por contagem). A de louças do apto Boa Viagem listava as mesmas peças em 2 banheiros e
+  // o revisor apontava 5 "duplicados" falsos (a lista do site não guarda o ambiente): trocada em 08/11.
+  { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, casa térrea em Aldeia" },
   { arquivo: "teste_2.txt", modo: "revit", obra: "Elétrica, casa térrea em Aldeia" },
   { arquivo: "teste_1.pdf", modo: "pdf", obra: "Pedido de cotação, fachada Madalena" },
   { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, escritório" },
