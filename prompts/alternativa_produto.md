@@ -13,6 +13,7 @@ Regras:
 - O campo faixa_de_preco diz onde a alternativa deve ficar em relação a preco_atual_por_embalagem (quando vier):
   mais cara (linha superior), mais barata ou na mesma faixa. Use o que você sabe do mercado para escolher; quem
   confere o preço é a pesquisa nas lojas.
+- Se vier acabamento_obrigatorio (ex.: acetinado), a alternativa TEM esse acabamento e o nome dela diz isso.
 - Precisa ser OUTRO produto: nunca o atual escrito de outro jeito, nem nada da lista nao_sugira. No "semelhante",
   outra marca.
 - Se não houver alternativa razoável, devolva "produto": null.

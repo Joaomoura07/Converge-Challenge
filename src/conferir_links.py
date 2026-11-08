@@ -209,6 +209,7 @@ class Veredito:
     errado: str | None = None            # motivo para tirar a oferta
     confirmado: bool = False
     ler_com_ia: bool = False
+    parecido: bool = False               # outro acabamento/cor/linha: não é o pedido, mas serve para a ESTIMATIVA
 
 
 def julgar(pedido: str, oferta: Oferta, pagina: Pagina | None) -> Veredito:
@@ -225,7 +226,7 @@ def julgar(pedido: str, oferta: Oferta, pagina: Pagina | None) -> Veredito:
     legivel = bool(pagina and pagina.http == 200 and pagina.nome and "mercado libre" not in _norm(pagina.nome))
     nome = pagina.nome if legivel else slug(oferta.url)
     if motivo := conflito(pedido, nome, oferta):
-        return Veredito(errado=motivo)
+        return Veredito(errado=motivo, parecido=motivo.startswith(("outro acabamento", "outra cor", "outra linha")))
     if not legivel:
         return Veredito()                                   # bloqueou robô: sem como confirmar
     confere = preco_confere(oferta, pagina)
@@ -292,6 +293,11 @@ async def conferir(pedido: str, ofertas: list[Oferta], cliente: httpx.AsyncClien
         saida, para_ia = [], []
         for o in ofertas:
             v = julgar(pedido, o, paginas.get(o.url))
+            if v.errado and v.parecido:
+                # medido em 08/11: tirar de vez deixava o porcelanato "polido" sem nada (as lojas tinham natural e
+                # acetinado); como "parecido" ele vira estimativa com pergunta, sem link e sem passar por exato
+                saida.append(o.model_copy(update={"mesmo_produto": "parecido", "link_verificado": False}))
+                continue
             if v.errado:
                 logger.info("Link removido (%s): %s %s", v.errado, o.loja, o.url[:90])
                 continue

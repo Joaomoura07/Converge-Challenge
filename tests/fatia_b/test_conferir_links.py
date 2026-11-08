@@ -113,7 +113,9 @@ def test_conferir_tira_os_errados_e_confirma_os_certos(monkeypatch):
             return await cl.conferir("Tinta Suvinil Toque de Seda Branco Neve 18L", ofertas, cliente=cli)
 
     saida = asyncio.run(rodar())
-    assert [(o.loja, o.link_verificado) for o in saida] == [("A", True), ("D", False)]
+    # "Toque Fosco" (outra linha) fica como PARECIDO: sem link e fora da conta do produto exato
+    assert [(o.loja, o.link_verificado, o.mesmo_produto) for o in saida] == [
+        ("A", True, "sim"), ("B", False, "parecido"), ("D", False, "sim")]
 
 
 def test_falha_geral_nao_derruba_a_pesquisa(monkeypatch):
@@ -153,7 +155,8 @@ def test_oferta_sem_preco_nao_vai_para_a_ia_e_falha_da_ia_nao_traz_errado_de_vol
             return await cl.conferir("Tinta Suvinil Toque de Seda Branco Neve 18L", ofertas, cliente=cli)
 
     saida = asyncio.run(rodar())
-    assert [o.loja for o in saida] == ["H", "F"] and not any(o.link_verificado for o in saida)
+    assert [(o.loja, o.mesmo_produto) for o in saida] == [("B", "parecido"), ("H", "sim"), ("F", "sim")]
+    assert not any(o.link_verificado for o in saida)
 
 
 
@@ -163,3 +166,40 @@ def test_kit_do_link_diferente_do_kit_do_anuncio_sai():
                                    cl.Pagina(http=200, final="", nome="Mercado Libre")).errado
     assert not cl.julgar("Spot Stella 7W 3000K", of(url, "Kit 5 Spot Stella Easy 7W", 122.56),
                          cl.Pagina(http=200, final="", nome="Mercado Libre")).errado
+
+
+
+def test_so_links_confirmados_entram_na_conta_quando_ha_algum():
+    from src.calculo import calcular
+    from src.modelos import ItemEntrada
+    from src.precos import ResultadoExtracao
+    oks = [of(f"https://l{i}.com.br/tinta-toque-de-seda-18l", "Tinta Toque de Seda 18L", p, "lata 18 L", f"L{i}")
+           for i, p in enumerate([739.9, 799.9])]
+    oks = [o.model_copy(update={"link_verificado": True}) for o in oks]
+    sem = of("https://x.com.br/tinta-toque-de-seda-18l", "Tinta Toque de Seda 18L", 760.0, "lata 18 L", "X")
+    c = calcular(ItemEntrada(id="1", descricao="Tinta Suvinil Toque de Seda 18L", quantidade=1, unidade="un"),
+                 ResultadoExtracao(ofertas=[*oks, sem]))
+    assert {f.loja for f in c.fontes} == {"L0", "L1"} and c.descartadas.get("link não confirmado") == 1
+
+
+def test_pagina_aberta_na_busca_extra_vira_oferta_confirmada():
+    from src.outras_lojas import consulta_sem, oferta_da_pagina
+    assert consulta_sem("Spot Stella 7W", {"leroymerlin.com.br", "google.com"}) == "Spot Stella 7W preço -site:leroymerlin.com.br"
+    pg = pagina("Spot de Embutir LED Stella 7W 3000K", (54.9, 59.9))
+    o = oferta_da_pagina("Spot Stella 7W 3000K", "un", "https://loja.com.br/spot-stella-7w-3000k", "loja.com.br", "Loja", pg)
+    assert o and o.preco == 54.9 and o.link_verificado and o.embalagem == "unidade"
+    outro = pagina("Kit 10 Spot de Embutir LED Stella 7W", (99.0,))
+    assert oferta_da_pagina("Spot Stella 7W 3000K", "un", "https://loja.com.br/kit-10-spot-stella", "loja.com.br", "L", outro) is None
+    assert oferta_da_pagina("Spot Stella 7W 3000K", "un", "https://loja.com.br/a-b-c-d", "loja.com.br", "L",
+                            cl.Pagina(http=403, final="")) is None
+
+
+
+def test_busca_extra_nao_aceita_produto_fora_da_faixa_ja_vista():
+    """Medido em 08/11: o spot de TRILHO (R$ 239) entrou no lugar do de embutir (R$ 55) na busca extra."""
+    from src.outras_lojas import na_faixa, referencia_de
+    vistos = [of("https://a.com.br/x", "Spot Stella 7W", 55.6, loja="A"), of("https://b.com.br/x", "Spot Stella 7W", 53.5, loja="B")]
+    ref = referencia_de(vistos)
+    assert not na_faixa(of("https://c.com.br/x", "Spot para Trilho Stella 7W", 239.1), ref)
+    assert na_faixa(of("https://d.com.br/x", "Spot Stella 7W", 59.9), ref)
+    assert na_faixa(of("https://e.com.br/x", "Spot", 239.1), None)

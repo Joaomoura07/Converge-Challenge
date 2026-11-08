@@ -265,6 +265,14 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
             descartadas[motivo] += 1
             continue
         candidatas.append(o)
+    # Pedido de 08/11: link não confirmado não aparece. Havendo oferta confirmada na página da loja, só elas entram
+    # na conta (e viram fonte). Sem nenhuma confirmada (a conferência não rodou ou as lojas bloqueiam robô), segue
+    # como antes; a tela não mostra o link de quem não foi confirmado.
+    if any(o.link_verificado for o in candidatas):
+        sem = [o for o in candidatas if not o.link_verificado]
+        if sem:
+            descartadas["link não confirmado"] += len(sem)
+        candidatas = [o for o in candidatas if o.link_verificado]
     normalizadas: list[_Normalizada] = []
     for o in candidatas:
         c = conteudo_embalagem(o.embalagem)

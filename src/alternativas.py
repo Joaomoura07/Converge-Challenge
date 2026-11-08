@@ -104,6 +104,22 @@ def mesmo_produto(a: str, b: str) -> bool:
     return len(ta & tb) / max(len(ta), len(tb)) >= 0.85
 
 
+# Acabamento escrito no nome ou implícito na linha (Toque de Seda é acetinado). A alternativa precisa manter.
+_ACABAMENTO = {"acetinado": "acetinado", "acetinada": "acetinado", "seda": "acetinado", "fosco": "fosco", "fosca": "fosco",
+               "semibrilho": "semibrilho", "brilhante": "brilhante", "brilho": "brilhante", "polido": "polido",
+               "polida": "polido", "natural": "natural", "acetinadas": "acetinado"}
+_LINHA_ACABAMENTO = {"toque de seda": "acetinado", "rende muito": "fosco", "fosco completo": "fosco",
+                     "decora seda": "acetinado", "toque fosco": "fosco"}
+
+
+def acabamento(texto: str) -> str | None:
+    t = _norm(texto)
+    for linha, acab in _LINHA_ACABAMENTO.items():
+        if linha in t:
+            return acab
+    return next((_ACABAMENTO[w] for w in t.split() if w in _ACABAMENTO), None)
+
+
 def mesma_marca(a: str, b: str) -> bool:
     """As marcas reconhecidas do sugerido estão todas no atual (para o "semelhante, de outra marca")."""
     from .revisao import marcas_encontradas
@@ -124,6 +140,9 @@ def _validar(obj: dict, atual: str, objetivo: str = "", evitar: tuple[str, ...] 
         raise Repetiu(produto, "o modelo sugeriu de novo o mesmo produto")
     if objetivo == "semelhante" and mesma_marca(atual, produto):
         raise Repetiu(produto, "o modelo sugeriu a mesma marca")
+    acab_atual, acab_novo = acabamento(atual), acabamento(produto)
+    if acab_atual and acab_novo and acab_novo != acab_atual:
+        raise Repetiu(produto, f"o modelo trocou o acabamento ({acab_atual} -> {acab_novo})")
     por_que = obj.get("por_que")
     por_que = " ".join(por_que.split()) if isinstance(por_que, str) else ""
     # A frase não pode trazer número (preço, % de economia): números da tela vêm só da pesquisa.
@@ -152,6 +171,8 @@ def sugerir_alternativa(atual: str, objetivo: Objetivo, *, categoria: str | None
         pedido["embalagem_atual"] = embalagem
     if evitar:
         pedido["nao_sugira"] = list(evitar)
+    if acab := acabamento(atual):
+        pedido["acabamento_obrigatorio"] = acab
     mensagens = [{"role": "system", "content": load_prompt("alternativa_produto")},
                  {"role": "user", "content": json.dumps(pedido, ensure_ascii=False)}]
     # Modelo frio (400/503) ou resposta vazia: tenta o reserva uma vez (skills/02, seção 4).

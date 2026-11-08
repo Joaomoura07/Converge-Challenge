@@ -66,8 +66,10 @@ class Settings(BaseSettings):
     pesquisa_modelo_extracao: str = "moonshotai/Kimi-K2-Instruct-0905"
     # "Pesquisar de novo" com alternativa. Medido em 07/11 (3 casos): Gemma 4–10 s e US$ 0,00007, mantendo cor e
     # acabamento; Qwen3-32B 12–24 s; GLM-5.2 48–125 s (com a busca depois, estourava os 120 s da tela).
-    pesquisa_modelo_alternativa: str = "google/gemma-4-31B-it"
-    pesquisa_modelo_agente: str = "Qwen/Qwen3-32B"
+    # 08/11: Kimi-K2 em toda a pesquisa. Alternativa: 2–6 s (Gemma até 26 s), com o acabamento conferido no código;
+    # agente que refaz a busca: 17 s contra 40 s do Qwen3-32B no mesmo item.
+    pesquisa_modelo_alternativa: str = "moonshotai/Kimi-K2-Instruct-0905"
+    pesquisa_modelo_agente: str = "moonshotai/Kimi-K2-Instruct-0905"
     pesquisa_paginas_por_rodada: int = Field(default=2, ge=0, le=3)
     pesquisa_pagina_timeout_s: float = Field(default=8, gt=0, le=20)
     pesquisa_max_tokens_saida: int = Field(default=400, ge=100, le=1200)

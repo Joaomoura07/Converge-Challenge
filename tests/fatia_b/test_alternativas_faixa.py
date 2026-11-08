@@ -39,7 +39,7 @@ def test_mesmo_produto_em_outra_ordem_e_reconhecido():
 
 def test_repetiu_pede_de_novo_dizendo_o_que_evitar():
     c, pedidos = cliente('{"produto": "Suvinil Toque de Seda Branco Neve tinta 18 L", "por_que": "x"}',
-                         '{"produto": "Tinta Coral Pinta Piso fosco branco 18 L", "por_que": "outra marca"}')
+                         '{"produto": "Tinta Coral Decora Seda acetinado branco 18 L", "por_que": "outra marca"}')
     alt = sugerir_alternativa("Tinta Suvinil Toque de Seda Branco Neve 18L", "semelhante", client=c, model="m",
                               preco_atual=800.0, embalagem="18 L")
     assert alt.produto.startswith("Tinta Coral")
@@ -74,3 +74,13 @@ def test_mesmo_produto_devolvido_pela_pesquisa_nao_troca():
 
 def test_razao_compara_por_litro_quando_a_lata_muda():
     assert razao_de_preco(tinta(emb=200.0, embalagem="3,6 L"), tinta(emb=800.0, embalagem="18 L")) == pytest.approx(1.25)
+
+
+
+def test_alternativa_que_troca_o_acabamento_pede_de_novo():
+    """Medido em 08/11 com o Kimi-K2: "Toque de Seda" (acetinado) virava "Coral Premium Fosco"."""
+    c, pedidos = cliente('{"produto": "Tinta Coral Premium Fosco Perfeito Branco 18 L"}',
+                         '{"produto": "Tinta Coral Decora Seda acetinado Branco 18 L"}')
+    alt = sugerir_alternativa("Tinta Suvinil Toque de Seda Branco Neve 18L", "semelhante", client=c, model="m")
+    assert "Seda" in alt.produto and pedidos[0]["acabamento_obrigatorio"] == "acetinado"
+    assert pedidos[1]["nao_sugira"] == ["Tinta Coral Premium Fosco Perfeito Branco 18 L"]

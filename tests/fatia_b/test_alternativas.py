@@ -42,12 +42,12 @@ def tinta(item_id="a", produto="Tinta Suvinil Toque de Seda branco 18 L", un=4.5
 
 # ---------------------------------------------------------------- sugestão do LLM
 def test_sugere_produto_e_manda_o_objetivo_ao_modelo():
-    c = cliente('{"produto": "Tinta Coral Rende Muito fosco branco 18 L", "por_que": "Linha de entrada da Coral."}')
+    c = cliente('{"produto": "Tinta Coral Decora acetinado branco 18 L", "por_que": "Linha de entrada da Coral."}')
     alt = sugerir_alternativa("Tinta Suvinil Toque de Seda branco 18 L", "preco", categoria="Pintura", client=c, model="m")
-    assert alt == Alternativa("Tinta Coral Rende Muito fosco branco 18 L", "Linha de entrada da Coral.")
+    assert alt == Alternativa("Tinta Coral Decora acetinado branco 18 L", "Linha de entrada da Coral.")
     pedido = json.loads(c.chamadas[0]["messages"][1]["content"])
     assert pedido == {"produto_atual": "Tinta Suvinil Toque de Seda branco 18 L", "objetivo": "preco", "categoria": "Pintura",
-                      "faixa_de_preco": "mais barata que a atual"}
+                      "faixa_de_preco": "mais barata que a atual", "acabamento_obrigatorio": "acetinado"}
     assert c.chamadas[0]["max_tokens"] >= 2000   # GLM pensa antes: limite baixo devolve vazio
 
 

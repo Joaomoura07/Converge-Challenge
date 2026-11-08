@@ -40,6 +40,7 @@ from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
+from .outras_lojas import MIN_LOJAS_CONFIRMADAS, lojas_confirmadas, ofertas_em_outras_lojas, referencia_de
 from .paginas_produto import verificar_ofertas
 from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, conferir_resposta,
                      extrair_e_conferir, semaforo_do_loop)
@@ -371,6 +372,12 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
     coleta.ofertas = await _conferir_links(item, coleta.ofertas)
+    if lojas_confirmadas(coleta.ofertas) < MIN_LOJAS_CONFIRMADAS:
+        # poucas lojas com link confirmado: procura em OUTROS sites (nunca nos que já foram tentados)
+        tentados = {o.dominio for o in coleta.ofertas if o.dominio}
+        coleta.juntar(await ofertas_em_outras_lojas(item.descricao, item.unidade, tentados,
+                                                    referencia_de(coleta.ofertas)))
+        coleta.consultas.append(f"{item.descricao} (outras lojas)")
     calc = calcular(item, coleta.extracao(), generico)
 
     precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured

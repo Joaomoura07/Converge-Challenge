@@ -163,7 +163,7 @@ describe("itemParaTela e itensParaTela", () => {
   it("só aceita imagem e link http(s)", () => {
     const t = itemParaTela(definido("X", 1, "un", 10, { imagem_url: "javascript:alert(1)", fontes: [{ ...fonte("A", 10), url: "javascript:alert(1)" }] }));
     expect(t.imagem).toBeNull();
-    expect(t.fontes[0].url).toBeNull();
+    expect(t.fontes).toHaveLength(0);   // link não confirmado (ou inválido) não aparece
   });
 
   it("pendentes e sem preço vão para o fim; complemento recusado some", () => {
@@ -230,8 +230,7 @@ describe("fonte mostra o preço do anúncio", () => {
       preco_anunciado: 239.9, embalagem: "lata 18 L" };
     const tela = itemParaTela({ id: "s", descricao: "Selador", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
       preco_emb_min: 239.9, preco_emb_med: 239.9, preco_emb_max: 239.9, fontes: [fonte] } as never);
-    expect(tela.fontes[0].preco).toBe("Preço anunciado indisponível");
-    expect(tela.fontes[0].url).toBeNull();
+    expect(tela.fontes).toHaveLength(0);   // sem link confirmado a loja não aparece (08/11)
     expect(tela.total).toBe(239.9);
   });
 });

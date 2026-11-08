@@ -95,7 +95,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [respondendo, setRespondendo] = useState(false);
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
-  const lojas = item.fontes ?? [];
+  // Só loja com link confirmado na página dela aparece (pedido de 08/11: sem confirmação, não mostrar).
+  const lojas = (item.fontes ?? []).filter((f) => linkDeCompra(f) !== null);
   // Foto que não carrega (link quebrado, bloqueio) volta para a hachura cinza em vez do ícone de imagem quebrada.
   const [fotoFalhou, setFotoFalhou] = useState(false);
   const temFoto = !!item.imagem_url && !carregando && !fotoFalhou;

@@ -182,7 +182,7 @@ const dataFonte = (iso?: string | null) => {
 export function itemParaTela(i: ItemLinha): ItemTela {
   const linha = linhasDocumento([i])[0];
   const fontes: FonteTela[] = (i.fontes ?? [])
-    .slice()
+    .filter((f) => linkDeCompra(f) !== null)   // só loja com link confirmado aparece (08/11)
     .sort((a, b) => a.preco_embalagem - b.preco_embalagem)
     .map((f) => {
       const url = linkDeCompra(f);
