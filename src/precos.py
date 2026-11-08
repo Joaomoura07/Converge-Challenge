@@ -51,6 +51,7 @@ class Oferta(BaseModel):
     evidencia: str = ""
     pagina_lida: bool = False
     especificacoes_nao_confirmadas: list[str] = []
+    imagem: str | None = None   # foto do anúncio (o Google Shopping devolve `imageUrl` em todos os anúncios)
 
     def para_fonte(self) -> Fonte:
         assert self.preco, "oferta sem preço não vira fonte"

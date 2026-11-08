@@ -127,7 +127,7 @@ export default function Inicio() {
               Conhecer projeto
             </a>
           </div>
-          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit, PDF com texto e planta em DXF.</p>
+          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit, PDF com texto, plantas em DXF e modelos IFC ou SketchUp (SKP).</p>
         </div>
       </section>
 
@@ -172,7 +172,7 @@ export default function Inicio() {
           <li>
             <span className="n">1</span>
             <h3>Lê a lista</h3>
-            <p>Planilha, CSV, tabela do Revit, PDF com texto ou planta: tudo vira a mesma lista editável.</p>
+            <p>Excel, CSV, TXT do Revit, PDF com texto, plantas em DXF e modelos IFC ou SketchUp (SKP): tudo vira a mesma lista editável.</p>
           </li>
           <li>
             <span className="n">2</span>
@@ -216,7 +216,7 @@ export default function Inicio() {
             <span className="n">1</span>
             <h3>Envie a lista da obra</h3>
             <p>
-              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit, PDF ou planta em DXF)
+              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit ou PDF com texto), uma planta em DXF ou um modelo IFC ou SketchUp (SKP),
               ou use um exemplo. O CEP define a cidade da busca e põe primeiro as lojas com unidade na região.
             </p>
           </li>
@@ -313,7 +313,7 @@ export default function Inicio() {
       </section>
 
       <section className="in-faixa in-final" data-revelar aria-labelledby="in-final">
-        <h2 id="in-final">Mais tempo para projetar.</h2>
+        <h2 id="in-final">Veja o agente cotando ao vivo.</h2>
         <p>Deixe a busca de preços com o agente e chegue à reunião com o orçamento pronto.</p>
         <Link href="/demo" className="oa-botao oa-botao--principal">
           Visualizar Demo

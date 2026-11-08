@@ -6,7 +6,9 @@ Deca Vogue Plus : Padrão	Banheiros	2
 Hydra Max : Padrão	Banheiros	3
 Lorenzetti Acqua Duo : Padrão	Banheiros	2
 Caixa sifonada Tigre 150 : Padrão	Banheiros	4
-		11
+Bacia sanitária com caixa acoplada : Padrão	Banheiros	1
+Caixa sifonada Tigre 150 : Padrão	Banheiros	4
+		16
 
 Ambiente: Cobertura
 Caixa d'água Fortlev 1000 : Padrão	Cobertura	1
@@ -19,4 +21,4 @@ Joelho Tigre 25 : Padrão	Hidráulica	40
 Ambiente: Lavabo
 Celite Azalea : Padrão	Lavabo	1
 		1
-Total geral: 53
+Total geral: 58

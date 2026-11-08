@@ -10,6 +10,7 @@ Python puro, sem IA (conta não se pede para LLM). Passos:
 
 from __future__ import annotations
 
+import math
 import re
 import statistics
 import unicodedata
@@ -287,7 +288,7 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
 
     fontes = [fonte(n) for n in validas]
     # perto da obra primeiro, a mais próxima antes (sort estável: as outras ficam na ordem da busca)
-    fontes.sort(key=lambda f: (not f.perto_da_obra, f.distancia_km if f.distancia_km is not None else 9e9))
+    fontes.sort(key=lambda f: (not f.perto_da_obra, f.dominio == "google.com", f.distancia_km if f.distancia_km is not None else 9e9))
 
     # 4. R$ por unidade do quantitativo só quando a unidade da embalagem é a mesma do item (m² com m²)
     ui = normalizar_unidade(item.unidade)
@@ -295,6 +296,10 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
     n_emb, perda, premissa = qtd_embalagens(item.descricao, item.quantidade, item.unidade, ref)
     if n_emb is None:
         premissa = None   # o motivo da falha ("não sei converter m2 em l") não é conta: a tela mostrava como se fosse
+        # Peça contada em unidades cuja embalagem é a CAPACIDADE ("Caixa d'água Fortlev 1000", 1 un, "1000 L"):
+        # cada unidade é uma embalagem. Antes ficava sem total e a tela dizia "1 item sem preço" (medido em 08/11).
+        if ui == "un" and ref.unidade != "un" and item.quantidade:
+            n_emb = max(math.ceil(item.quantidade * (1 + perda) - 1e-9), 1)
 
     lojas = len({n.oferta.loja for n in validas})
     todos = [n.unitario for n in validas]   # a confiança olha TODAS as lojas, não só as da embalagem exata

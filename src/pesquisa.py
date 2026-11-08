@@ -33,7 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .google_shopping import ofertas_google, ofertas_regionais
+from .google_shopping import ofertas_google, ofertas_regionais, resolver_links_das_lojas
 from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -371,6 +371,7 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
     (b, ext), google, regionais = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
                                                        ofertas_google(item.descricao, item.unidade, generico),
                                                        ofertas_regionais(item.descricao, item.unidade))
+    google = await resolver_links_das_lojas(item.descricao, google)   # link da loja, não o da página do Google
     coleta = Coleta(imagem=b.imagem, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
     coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
@@ -383,6 +384,14 @@ async def _fase_rapida_impl(item: ItemEntrada, usar_agente: bool, usar_cache: bo
                     primeira=resumo_para_agente(ext.ofertas, coleta, generico) if precisa else None)
 
 
+def imagem_das_ofertas(ofertas: list[Oferta], usadas: set[str] | None = None) -> str | None:
+    """Foto de uma oferta que entrou na conta (`usadas` = links das fontes); senão a de qualquer oferta do mesmo produto.
+    As ofertas do Shopping já vêm ordenadas da mais parecida para a menos."""
+    com_foto = [o for o in ofertas if o.imagem]
+    escolhida = next((o for o in com_foto if usadas and o.url in usadas), None)         or next((o for o in com_foto if o.mesmo_produto == "sim"), None)
+    return escolhida.imagem if escolhida else None
+
+
 async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCache | None, erro_busca: str | None,
                     gravar_cache: bool = True) -> ResultadoItem:
     """⑤ Resultado a partir de tudo que a coleta juntou (1ª busca + as do agente)."""
@@ -390,6 +399,8 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
     agora = datetime.now(timezone.utc)
     calc = calcular(item, coleta.extracao(), generico)
     iteracoes = coleta.buscas_agente
+    if not coleta.imagem:   # sem foto da busca: usa a do anúncio do Google Shopping (medido em 08/11: 6 de 7 itens sem foto)
+        coleta.imagem = imagem_das_ofertas(coleta.ofertas, {f.url for f in calc.fontes})
 
     if calc.tem_preco:
         if gravar_cache:

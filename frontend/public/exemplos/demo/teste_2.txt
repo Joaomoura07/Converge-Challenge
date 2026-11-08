@@ -1,21 +1,26 @@
-Tabela de dispositivos elétricos e luminárias
-Família e tipo	Ambiente	Contagem
+Tabela de acabamentos - pintura
+Ambiente	Material de acabamento	Área
 
-Ambiente: Cozinha
-Tomada Liz 20A : Padrão	Cozinha	8
-		8
+Ambiente: Fachada
+Fachada	PAREDE - Metalatex verde oliva	140,00 m²
+Fachada	PAREDE - Massa acrílica Coral	140,00 m²
+		280,00 m²
 
 Ambiente: Geral
-Tomada Liz 10A : Padrão	Geral	30
-Interruptor Pial Plus+ : Padrão	Geral	22
-Caixinha 4x2 Tigre : Padrão	Geral	60
-Lâmpada Philips 9W : Padrão	Geral	20
-		132
+Geral	PAREDE - Selador Coral	520,00 m²
+		520,00 m²
 
-Ambiente: Quadro
-Disjuntor Easy9 1P 20A : Padrão	Quadro	14
-Disjuntor Easy9 2P 40A : Padrão	Quadro	2
-DR Steck 40A : Padrão	Quadro	1
-Quadro Steck 24 : Padrão	Quadro	1
-		18
-Total geral: 158
+Ambiente: Paredes internas
+Paredes internas	PAREDE - Coral Rende Muito branco	260,00 m²
+Paredes internas	PAREDE - Massa corrida Suvinil	380,00 m²
+Paredes internas	PAREDE - Massa corrida Suvinil	380,00 m²
+		1.020,00 m²
+
+Ambiente: Área de serviço
+Área de serviço	PAREDE - Tinta acrílica branca fosca	45,00 m²
+		45,00 m²
+
+Ambiente: Tetos
+Tetos	TETO - Coral Rende Muito branco	120,00 m²
+		120,00 m²
+Total geral: 1.985,00 m²

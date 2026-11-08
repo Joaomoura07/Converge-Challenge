@@ -1,6 +1,8 @@
 // Arquivos de exemplo da página /demo: 2 por formato, para o jurado baixar e arrastar para dentro como um arquiteto
 // faria. Todos são obras sintéticas do acervo (docs/arquivos-teste e tests/importacao/fixtures/modelos), curtos
-// (3 a 13 itens) para a pesquisa terminar rápido. Os .xlsx foram gerados com o SheetJS a partir de 2 CSV do acervo.
+// (3 a 15 itens) para a pesquisa terminar rápido. Os .xlsx foram gerados com o SheetJS e o teste_2.skp com a openskp.
+// Cada teste traz de propósito um erro típico (unidade trocada, item repetido), um material que puxa complementos e
+// um item genérico, para a revisão e a pergunta ao arquiteto aparecerem (garantido em exemplos.test.ts).
 // Para acrescentar um formato (ex.: IFC), basta incluir aqui e pôr os arquivos em public/exemplos/demo/.
 
 import type { ModoEntrada } from "@/lib/lista";
@@ -23,14 +25,14 @@ export const FORMATOS_DEMO: FormatoDemo[] = [
 export const EXEMPLOS_DEMO: ExemploDemo[] = [
   { arquivo: "teste_1.csv", modo: "csv", obra: "Pintura de fachada, Madalena" },
   { arquivo: "teste_2.csv", modo: "csv", obra: "Banheiro social, Casa Forte (SketchUp)" },
-  { arquivo: "teste_1.xlsx", modo: "excel", obra: "Escritório corporativo, Ilha do Leite" },
+  { arquivo: "teste_1.xlsx", modo: "excel", obra: "Orçamento de materiais, escritório Ilha do Leite" },
   { arquivo: "teste_2.xlsx", modo: "excel", obra: "Restaurante, Recife Antigo" },
   // Tabela agregada (louças por contagem). A de louças do apto Boa Viagem listava as mesmas peças em 2 banheiros e
   // o revisor apontava 5 "duplicados" falsos (a lista do site não guarda o ambiente): trocada em 08/11.
   { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, casa térrea em Aldeia" },
-  { arquivo: "teste_2.txt", modo: "revit", obra: "Elétrica, casa térrea em Aldeia" },
-  { arquivo: "teste_1.pdf", modo: "pdf", obra: "Pedido de cotação, fachada Madalena" },
-  { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, escritório" },
+  { arquivo: "teste_2.txt", modo: "revit", obra: "Pintura, casa térrea em Aldeia" },
+  { arquivo: "teste_1.pdf", modo: "pdf", obra: "Quadro de acabamentos, fachada Madalena" },
+  { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, restaurante Recife Antigo" },
   { arquivo: "teste_1.dxf", modo: "dxf", obra: "Planta baixa simples (cm)" },
   { arquivo: "teste_2.dxf", modo: "dxf", obra: "Planta exportada do AutoCAD" },
   { arquivo: "teste_1.ifc", modo: "ifc", obra: "Apartamento mínimo (IFC4)" },

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as pdfjsLegacy from "pdfjs-dist/legacy/build/pdf.mjs";
@@ -44,5 +44,21 @@ describe("exemplos para baixar na /demo", () => {
     expect(modoPeloArquivo("tabela.txt")).toBe("revit");
     expect(modoPeloArquivo("modelo.ifc")).toBe("ifc");
     expect(modoPeloArquivo("foto.png")).toBeNull();
+  });
+
+  // Os itens que o leitor do site tira de cada teste ficam numa fixture que o backend usa para garantir, com as regras
+  // REAIS do revisor e dos complementos, que todo teste mostra erro, complemento e item genérico
+  // (tests/test_exemplos_demo.py). Mudou um arquivo de exemplo? Rode com ATUALIZAR_FIXTURE_DEMO=1.
+  it("a fixture dos itens dos testes está em dia com os arquivos", async () => {
+    const atual: Record<string, unknown> = {};
+    for (const ex of EXEMPLOS_DEMO) {
+      const bytes = new Uint8Array(readFileSync(join(PUBLICO, ex.arquivo)));
+      const r = (await lerArquivo({ nome: ex.arquivo, bytes, aba: null, pdfjs: pdfjsLegacy as never })) as Importacao;
+      atual[ex.arquivo] = r.itens.map((i) => ({ descricao: i.descricao, quantidade: i.quantidade, unidade: i.unidade, categoria: i.categoria }));
+    }
+    const caminho = join(__dirname, "fixtures/itens-exemplos.json");
+    if (process.env.ATUALIZAR_FIXTURE_DEMO === "1") writeFileSync(caminho, JSON.stringify(atual, null, 1) + "\n");
+    expect(existsSync(caminho), "rode com ATUALIZAR_FIXTURE_DEMO=1").toBe(true);
+    expect(JSON.parse(readFileSync(caminho, "utf-8"))).toEqual(JSON.parse(JSON.stringify(atual)));
   });
 });

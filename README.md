@@ -17,8 +17,9 @@ leva horas e cada preço fica sem rastro de onde veio.
 
 ## Como funciona
 
-1. **Entrada:** nome, CEP e orçamento do cliente; lista importada (CSV, Excel, TXT do Revit, PDF com texto),
-   digitada à mão ou um dos três exemplos.
+1. **Entrada:** nome, CEP e orçamento do cliente; lista importada (CSV, Excel — `.xlsx`, `.xls` e `.xlsm` —,
+   TXT do Revit ou PDF com texto), planta em DXF, modelo BIM em IFC ou modelo SketchUp (SKP).
+   Também aceita digitação manual e arquivos de exemplo. Todas as entradas alimentam a mesma lista editável para revisão.
 2. **Revisão antes de gastar IA:** regras apontam erros (unidade incompatível, quantidade fora da faixa, duplicados,
    colunas trocadas) e sugerem itens que costumam faltar (argamassa e rejunte para porcelanato, selador para pintura).
    **Nada muda sem o clique do arquiteto.**
