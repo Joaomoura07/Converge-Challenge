@@ -7,10 +7,17 @@ import type { ItemOrcamento, StatusItem } from "./tipos";
 const item = (id: string, status: StatusItem): ItemOrcamento => ({ id, descricao: `item ${id}`, status });
 
 describe("ordem da lista", () => {
-  it("pendentes ficam juntos no fim e não encontrados logo antes, sem embaralhar o resto", () => {
+  it("achados em cima, buscando no meio, erros embaixo junto dos pendentes (verificação), sem embaralhar o resto", () => {
     const lista = [item("1", "pendente_especificacao"), item("2", "definido"), item("3", "nao_encontrado"),
-                   item("4", "buscando"), item("5", "definido"), item("6", "erro")];
-    expect(ordenarItens(lista).map((i) => i.id)).toEqual(["2", "4", "5", "3", "6", "1"]);
+                   item("4", "buscando"), item("5", "definido"), item("6", "erro"), item("7", "buscando")];
+    expect(ordenarItens(lista).map((i) => i.id)).toEqual(["2", "5", "4", "7", "3", "6", "1"]);
+  });
+
+  it("à medida que chegam, o item achado sobe para cima dos que ainda buscam", () => {
+    const antes = [item("1", "buscando"), item("2", "buscando"), item("3", "buscando")];
+    const depois = [item("1", "buscando"), item("2", "buscando"), item("3", "definido")];
+    expect(ordenarItens(antes).map((i) => i.id)).toEqual(["1", "2", "3"]);
+    expect(ordenarItens(depois).map((i) => i.id)).toEqual(["3", "1", "2"]);
   });
 });
 

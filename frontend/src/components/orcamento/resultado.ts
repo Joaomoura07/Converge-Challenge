@@ -4,10 +4,11 @@
 import { normalizarApiUrl } from "@/lib/apiUrl";
 import type { ItemOrcamento, Objetivo, StatusItem } from "./tipos";
 
-// Pendentes juntos no fim, com a pergunta do agente (skills/04-ui-design.md, seção 3.3).
-// Não encontrados logo antes deles: também pedem uma ação do arquiteto ("Pesquisar de novo").
+// Pedido de 08/11: à medida que chegam, os achados ficam em cima, os que ainda estão buscando no meio e os que
+// pedem ação do arquiteto embaixo: não encontrados/erros logo acima dos pendentes (a parte de verificação e
+// correção, com a pergunta do agente; skills/04-ui-design.md, seção 3.3).
 const ORDEM: Record<StatusItem, number> = {
-  buscando: 0, definido: 0, nao_encontrado: 1, erro: 1, pendente_especificacao: 2,
+  definido: 0, buscando: 1, nao_encontrado: 2, erro: 2, pendente_especificacao: 3,
 };
 
 /** Ordem estável: dentro do mesmo grupo, mantém a ordem em que os itens chegaram (a da lista do arquiteto). */
