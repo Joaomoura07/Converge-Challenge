@@ -6,9 +6,14 @@ O arquiteto sobe a lista de materiais do projeto e recebe, em poucos minutos, um
 mínimo, médio e máximo de cada item **com as lojas de onde veio**, quantas embalagens comprar, o que ainda precisa
 de especificação, onde comprar e se cabe no orçamento do cliente.
 
+> **Aviso sobre o repositório:** este repositório é um fork do original, [enzoemanuelgl/Converge-Challenge](https://github.com/enzoemanuelgl/Converge-Challenge).
+> Durante o hackathon, a conta da Vercel do Enzo bateu no limite de deploys do plano gratuito, e os builds passaram a falhar.
+> Para continuar publicando, o projeto passou da conta de **enzoemanuelgl** para a de **Joaomoura07**: o fork é o
+> repositório principal e o site e a API são publicados a partir dele. O histórico de commits do time foi preservado.
+
 - **Repositório principal:** https://github.com/Joaomoura07/Converge-Challenge
-- **Site:** https://converge-challenge-3k6i.vercel.app
-- **API:** https://orca-api-x7k2.vercel.app (`/health`, `/docs`)
+- **Site:** https://orcaai-agent.vercel.app
+- **API:** https://orcaapijndbjdfvk.vercel.app (`/health`, `/docs`)
 - **Demonstração:** [roteiro dos exemplos para os jurados](frontend/public/exemplos/demo/ROTEIRO.md). Comece pelo `teste_1`: de três a cinco materiais especificados, sem preços pré-preenchidos.
 
 ## O problema
