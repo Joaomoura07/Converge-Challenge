@@ -3,7 +3,7 @@
 // Tela de estimativa (Figma 05 Materiais, 06 Fontes, 08 Documento): só desenha. Recebe o orçamento e os itens já lidos
 // (do useOrcamento na página real, de dados de exemplo na prévia).
 import { useEffect, useMemo, useState } from "react";
-import { reais, linkDiretoProduto } from "../orcamento/formato";
+import { reais } from "../orcamento/formato";
 import { ImagemProduto } from "../imagens/ImagemProduto";
 import { CabecalhoPagina } from "../shell/CabecalhoPagina";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
@@ -137,7 +137,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
                   <span>
                     {f.loja}
                     <small style={{ display: "block" }}>
-                      {f.item} · {f.url && linkDiretoProduto(f.url) ? <a className="sh-link" href={f.url} target="_blank" rel="noopener noreferrer">Ver produto em {f.dominio}</a> : "Link direto indisponível. Pesquise este item novamente."}
+                      {f.item} · {f.url ? <a className="sh-link" href={f.url} target="_blank" rel="noopener noreferrer">{f.dominio}</a> : f.dominio}
                     </small>
                     {f.data && <small style={{ display: "block" }}>{f.data}</small>}
                   </span>

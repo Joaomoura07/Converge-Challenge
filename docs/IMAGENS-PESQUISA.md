@@ -30,3 +30,11 @@ Uma foto que já está no cache e tem URL válida não é revalidada em toda lei
 As mudanças de especificações, preços, tokens, links de produto e importação dos outros chats foram preservadas. Revisar o conjunto antes do deploy.
 
 Referências técnicas consultadas: [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search), [Serper](https://serper.dev/). A resposta do endpoint de imagens foi verificada com uma consulta real usando a configuração existente.
+
+## Integração para publicação — 08/11/2026
+
+- A pedido do usuário, aplicada a melhoria de imagens sobre `origin/main` em checkout isolado, inicialmente na versão `1e00ec2`. Preservadas as novidades remotas, incluindo fotos do Google Shopping, links de lojas, cálculos e arquivos de demonstração.
+- Removida da integração uma dependência de `linkDiretoProduto` que pertencia ao trabalho paralelo ainda não publicado. Os links da estimativa mantêm o comportamento da versão remota.
+- Sincronizados ItemRow e os três arquivos do componente de imagem com `ui-fatia-b`, incluindo tipos de CSS Modules do Vite e proteção contra divergência entre site e prévia.
+- Validação no checkout isolado: 400 testes offline da Fatia B aprovados; 557 testes do frontend aprovados e um ignorado; build Next.js e build Vite aprovados, ambos com checagem TypeScript. Chave sintética usada exclusivamente para habilitar caminhos de agentes simulados, sem chamadas reais de LLM nesses testes.
+- Os arquivos não commitados dos outros chats e o commit local de importação não foram incluídos nesta integração de imagens. A pasta de trabalho original foi preservada.

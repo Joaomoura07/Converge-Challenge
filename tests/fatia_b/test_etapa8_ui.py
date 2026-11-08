@@ -18,6 +18,7 @@ COMP = UI / "src" / "components" / "orcamento"
 SITE = RAIZ / "frontend"                                   # site Next.js do time (fatia A)
 COMP_SITE = SITE / "src" / "components" / "orcamento"      # cópia oficial dos componentes da B no site
 COMPARTILHADOS = ["tipos.ts", "formato.ts", "StatusBadge.tsx", "PriceDimension.tsx", "ItemRow.tsx", "orcamento.css"]
+COMPARTILHADOS += ["../imagens/ImagemProduto.tsx", "../imagens/imagem.ts", "../imagens/imagem.module.css"]
 
 
 def test_site_e_previa_usam_os_mesmos_componentes():
