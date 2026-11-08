@@ -602,9 +602,23 @@ html .demo-passos small { font-size: 12px; line-height: 1.35; color: var(--tinta
 html .demo-exemplos { margin: 0 0 20px; display: grid; gap: 14px; }
 html .demo-exemplos__cabeca h3 { margin: 0; font-size: var(--text-body); font-weight: 480; }
 html .demo-exemplos__cabeca p { margin: 4px 0 0; font-size: var(--text-body-sm); color: var(--tinta-suave); }
-html .demo-exemplos__grupos { display: flex; flex-wrap: wrap; gap: 12px 20px; }
-html .demo-exemplos__grupo { display: grid; gap: 6px; }
-html .demo-exemplos__formato { font-size: 12px; color: var(--tinta-fraca); }
+html .demo-exemplos__grupos { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+html .demo-exemplos__grupo { display: grid; gap: 8px; }
+/* cada formato é uma pílula que abre e fecha (details/summary); os arquivos só aparecem ao clicar */
+html .demo-exemplos__formato {
+  display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+  min-height: 36px; padding: 0 14px; border-radius: var(--raio-pilula);
+  background: var(--papel-2); color: var(--tinta-suave);
+  font-size: var(--text-body-sm); cursor: pointer; list-style: none; user-select: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+html .demo-exemplos__formato::-webkit-details-marker { display: none; }
+html .demo-exemplos__formato:hover, html .demo-exemplos__grupo[open] > .demo-exemplos__formato { background: var(--obsidiana); color: var(--tinta); }
+html .demo-exemplos__grupo:not([open]) > ul { display: none; }
+html .demo-exemplos__grupo[open] { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html .demo-exemplos__seta { transition: transform 200ms ease; }
+html .demo-exemplos__grupo[open] .demo-exemplos__seta { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { html .demo-exemplos__seta { transition: none; } }
 html .demo-exemplos__grupo ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 html .demo-chip {
   display: inline-flex; align-items: center; gap: 8px;

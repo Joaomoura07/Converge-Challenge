@@ -33,7 +33,7 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
 
 const MODO_POR_EXTENSAO: Record<string, FormatoDemo["modo"]> = {
   csv: "csv", xlsx: "excel", xls: "excel", xlsm: "excel", txt: "revit", pdf: "pdf", dxf: "dxf", dwg: "dxf",
-  ifc: "ifc", ifczip: "ifc",
+  ifc: "ifc", ifczip: "ifc", skp: "skp",
 };
 
 /** Aba que corresponde ao arquivo (o leitor já escolhe pela extensão; a aba só acompanha para o texto de ajuda). */

@@ -30,13 +30,14 @@ export async function lerArquivo({
   if (ext === "txt") return importarTxt({ nome, bytes }); // tabela tabulada do Revit
   if (ext === "dxf") return importarDxf({ nome, bytes });
   if (ext === "ifc") return importarIfc({ nome, bytes });
+  if (ext === "skp") return (await import("./skpNavegador")).lerSkp(nome, bytes);
   if (ext === "ifczip") return erro("FORMATO_NAO_SUPORTADO", "IFCZIP é compactado. Descompacte ou exporte o modelo como .ifc comum.");
   if (ext === "dwg") return erro("FORMATO_NAO_SUPORTADO", "DWG é um formato fechado. No AutoCAD use Salvar como e escolha DXF; depois envie o .dxf.");
   if (ext === "pdf") {
     const motor = pdfjs ?? (await (await import("./pdfNavegador")).carregarPdfjs());
     return importarPdf({ nome, bytes, pdfjs: motor });
   }
-  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx, .xls, .txt do Revit, .pdf com texto, .dxf ou .ifc.`);
+  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx, .xls, .txt do Revit, .pdf com texto, .dxf, .ifc ou .skp.`);
 }
 
 /** Abas que a pessoa poderia escolher: visíveis e com dados. */
