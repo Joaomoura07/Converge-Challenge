@@ -8,7 +8,7 @@ import { CabecalhoPagina } from "../shell/CabecalhoPagina";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 import { BlocoViabilidade } from "./BlocoViabilidade";
 import { DocumentoOrcamento } from "./DocumentoOrcamento";
-import { contagem, foraDoSubtotal, itensParaTela, linhasDocumento, mesAno, subtotal, tituloEditorial, urlExportar } from "./resultado";
+import { contagem, foraDoSubtotal, itensParaTela, linhasDocumento, linkRaciocinio, mesAno, subtotal, tituloEditorial, urlExportar } from "./resultado";
 import "./resultado.css";
 
 export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; itens: ItemLinha[] }) {
@@ -28,6 +28,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
 
   const { titulo, destaque } = tituloEditorial(orcamento.nome);
   const excel = urlExportar(orcamento.id);
+  const raciocinio = linkRaciocinio(orcamento.trace_url);
   const cep = orcamento.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
 
   return (
@@ -53,6 +54,18 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
             {excel ? (
               <a className="sh-link" href={excel} download="plano-de-compra.xlsx" style={{ display: "block", marginTop: 8 }}>
                 Baixar plano em Excel ↓
+              </a>
+            ) : null}
+            {raciocinio ? (
+              <a
+                className="sh-link"
+                href={raciocinio}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
+                style={{ display: "block", marginTop: 6 }}
+              >
+                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
               </a>
             ) : null}
           </div>

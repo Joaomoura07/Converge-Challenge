@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { reais } from "@/components/orcamento/formato";
-import { foraDoSubtotal, linhasDocumento, subtotal, veredito } from "@/components/resultado/resultado";
+import { foraDoSubtotal, linhasDocumento, linkRaciocinio, subtotal, veredito } from "@/components/resultado/resultado";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 
 export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamento; itens?: ItemLinha[] }) {
@@ -13,6 +13,7 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
   const calculando = !logistica && !viabilidade && !ganho;
   const linhas = linhasDocumento(itens);
   const ver = viabilidade ? veredito(viabilidade) : null;
+  const raciocinio = linkRaciocinio(orcamento.trace_url);
 
   return (
     <section className="obra-bloco" aria-labelledby="obra-resultado-c">
@@ -53,9 +54,22 @@ export function EncaixeResultado({ orcamento, itens = [] }: { orcamento: Orcamen
               </div>
             )}
           </dl>
-          <Link href={`/estimativa/${orcamento.id}`} className="sh-botao">
-            Ver estimativa completa <span aria-hidden="true">↗</span>
-          </Link>
+          <div className="obra-acoes">
+            <Link href={`/estimativa/${orcamento.id}`} className="sh-botao">
+              Ver estimativa completa <span aria-hidden="true">↗</span>
+            </Link>
+            {raciocinio ? (
+              <a
+                className="sh-link"
+                href={raciocinio}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
+              >
+                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
+          </div>
         </>
       )}
     </section>
