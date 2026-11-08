@@ -18,6 +18,9 @@ export function importacaoParaLinhas(imp: Importacao, novoId: () => string): Lin
     unidade: it.unidade ?? "",
     categoria: it.categoria ?? "",
     linhaOrigem: it.linha,
+    descricaoOriginal: it.descricao ?? "",
+    nivel: it.nivel,
+    extras: it.extras,
   }));
 }
 

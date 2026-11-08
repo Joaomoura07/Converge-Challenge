@@ -26,6 +26,7 @@ from . import chaves_llm
 from .busca import ResultadoWeb
 from .config import get_settings, load_prompt
 from .modelos import Fonte
+from .especificacao import nao_confirmados
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,9 @@ class Oferta(BaseModel):
     preco: float | None
     embalagem: str | None
     mesmo_produto: Literal["sim", "parecido", "nao"]
+    evidencia: str = ""
+    pagina_lida: bool = False
+    especificacoes_nao_confirmadas: list[str] = []
     imagem: str | None = None   # foto do anúncio (o Google Shopping devolve `imageUrl` em todos os anúncios)
 
     def para_fonte(self) -> Fonte:
@@ -100,7 +104,7 @@ def preco_no_texto(preco: float, texto: str) -> bool:
 
 # ------------------------------------------------------------------ montagem e leitura
 def montar_anuncios(resultados: list[ResultadoWeb]) -> str:
-    return "\n".join(f"[{i}] {r.loja}: {r.titulo} — {r.trecho[:LIMITE_TRECHO]}" for i, r in enumerate(resultados))
+    return "\n".join(f"[{i}] {r.loja}: {r.titulo} — {r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO]}" for i, r in enumerate(resultados))
 
 
 def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Oferta], int]:
@@ -131,7 +135,8 @@ def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Ofert
             vistos.discard(i)
             continue
         ofertas.append(Oferta(loja=r.loja, dominio=r.dominio, url=r.url, titulo=r.titulo,
-                              preco=preco, embalagem=emb, mesmo_produto=igual))
+                              preco=preco, embalagem=emb, mesmo_produto=igual,
+                              evidencia=r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO], pagina_lida=r.pagina_lida))
     return ofertas, alucinadas
 
 
@@ -150,7 +155,7 @@ def _cliente(chave: str | None = None) -> AsyncOpenAI:
     s = get_settings()
     # Tempo curto + 1 nova tentativa: se o modelo principal travar, a reserva assume rápido (demo de ~30 s).
     return AsyncOpenAI(api_key=chave or s.featherless_key or "missing", base_url=s.featherless_base_url,
-                       timeout=TIMEOUT_EXTRACAO_S, max_retries=1)
+                       timeout=TIMEOUT_EXTRACAO_S, max_retries=0)
 
 
 ERROS_DA_CHAVE = {429, 500, 502, 503, 504}   # problema da conta/servidor: vale tentar com outra chave
@@ -183,8 +188,10 @@ async def _chamar(cliente, modelo: str, produto: str, anuncios: str):
         async with chaves_llm.pool_extracao().vaga(evitar=falhou) as chave:
             cli = cliente or _cliente(chave)
             try:
+                reserva = _custo.reservar(mensagens, get_settings().pesquisa_max_tokens_saida)
                 r = await cli.chat.completions.create(model=modelo, messages=mensagens, temperature=0, top_p=get_settings().llm_top_p,
-                                                      max_tokens=400)
+                                                      max_tokens=get_settings().pesquisa_max_tokens_saida)
+                _custo.registrar_resposta(reserva, r.usage)
             except APIStatusError as exc:
                 if exc.status_code in ERROS_DA_CHAVE:
                     chaves_llm.esfriar(chave)
@@ -267,6 +274,10 @@ async def _tentar(cliente, modelo: str, produto: str, anuncios: str, resultados:
         erro = f"{modelo}: {type(exc).__name__}"
         return _Tentativa(modelo, erro=erro, texto=f"{erro} ({time.perf_counter() - t:.1f}s)")
     ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
+    for o in ofertas:
+        o.especificacoes_nao_confirmadas = nao_confirmados(produto, f"{o.titulo} {o.evidencia}", titulo=o.titulo)
+        if o.mesmo_produto == "sim" and o.especificacoes_nao_confirmadas:
+            o.mesmo_produto = "parecido"
     return _Tentativa(modelo, ofertas, alucinadas, r.usage, None if ofertas else f"{modelo}: resposta sem linhas válidas",
                       f"{modelo}: {time.perf_counter() - t:.1f}s, {len(ofertas)} linhas válidas")
 
@@ -289,7 +300,7 @@ async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> Res
     lancar()
     try:
         while ativas:
-            prazo = get_settings().pesquisa_hedge_s if fila else None
+            prazo = get_settings().pesquisa_hedge_s if fila and get_settings().pesquisa_hedge_ativo else None
             feitas, _ = await asyncio.wait(ativas, timeout=prazo, return_when=asyncio.FIRST_COMPLETED)
             if not feitas:   # principal demorando: reserva em paralelo
                 logger.info("Extração lenta (> %.0f s): reserva em paralelo", prazo)
@@ -305,7 +316,6 @@ async def _extrair(produto: str, resultados: list[ResultadoWeb], cliente) -> Res
                     res.tokens_entrada += t.usage.prompt_tokens or 0
                     res.tokens_saida += t.usage.completion_tokens or 0
                     res.custo_usd += float(getattr(t.usage, "cost", 0) or 0)
-                    _custo.registrar(getattr(t.usage, "cost", 0))
                 if t.ofertas and not res.ofertas:
                     res.ofertas, res.modelo, res.erro = t.ofertas, t.modelo, None
                 elif not res.ofertas:

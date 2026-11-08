@@ -18,6 +18,7 @@ COMP = UI / "src" / "components" / "orcamento"
 SITE = RAIZ / "frontend"                                   # site Next.js do time (fatia A)
 COMP_SITE = SITE / "src" / "components" / "orcamento"      # cópia oficial dos componentes da B no site
 COMPARTILHADOS = ["tipos.ts", "formato.ts", "StatusBadge.tsx", "PriceDimension.tsx", "ItemRow.tsx", "orcamento.css"]
+COMPARTILHADOS += ["../imagens/ImagemProduto.tsx", "../imagens/imagem.ts", "../imagens/imagem.module.css"]
 
 
 def test_site_e_previa_usam_os_mesmos_componentes():
@@ -67,7 +68,8 @@ def test_respeita_movimento_reduzido_e_tem_modo_demo():
 @pytest.mark.skipif(not (UI / "node_modules").exists() or not shutil.which("npx"),
                     reason="rode `npm install` em ui-fatia-b para checar os tipos")
 def test_typescript_compila():
-    r = subprocess.run("npx tsc --noEmit", cwd=UI, shell=True, capture_output=True, text=True, timeout=120)
+    r = subprocess.run("npx tsc --noEmit", cwd=UI, shell=True, capture_output=True,
+                       encoding="utf-8", errors="replace", timeout=120)
     assert r.returncode == 0, r.stdout + r.stderr
 
 
@@ -83,5 +85,6 @@ def test_papeis_de_cor_do_site_cobrem_todos_os_papeis():
                     reason="rode `npm install` em frontend para checar tipos e testes do site")
 def test_site_compila_e_passa_nos_testes():
     for comando in ("npx tsc --noEmit", "npx vitest run"):
-        r = subprocess.run(comando, cwd=SITE, shell=True, capture_output=True, text=True, timeout=180)
+        r = subprocess.run(comando, cwd=SITE, shell=True, capture_output=True,
+                           encoding="utf-8", errors="replace", timeout=180)
         assert r.returncode == 0, f"{comando}\n{r.stdout[-2000:]}{r.stderr[-2000:]}"

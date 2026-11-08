@@ -38,14 +38,14 @@ def mundo(monkeypatch):
 
 # ---------------------------------------------------------------- agente também no item sem marca
 def test_generico_com_uma_loja_passa_pelo_agente_e_continua_pendente(mundo):
-    m = mundo({"tinta acrilica fosca 18l": [of("Telhanorte", 389.9, "lata 18 L", "parecido"),
+    m = mundo({"tinta acrilica fosca vermelha 18l": [of("Telhanorte", 389.9, "lata 18 L", "parecido"),
                                              of("Sertão", 359.9, "lata 18 L", "parecido")]},
               padrao=[of("Loja Suvinil", 290.9, "galão 3,6 L", "parecido")])
-    llm = LLMFalso([("buscar", "tinta acrilica fosca 18L"), ("fim", "FIM: simplifiquei")])
+    llm = LLMFalso([("buscar", "tinta acrilica fosca vermelha 18L"), ("fim", "FIM: simplifiquei")])
     item = ItemEntrada(id="g", descricao="Tinta acrílica fosca vermelha", quantidade=120, unidade="m2",
                        classificacao="pendente_especificacao")
     r = asyncio.run(p.pesquisar_item(item, cliente_llm=llm))
-    assert llm.chamadas == 1 and r.iteracoes == 1 and m.consultas[1] == "tinta acrilica fosca 18L"
+    assert llm.chamadas == 1 and r.iteracoes == 1 and m.consultas[1] == "tinta acrilica fosca vermelha 18L"
     assert r.status == "pendente_especificacao" and r.pergunta and r.estimativa   # não chuta marca
     assert len(r.fontes) >= 2
 
@@ -85,13 +85,13 @@ def test_resposta_sem_preco_nao_inventa_definido():
     assert p.aceitar_mais_proximo(sem) is sem
 
 
-def test_repesquisar_com_resposta_nao_repete_a_pergunta(monkeypatch):
+def test_repesquisar_com_resposta_mantem_pendencia_se_so_ha_parecidos(monkeypatch):
     async def pesquisar_item(item, **kw): return _pendente_com_preco()
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     banco = BancoFalso([ItemEntrada(id="t", descricao="Tomada Liz 20A", quantidade=6, unidade="un",
                                     classificacao="pendente_especificacao")])
     r = asyncio.run(o.repesquisar_item("t", "Tramontina Liz tomada 2P+T 20A branca", banco=banco))
-    assert r.status == "definido" and r.pergunta is None and banco.gravados[-1].status == "definido"
+    assert r.status == "pendente_especificacao" and r.pergunta and banco.gravados[-1].status == "pendente_especificacao"
 
 
 def test_usar_a_media_tira_a_pendencia_e_mantem_estimativa_e_fontes():

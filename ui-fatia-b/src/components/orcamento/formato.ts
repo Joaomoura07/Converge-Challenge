@@ -48,3 +48,14 @@ export function distanciaDaLoja(km: number | null | undefined): string | null {
   if (km == null || !Number.isFinite(km) || km <= 0) return null;
   return `a ${km.toFixed(1).replace(".", ",")} km de carro (aprox.)`;
 }
+/** Fontes antigas podem conter Shopping; não oferecer um buscador como link do produto. */
+export function linkDiretoProduto(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
+      && !/(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\./i.test(u.hostname)
+      && u.pathname.replaceAll("/", "").length > 0
+      && !/\/(busca|search|pesquisa|categoria|category|catalogo|collections?)(\/|$)/i.test(u.pathname)
+      && !["q", "query", "busca", "ft"].some((k) => u.searchParams.has(k));
+  } catch { return false; }
+}

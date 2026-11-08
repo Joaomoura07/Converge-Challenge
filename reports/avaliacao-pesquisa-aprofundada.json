@@ -1,0 +1,87 @@
+{
+  "data": "2026-11-08",
+  "consumo_total": {
+    "tokens_entrada": 7394,
+    "tokens_saida": 279,
+    "chamadas": 4,
+    "custo_usd": 0.000892,
+    "consumo_incompleto": false,
+    "chamadas_sem_usage": 0,
+    "limite_atingido": false,
+    "paginas_lidas": 0
+  },
+  "resultados": [
+    {
+      "produto": "Tomada Tramontina Liz branca 20A",
+      "status": "definido",
+      "motivo": null,
+      "fontes": [
+        {
+          "loja": "Eletrorastro",
+          "dominio": "eletrorastro.com.br",
+          "url": "https://www.eletrorastro.com.br/produto/tomada-liz-branca-20a-com-placa-tramontina-88646?srsltid=AYCX9vL0K9ZuPSakJOyb4eByJ6PLNgpUNxw5WwySVxiqymlgoXH2LuTB",
+          "preco_embalagem": 11.98,
+          "embalagem": "unidade",
+          "preco_anunciado": 11.98,
+          "embalagem_anunciada": "unidade",
+          "perto_da_obra": false,
+          "distancia_km": null,
+          "endereco": null
+        },
+        {
+          "loja": "Othondecarvalho",
+          "dominio": "othondecarvalho.com.br",
+          "url": "https://othondecarvalho.com.br/products/tomada-tomada-20a-com-placa-branca-liz-tramontina-57170266",
+          "preco_embalagem": 14.9,
+          "embalagem": "unidade",
+          "preco_anunciado": 14.9,
+          "embalagem_anunciada": "unidade",
+          "perto_da_obra": false,
+          "distancia_km": null,
+          "endereco": null
+        }
+      ],
+      "consumo": {
+        "tokens_entrada": 1390,
+        "tokens_saida": 68,
+        "chamadas": 1,
+        "custo_usd": 0.000175,
+        "consumo_incompleto": false,
+        "chamadas_sem_usage": 0,
+        "limite_atingido": false,
+        "paginas_lidas": 0,
+        "orientacao": "Informe o que souber: marca, modelo/referência, tensão, potência ou corrente, seção/medidas, cor e instalação; para iluminação, temperatura de cor. Preserve os detalhes já informados. Sem confirmação, o preço continua sendo uma estimativa."
+      }
+    },
+    {
+      "produto": "Tinta Suvinil Toque de Seda Branco Neve 18 L",
+      "status": "definido",
+      "motivo": null,
+      "fontes": [
+        {
+          "loja": "Mercadolivre",
+          "dominio": "mercadolivre.com.br",
+          "url": "https://www.mercadolivre.com.br/tinta-acrilica-toque-de-seda-branco-neve-18l-suvinil/up/MLBU3598168993",
+          "preco_embalagem": 720.76,
+          "embalagem": "18 L",
+          "preco_anunciado": 720.76,
+          "embalagem_anunciada": "18 L",
+          "perto_da_obra": false,
+          "distancia_km": null,
+          "endereco": null
+        }
+      ],
+      "consumo": {
+        "tokens_entrada": 6004,
+        "tokens_saida": 211,
+        "chamadas": 3,
+        "custo_usd": 0.000716,
+        "consumo_incompleto": false,
+        "chamadas_sem_usage": 0,
+        "limite_atingido": false,
+        "paginas_lidas": 4,
+        "orientacao": "Informe o que souber: marca, linha, código da cor, acabamento, uso interno/externo e volume da embalagem. Preserve os detalhes já informados. Sem confirmação, o preço continua sendo uma estimativa."
+      }
+    }
+  ]
+}

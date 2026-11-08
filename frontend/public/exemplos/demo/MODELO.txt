@@ -1,8 +1,6 @@
-Tabela de materiais
-Família e tipo	Ambiente	Contagem
-
-Porcelanato acetinado 60x60 cm : Padrão	Sala	45
-Argamassa colante AC-III 20 kg : Padrão	Sala	12
-Tinta acrílica fosca branca 18 L : Padrão	Quartos	3
-Bacia sanitária com caixa acoplada : Padrão	Banheiro	1
-Cabo flexível 2,5 mm² (rolo 100 m) : Padrão	Geral	2
+﻿Descrição	Quantidade	Unidade	Categoria
+Porcelanato	18	m2	Revestimentos
+Tinta acrílica branca	30	m2	Pintura
+Tomada	4	un	Elétrica
+Joelho soldável 25mm	4	un	Hidráulica
+Spot LED	2	un	Iluminação

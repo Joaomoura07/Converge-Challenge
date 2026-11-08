@@ -18,9 +18,9 @@ function lerExemplo(arquivo: string) {
 
 describe("três exemplos passam pelo mesmo leitor dos uploads", () => {
   const esperado: Record<string, { codificacao: string; delimitador: string; itens: number }> = {
-    "apto-boa-viagem": { codificacao: "windows-1252", delimitador: ";", itens: 47 },
-    "casa-terrea-aldeia": { codificacao: "utf-8", delimitador: ";", itens: 53 },
-    "escritorio-ilha-do-leite": { codificacao: "utf-8", delimitador: ",", itens: 33 },
+    "apto-boa-viagem": { codificacao: "utf-8", delimitador: ";", itens: 5 },
+    "casa-terrea-aldeia": { codificacao: "utf-8", delimitador: ";", itens: 5 },
+    "escritorio-ilha-do-leite": { codificacao: "utf-8", delimitador: ";", itens: 5 },
   };
 
   for (const ex of EXEMPLOS) {

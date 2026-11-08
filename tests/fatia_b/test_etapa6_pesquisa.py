@@ -22,7 +22,7 @@ MISTURADOR = ItemEntrada(id="2", descricao="Misturador monocomando Deca Link par
 
 def of(loja, preco, emb="lata 18 L", igual="sim", titulo=None):
     return Oferta(loja=loja, dominio=f"{loja.lower().replace(' ', '')}.com.br", url=f"https://{loja}/{preco}/{igual}",
-                  titulo=titulo or loja, preco=preco, embalagem=emb, mesmo_produto=igual)
+                  titulo=titulo or (f"Tinta {emb}" if igual == "parecido" and "L" in emb else TINTA.descricao if "L" in emb else MISTURADOR.descricao), preco=preco, embalagem=emb, mesmo_produto=igual)
 
 
 # ---------------------------------------------------------------- dublês
@@ -80,7 +80,7 @@ class LLMFalso:
     @property
     def chat(self): return NS(completions=NS(create=self._create))
 
-    def _create(self, model, messages, tools=None, temperature=None, top_p=None):
+    def _create(self, model, messages, tools=None, temperature=None, top_p=None, max_tokens=None):
         acao, valor = self.roteiro[self.chamadas]
         self.chamadas += 1
         if acao == "buscar":
@@ -97,12 +97,12 @@ def rodar(item, **kw):
 
 # ---------------------------------------------------------------- caminho fixo
 def test_cache_valido_responde_sem_buscar(mundo):
-    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img/cache.jpg", provedor="tavily",
+    entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img.example/cache.jpg", provedor="tavily",
                            extracao=ResultadoExtracao(ofertas=[of("Telhanorte", 739.9), of("Magazine Luiza", 849.0)]),
                            atualizado_em=datetime.now(timezone.utc) - timedelta(days=1), vencido=False)
     m = mundo({}, cache_linha=entrada)
     r = rodar(TINTA, cliente_llm=LLMFalso([]))
-    assert r.status == "definido" and r.imagem_url == "https://img/cache.jpg" and r.qtd_embalagens == 2
+    assert r.status == "definido" and r.imagem_url == "https://img.example/cache.jpg" and r.qtd_embalagens == 2
     assert m.consultas == [] and r.iteracoes == 0 and r.premissa.startswith("rendimento")
 
 

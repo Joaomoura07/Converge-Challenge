@@ -46,6 +46,7 @@ export function TabelaMateriais({ estado, erros, despachar, novoId }: Props) {
 
   return (
     <div className="tabela" role="group" aria-label="Materiais da obra">
+      <p className="apoio">Para encontrar o produto certo, inclua na descrição marca, linha ou código do fabricante, medidas, cor, acabamento, aplicação e embalagem. Em itens elétricos, informe também tensão e potência/corrente. Quanto mais detalhes agora, menos novas pesquisas.</p>
       <datalist id="unidades-validas">
         {UNIDADES.map((u) => (
           <option key={u} value={u} />

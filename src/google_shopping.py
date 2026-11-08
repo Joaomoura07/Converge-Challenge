@@ -7,16 +7,15 @@ Entrar com eles no cálculo (mediana sem outliers, 1 oferta por loja) deixa o pr
 
 Regras para não comparar banana com laranja (anúncio só entra se):
 - o título tem TODAS as medidas do item ("18L", "60x60", "3/4", "25 mm") e a marca/linha (palavras próprias);
-- o título tem a maioria das palavras do item (≥ 75% = mesmo produto; ≥ 55% e o item é genérico = parecido);
+- atributos solicitados precisam estar confirmados; a similaridade textual apenas complementa essa verificação;
 - a embalagem sai do próprio título ("18L", "20kg", "kit 2 latas") ou é unidade, quando o item é contado em unidades.
-O preço é o do anúncio (texto estruturado do Google, não lido por LLM): não há o que alucinar.
+Preço e URL precisam vir da mesma oferta. Links do Shopping e de listagens não são fontes de compra.
 """
 
 from __future__ import annotations
 
 import logging
 import re
-from urllib.parse import quote_plus
 
 from langfuse import observe
 
@@ -26,14 +25,16 @@ from .compra import conteudo_embalagem, normalizar_unidade
 from .config import get_settings
 from .precos import Oferta
 from .regiao import regional_por_nome
+from .especificacao import nao_confirmados, texto_para_similaridade
+from .busca import dominio_de, link_direto_produto, nome_da_loja
 from .validacao_serper import _buscar, converter_preco
 
 logger = logging.getLogger(__name__)
 
-MIN_MESMO = 0.66            # 2 de 3 palavras: a cor ("Cinza Urbano" x "Cinza Tecnológico") quase não muda o preço da linha
+MIN_MESMO = 0.66            # aplicado somente após confirmar os atributos solicitados
 MIN_PARECIDO = 0.55
 MAX_OFERTAS = 12
-DOMINIO_SHOPPING = "google.com"   # o link do anúncio abre no Google Shopping
+DOMINIO_SHOPPING = "google.com"  # compatibilidade com ofertas antigas
 # palavras que não identificam o produto (a chave do cache já tira as vazias)
 FRACAS = {"preco", "comprar", "branco", "branca", "cinza", "preto", "preta", "cor", "para", "com", "kit", "un",
           "unidade", "unidades", "cozinha", "banheiro", "parede", "piso"}
@@ -66,8 +67,10 @@ def semelhanca(descricao: str, titulo: str) -> float:
     """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item.
     Medida compara pelo NÚMERO: "2,5" do item casa com "2,5mm" ou "2.50mm" do anúncio (medido em 08/11: o cabo SIL
     2,5 ficava sem preço porque "2.5" ≠ "2.5mm")."""
-    item = _tokens(descricao) - FRACAS
-    anuncio = _tokens(titulo)
+    if nao_confirmados(descricao, titulo, titulo=titulo):
+        return 0.0
+    item = _tokens(texto_para_similaridade(descricao)) - FRACAS
+    anuncio = _tokens(texto_para_similaridade(titulo))
     if len(item) < 2 or not _numeros(_medidas(item)) <= _numeros(anuncio):
         return 0.0
     palavras = item - _medidas(item)
@@ -160,12 +163,12 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         emb = _embalagem(titulo, unidade_item, descricao)
         if igual is None or emb is None:
             continue
-        link = str(a.get("link") or "") or f"https://www.google.com/search?tbm=shop&q={quote_plus(titulo)}"
-        if not link.startswith("http"):
+        link = str(a.get("link") or "")
+        if not link_direto_produto(link):
             continue
         regional = regional_por_nome(loja)
         candidatos.append((s, Oferta(loja=regional.nome if regional else loja,
-                                     dominio=regional.dominio if regional and regional.dominio else DOMINIO_SHOPPING,
+                                     dominio=dominio_de(link),
                                      url=link, titulo=titulo, preco=preco, embalagem=emb, mesmo_produto=igual,
                                      imagem=_imagem(a))))
     candidatos.sort(key=lambda c: -c[0])
@@ -251,7 +254,30 @@ async def ofertas_google(descricao: str, unidade_item: str | None, generico: boo
     except Exception as exc:  # noqa: BLE001
         logger.warning("Google Shopping falhou para '%s' (%s)", descricao, type(exc).__name__)
         return []
-    return ler_anuncios(descricao, unidade_item, anuncios, generico)
+    diretas = ler_anuncios(descricao, unidade_item, anuncios, generico)
+    # Uma busca adicional em lote, sem LLM: preço e URL vêm da mesma evidência.
+    # Não transplanta preço do Shopping para uma URL de outra variante/loja.
+    if len(diretas) >= get_settings().pesquisa_min_lojas:
+        return diretas
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as cli:
+            j = await serper.post(cli, URL_BUSCA, {"q": f"{descricao} comprar preço", "gl": "br", "hl": "pt-br", "num": 8})
+        organicos = []
+        for o in (j or {}).get("organic", []):
+            url = str(o.get("link") or "")
+            titulo = str(o.get("title") or "")
+            trecho = str(o.get("snippet") or "")
+            preco = _PRECO_NO_TRECHO.search(trecho)
+            if link_direto_produto(url) and preco:
+                organicos.append({"title": titulo, "link": url, "price": preco.group(1),
+                                  "source": nome_da_loja(dominio_de(url), titulo)})
+        novas = ler_anuncios(descricao, unidade_item, organicos, generico)
+        vistos = {o.url for o in diretas}
+        return diretas + [o for o in novas if o.url not in vistos]
+    except Exception as exc:
+        logger.info("Busca de links diretos falhou (%s)", type(exc).__name__)
+        return diretas
 
 
 # ------------------------------------------------------------------ link da LOJA no lugar do link do Google

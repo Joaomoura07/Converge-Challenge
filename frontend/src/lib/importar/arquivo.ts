@@ -6,7 +6,7 @@ import { importarIfc } from "./ifc";
 import { importarExcel, type AbaInfo } from "./excel";
 import { importarPdf, type PdfjsMinimo } from "./pdf";
 import { importarTxt } from "./txt";
-import type { ErroImportacao, Importacao, ResultadoImportacao } from "./tipos";
+import { LIMITE_BYTES, type ErroImportacao, type Importacao, type ResultadoImportacao } from "./tipos";
 
 export type ResultadoArquivo = ResultadoImportacao & { abas?: AbaInfo[] };
 
@@ -24,6 +24,7 @@ export async function lerArquivo({
   /** PDF.js já carregado (testes); na tela ele é carregado sob demanda, só quando o arquivo é PDF. */
   pdfjs?: PdfjsMinimo;
 }): Promise<ResultadoArquivo> {
+  if (bytes.length > LIMITE_BYTES) return erro("ARQUIVO_GRANDE_DEMAIS", "O arquivo passa de 20 MB. Divida a lista ou modelo em partes.");
   const ext = nome.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "";
   if (ext === "csv") return importarCsv({ nome, bytes });
   if (["xlsx", "xls", "xlsm", "ods"].includes(ext)) return importarExcel({ nome, bytes, aba });

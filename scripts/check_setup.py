@@ -17,6 +17,16 @@ from src.config import get_settings
 
 OK, FAIL, WARN = "[OK]  ", "[FAIL]", "[WARN]"
 
+CONSUMO = {"tokens_entrada": 0, "tokens_saida": 0, "custo_usd": 0.0, "respostas_sem_custo": 0}
+
+
+def registrar_consumo(usage):
+    CONSUMO["tokens_entrada"] += getattr(usage, "prompt_tokens", 0) or 0
+    CONSUMO["tokens_saida"] += getattr(usage, "completion_tokens", 0) or 0
+    cost = getattr(usage, "cost", None)
+    CONSUMO["respostas_sem_custo"] += int(cost is None)
+    CONSUMO["custo_usd"] += float(cost or 0)
+
 
 def check_featherless(model: str) -> bool:
     client = build_llm_client()
@@ -25,6 +35,7 @@ def check_featherless(model: str) -> bool:
         r = client.chat.completions.create(model=model, max_tokens=300,
                                            messages=[{"role": "user", "content": "Responda só: pong"}])
         u = r.usage
+        registrar_consumo(u)
         print(f"{OK} chat {model}: {r.choices[0].message.content!r} | tokens {u.prompt_tokens}+"
               f"{u.completion_tokens} | custo US$ {getattr(u, 'cost', 'n/d')}")
     except Exception as exc:  # noqa: BLE001
@@ -38,6 +49,8 @@ def check_featherless(model: str) -> bool:
         r = client.chat.completions.create(model=model, tools=[tool], max_tokens=200,
                                            messages=[{"role": "user", "content": "Como está o clima em Recife?"}])
         calls = r.choices[0].message.tool_calls
+        registrar_consumo(r.usage)
+        print(f"{OK} consumo tool calling: {r.usage}")
         if calls:
             print(f"{OK} tool calling nativo: {calls[0].function.name}({calls[0].function.arguments})")
         else:
@@ -80,6 +93,7 @@ def check_chaves_featherless() -> bool:
             r = build_llm_client(api_key=chave).chat.completions.create(
                 model=modelo, max_tokens=20, messages=[{"role": "user", "content": "Responda só: pong /no_think"}])
             ok = bool(getattr(r, "choices", None))
+            registrar_consumo(r.usage)
             print(f"{OK if ok else WARN} Featherless chave {i}/{len(chaves)} ({modelo}): "
                   f"{'respondeu' if ok else 'resposta vazia (sobrecarga)'}")
         except Exception as exc:  # noqa: BLE001
@@ -142,6 +156,7 @@ def main() -> int:
     results = [check_featherless(args.model), check_chaves_featherless(), check_langfuse(), check_supabase(),
                check_tavily(), check_duckduckgo()]
     print(json.dumps(dict(zip(nomes, results))))
+    print("Consumo medido Featherless: " + json.dumps(CONSUMO))
     return 0 if all(results) else 1
 
 

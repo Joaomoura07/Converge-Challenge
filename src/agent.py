@@ -23,6 +23,7 @@ from openai import APIStatusError, OpenAI
 from pydantic import BaseModel, Field
 
 from .config import get_settings, load_prompt
+from . import custo
 from .tools import ESCALATE_TOOL, ToolRegistry, registry
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class Agent:
         model: str | None = None,
         max_steps: int | None = None,
         client: OpenAI | None = None,
+        max_tokens: int | None = None,
     ) -> None:
         s = get_settings()
         self.name = name
@@ -82,6 +84,7 @@ class Agent:
         self.temperature = s.llm_temperature
         self.top_p = s.llm_top_p
         self.client = client or build_llm_client()
+        self.max_tokens = max_tokens
 
     # --- LLM ----------------------------------------------------------------
 
@@ -90,14 +93,20 @@ class Agent:
         lf = get_client()  # com tracing desligado, os update_* abaixo são no-op
         lf.update_current_generation(model=model, input=messages,
                                      model_parameters={"temperature": self.temperature, "top_p": self.top_p})
+        extras = {"max_tokens": self.max_tokens} if self.max_tokens else {}
+        if self.name == "pesquisador" and "qwen3" in model.lower():
+            messages = [*messages, {"role": "user", "content": "/no_think"}]
+        reserva = custo.reservar({"messages": messages, "tools": self.tools.schemas()}, self.max_tokens or 4096)
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
             tools=self.tools.schemas() or None,
             temperature=self.temperature,
             top_p=self.top_p,
+            **extras,
         )
         usage = response.usage
+        custo.registrar_resposta(reserva, usage)
         cost = getattr(usage, "cost", None) if usage else None  # Featherless devolve usage.cost (USD)
         lf.update_current_generation(
             # a Featherless sobrecarregada pode devolver 200 sem `choices`: quem chama decide o que fazer

@@ -1,0 +1,30 @@
+{
+  "pesquisa": [
+    ["Tomada Tramontina Liz branca 20A", 6, "un", "Elétrica"],
+    ["Spot Stella 7W 3000K", 4, "un", "Iluminação"],
+    ["Joelho Tigre soldável 25mm", 8, "un", "Hidráulica"],
+    ["Argamassa Quartzolit AC-III cinza 20kg", 40, "kg", "Revestimentos"],
+    ["Tinta Suvinil Toque de Seda Branco Neve 18L", 18, "l", "Pintura"]
+  ],
+  "revisao": [
+    ["Porcelanato Portobello 60x60cm polido", 18, "m2", "Revestimentos"],
+    ["Tomada Tramontina Liz branca 20A", 4, "m2", "Elétrica"],
+    ["Tinta acrílica fosca branca", 30, "m2", "Pintura"],
+    ["Joelho Tigre soldável 25mm", 4, "un", "Hidráulica"],
+    ["Spot Stella 7W 3000K", 2, "un", "Iluminação"]
+  ],
+  "componentes": [
+    ["Tomada Tramontina Liz branca 20A", 6, "un", "Elétrica"],
+    ["Spot Stella 7W 3000K", 4, "un", "Iluminação"],
+    ["Joelho Tigre soldável 25mm", 8, "un", "Hidráulica"],
+    ["Saco de argamassa Quartzolit AC-III cinza 20kg", 2, "un", "Revestimentos"],
+    ["Lata de tinta Suvinil Toque de Seda Branco Neve 18L", 1, "un", "Pintura"]
+  ],
+  "modelo": [
+    ["Porcelanato", 18, "m2", "Revestimentos"],
+    ["Tinta acrílica branca", 30, "m2", "Pintura"],
+    ["Tomada", 4, "un", "Elétrica"],
+    ["Joelho soldável 25mm", 4, "un", "Hidráulica"],
+    ["Spot LED", 2, "un", "Iluminação"]
+  ]
+}

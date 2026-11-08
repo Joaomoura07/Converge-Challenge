@@ -1,58 +1,74 @@
-%PDF-1.4
-%âãÏÓ
+%PDF-1.3
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 841.8898 595.2756 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 1145 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (Or\347a \204 exemplos sint\351ticos) /CreationDate (D:20000101000000+00'00') /Creator (anonymous) /Keywords () /ModDate (D:20000101000000+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (unspecified) /Title (Modelo de lista \204 Or\347a) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 731
+>>
 stream
-BT /F1 14 Tf 50 780 Td (MODELO DE LISTA DE MATERIAIS) Tj ET
-BT /F1 10 Tf 50 760 Td (Uma linha por material: descrição, embalagem/unidade e quantidade.) Tj ET
-BT /F1 10 Tf 51 730 Td (Item) Tj ET
-BT /F1 10 Tf 85 730 Td (Descrição) Tj ET
-BT /F1 10 Tf 403 730 Td (Unidade) Tj ET
-BT /F1 10 Tf 505 730 Td (Qtd.) Tj ET
-BT /F1 10 Tf 51 713 Td (1) Tj ET
-BT /F1 10 Tf 85 713 Td (Porcelanato acetinado 60x60 cm) Tj ET
-BT /F1 10 Tf 403 713 Td (m²) Tj ET
-BT /F1 10 Tf 534 713 Td (45) Tj ET
-BT /F1 10 Tf 51 696 Td (2) Tj ET
-BT /F1 10 Tf 85 696 Td (Argamassa colante AC-III 20 kg) Tj ET
-BT /F1 10 Tf 403 696 Td (un) Tj ET
-BT /F1 10 Tf 534 696 Td (12) Tj ET
-BT /F1 10 Tf 51 679 Td (3) Tj ET
-BT /F1 10 Tf 85 679 Td (Tinta acrílica fosca branca 18 L) Tj ET
-BT /F1 10 Tf 403 679 Td (un) Tj ET
-BT /F1 10 Tf 534 679 Td (3) Tj ET
-BT /F1 10 Tf 51 662 Td (4) Tj ET
-BT /F1 10 Tf 85 662 Td (Bacia sanitária com caixa acoplada) Tj ET
-BT /F1 10 Tf 403 662 Td (un) Tj ET
-BT /F1 10 Tf 534 662 Td (1) Tj ET
-BT /F1 10 Tf 51 645 Td (5) Tj ET
-BT /F1 10 Tf 85 645 Td (Cabo flexível 2,5 mm² \(rolo 100 m\)) Tj ET
-BT /F1 10 Tf 403 645 Td (un) Tj ET
-BT /F1 10 Tf 534 645 Td (2) Tj ET
-endstream
+GatUp9okbt&;KZL'm"1m'u_7[\99f2>A^e4QJQY%^e%g_S_>EgrqHuAj?lPPLBnJ(GWdk/48'4VnKR"3h#Vo'i8\GOKL3'I_@mF01G#P/66Ms1&iL!,SW,*+PRK%1,rDRi4UD-LKoBY@Fn"h2Bk2"POjGT@"fs+(i5Mi90>r49r]p,f(6>HD1%gNf6V7d_ZF0fmWqIs/A[N0?%t=.;Hf]r_HNQ?\h](5dmCX0$-G5a4g!\%%YApe1mVf;!B^j]C:22FJlrGZM%LbnA=6?g"ZT<>6NcdH&]ht.(6Zg1<X+YL9_5s37HOT(F@kb(_!4#ge<c"TR^.Yr![DMc-BmD$GBEM;H^@bT*EgD!TT&H7%KCp-b%NM+!!ZOtq'%f=jco/O3SV`fVo6`+g8\3WUUH-q71S,X(*%Ytq,Hkm(Q6!BJF@96,VkB+7gX`$=kK%3=8QjtWSsW)(1:)g_n-.\q1d?T,Z$SGlm%1&Y[;:O44pE%GA0-:2RZ9isKB?2%V=SHSB?$LaO0'?M=i'R'AFoVaYYlAMS#G^n7U"S_J;6VGi\pA7P,5XM-VY"pdO_YThS.NBL'HIl*%"Bk3mkkGK8rIsJu%!1^7\W9BJ&aT?'ork:l8T79:+']h)?S5hZd^ngYdW/HeIEFmCER@=;\pbOsk4pHr8-BZq9.]!af^m7>pTPVV,CtrnJA%c\n^US<NN`Q5hk38W7`=Hu8aUBlRuD_X'L&G.!M~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000015 00000 n 
-0000000064 00000 n 
-0000000121 00000 n 
-0000000247 00000 n 
-0000000344 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000899 00000 n 
+0000000958 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<590fe08825223a1e12772895887ac026><590fe08825223a1e12772895887ac026>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1541
+1779
 %%EOF

@@ -194,7 +194,7 @@ def test_colunas_combinadas_com_a_fatia_a():
                   "qtd_embalagens", "iteracoes", "preco_emb_min", "preco_emb_med", "preco_emb_max", "preco_un_min",
                   "preco_un_med", "preco_un_max", "confianca", "estimativa", "fontes", "preco_data", "atualizado_em"}
     novas = set(o.COLUNAS_GRAVADAS) - combinadas
-    assert novas == {"premissa", "validacao"}, f"coluna nova precisa ser avisada ao Samuel: {novas}"
+    assert novas == {"premissa", "validacao", "pesquisa_detalhes"}, f"coluna nova precisa ser avisada ao Samuel: {novas}"
 
 
 class SupabaseGravador:

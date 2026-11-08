@@ -63,10 +63,12 @@ def _extrair_json(conteudo: str) -> dict[str, Any]:
 @observe(as_type="generation", name="llm.featherless")
 def _chamar_llm(client: Any, model: str, mensagens: list[dict]) -> str:
     # GLM-5.2 pensa antes de responder: max_tokens baixo devolve resposta vazia (skills/02).
-    resp = client.chat.completions.create(model=model, messages=mensagens, temperature=0.3, max_tokens=2500, timeout=40)
+    limite = get_settings().pesquisa_max_tokens_saida
+    reserva = _custo.reservar(mensagens, limite)
+    resp = client.chat.completions.create(model=model, messages=mensagens, temperature=0.3, max_tokens=limite, timeout=40)
     usage = resp.usage
     custo = getattr(usage, "cost", None) if usage else None
-    _custo.registrar(custo)
+    _custo.registrar_resposta(reserva, usage)
     try:
         get_client().update_current_generation(
             model=model, model_parameters={"temperature": 0.3},
@@ -105,7 +107,7 @@ def sugerir_alternativa(atual: str, objetivo: Objetivo, *, categoria: str | None
         if not s.llm_configured:
             raise AlternativaIndisponivel("LLM não configurado")
         from .agent import build_llm_client
-        client = build_llm_client()
+        client = build_llm_client().with_options(max_retries=0)
     pedido = {"produto_atual": atual, "objetivo": objetivo, "categoria": categoria}
     mensagens = [{"role": "system", "content": load_prompt("alternativa_produto")},
                  {"role": "user", "content": json.dumps(pedido, ensure_ascii=False)}]

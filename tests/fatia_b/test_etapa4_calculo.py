@@ -7,10 +7,18 @@ import asyncio
 
 import pytest
 
-from src.calculo import calcular
+from src.calculo import calcular as calcular_real
 from src.compra import Conteudo, conteudo_embalagem, qtd_embalagens
 from src.modelos import ItemEntrada, ResultadoItem
 from src.precos import Oferta, ResultadoExtracao
+
+
+def calcular(item, extracao, *args, **kwargs):
+    # Esta suíte isola as contas com ofertas já conferidas; identidade é testada em
+    # test_pesquisa_aprofundada/test_conferencias_oferta com evidências contraditórias.
+    ext = ResultadoExtracao(ofertas=[o.model_copy(update={"evidencia": item.descricao})
+                                    if o.mesmo_produto == "sim" else o for o in extracao.ofertas])
+    return calcular_real(item, ext, *args, **kwargs)
 
 
 def of(loja, preco, emb, igual="sim"):

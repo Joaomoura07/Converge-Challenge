@@ -100,7 +100,10 @@ function lerTabela(linhas: Linha[], cab: Cabecalho, paginas: Map<number, number>
     if (norm(celulas[iQtd]) === norm(cab.colunas[iQtd].nome) && norm(celulas[iDesc]) === norm(cab.colunas[iDesc].nome)) continue;
     const temQtd = celulas[iQtd] !== "";
     const temNumeroDeItem = celulas[0] !== "" && iDesc !== 0;
-    if (!temQtd && !temNumeroDeItem && ultimo && celulas[iDesc] !== "") {
+    const soDescricao = celulas.every((c, indice) => indice === iDesc || c === "");
+    const anterior = linhas[i - 1];
+    const continuacaoProxima = anterior.pagina === linhas[i].pagina && anterior.y - linhas[i].y <= 18;
+    if (!temQtd && !temNumeroDeItem && soDescricao && continuacaoProxima && ultimo && celulas[iDesc] !== "") {
       // descrição que quebrou em duas linhas: continua a anterior
       ultimo.celulas[iDesc] = `${ultimo.celulas[iDesc]} ${celulas[iDesc]}`.trim();
       continue;
@@ -138,10 +141,11 @@ function lerQuadro(linhas: Linha[], cab: Cabecalho, paginas: Map<number, number>
   let n = 1;
   let ambiente = "";
   for (let i = cab.indiceLinha + 1; i < linhas.length; i++) {
-    for (const p of linhas[i].pedacos) {
-      const s = p.str.trim();
+    const porColuna: Pedaco[][] = cab.colunas.map(() => []);
+    for (const p of linhas[i].pedacos) porColuna[colunaDe(cab.colunas, p.x)].push(p);
+    for (const [c, pedacos] of porColuna.entries()) {
+      const s = texto(pedacos);
       if (s === "" || s === "—" || s === "-") continue;
-      const c = colunaDe(cab.colunas, p.x);
       if (c === 0) {
         ambiente = s; // primeira coluna: nome do ambiente (vale para as linhas seguintes até o próximo)
         continue;
@@ -239,6 +243,7 @@ export async function importarPdf({
     // que passa a fazer parte da descrição, e a pessoa é avisada para conferir.
     let usouEmbalagem = false;
     for (const item of r.itens) {
+      item.extras.origem_pdf = { pagina: paginasPorLinha.get(item.linha), layout };
       const emb = typeof item.extras.Embalagem === "string" ? item.extras.Embalagem.trim() : "";
       if (emb && item.descricao) {
         item.descricao = `${item.descricao} (${emb})`;
@@ -273,6 +278,8 @@ export async function importarPdf({
       mensagem: `Texto extraído de PDF (${layout === "tabela" ? "tabela com cabeçalho" : "quadro de acabamentos"}, ${doc.numPages} ${doc.numPages === 1 ? "página" : "páginas"}). Confira descrição, quantidade e unidade de cada linha.`,
     });
     return r;
+  } catch {
+    return erro("ARQUIVO_CORROMPIDO", `Não foi possível ler todas as páginas do PDF. ${ORIENTACAO}`);
   } finally {
     await (tarefa.destroy?.() ?? doc.destroy?.())?.catch(() => undefined);
   }

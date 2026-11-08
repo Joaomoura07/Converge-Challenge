@@ -23,6 +23,7 @@ from langfuse import observe
 
 from .config import get_settings
 from .modelos import ItemEntrada
+from .imagens import completar_imagem, normalizar_url_imagem
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +69,14 @@ class ResultadoWeb:
     dominio: str
     loja: str
     trecho: str
+    pagina_lida: bool = False
 
 
 @dataclass
 class ImagemWeb:
     url: str
     descricao: str = ""
+    origem_url: str = ""  # imagem original quando url é a miniatura de reserva
 
 
 @dataclass
@@ -131,6 +134,8 @@ def _medidas_em(texto: str) -> set[tuple[int, int]]:
 
 def nota_imagem(img: ImagemWeb, produto: str) -> float:
     """Nota de quão bem a imagem representa ESTE produto (regra fixa e explicável)."""
+    if img.origem_url:
+        return nota_imagem(ImagemWeb(img.origem_url, img.descricao), produto) - 0.1
     url_desc = f"{img.url} {img.descricao}"
     if _FORA.search(img.url) or _LIXO.search(img.url):
         return -100.0
@@ -169,7 +174,16 @@ def nota_imagem(img: ImagemWeb, produto: str) -> float:
 
 def _candidatas(imagens: list[ImagemWeb], produto: str) -> list[ImagemWeb]:
     """Acima da nota mínima, da melhor para a pior. Empate decidido pela URL (sempre o mesmo resultado)."""
-    boas = [i for i in imagens if nota_imagem(i, produto) >= NOTA_MINIMA]
+    # URLs repetidas não podem ocupar todas as vagas de verificação.
+    unicas = {}
+    for i in imagens:
+        url = normalizar_url_imagem(i.url)
+        if not url:
+            continue
+        candidata = ImagemWeb(url, i.descricao, i.origem_url)
+        if url not in unicas or nota_imagem(candidata, produto) > nota_imagem(unicas[url], produto):
+            unicas[url] = candidata
+    boas = [i for i in unicas.values() if nota_imagem(i, produto) >= NOTA_MINIMA]
     return sorted(boas, key=lambda i: (nota_imagem(i, produto), -len(i.url), i.url), reverse=True)
 
 
@@ -186,6 +200,9 @@ _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 async def imagem_carrega(url: str) -> bool:
     """A URL entrega uma imagem de verdade? (Algumas lojas devolvem uma página HTML para quem vem de fora.)"""
     import httpx
+    url = normalizar_url_imagem(url)
+    if not url:
+        return False
     try:
         async with httpx.AsyncClient(timeout=4, follow_redirects=True, headers={"User-Agent": _UA}) as c:
             async with c.stream("GET", url) as r:
@@ -203,13 +220,13 @@ async def imagem_carrega(url: str) -> bool:
 
 
 async def escolher_imagem_verificada(imagens: list[ImagemWeb], produto: str, checar=imagem_carrega,
-                                     max_checar: int = 3) -> str | None:
-    """A melhor imagem QUE CARREGA. Checa as 3 melhores em paralelo e fica com a de maior nota que passou."""
+                                     max_checar: int = 6) -> str | None:
+    """A melhor imagem QUE CARREGA. Checa até 6 URLs únicas em paralelo."""
     top = _candidatas(imagens, produto)[:max_checar]
     if not top:
         return None
-    ok = await asyncio.gather(*(checar(i.url) for i in top))
-    return next((i.url for i, passou in zip(top, ok) if passou), None)
+    ok = await asyncio.gather(*(checar(i.url) for i in top), return_exceptions=True)
+    return next((i.url for i, passou in zip(top, ok) if passou is True), None)
 
 
 def dominio_de(url: str) -> str:
@@ -369,6 +386,22 @@ def eh_pagina_de_listagem(dominio: str, url: str) -> bool:
     host = (partes.hostname or "").lower()
     padrao = next((p for d, p in _PRODUTO_POR_LOJA.items() if host == d or host.endswith("." + d)), None)
     return padrao is not None and not padrao.search(partes.path)
+
+
+def link_direto_produto(url: str) -> bool:
+    """Exclui buscadores, home e listagens; não inventa URLs."""
+    try:
+        p = urlparse(url or "")
+        host = (p.hostname or "").lower()
+        if p.scheme not in ("http", "https") or not host or p.username or p.password:
+            return False
+        if re.search(r"(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\.", host):
+            return False
+        if not p.path.strip("/") or re.search(r"/(?:categoria|category|catalogo|catalog|departamento|collections?)(/|$)", p.path, re.I):
+            return False
+        return not (eh_pagina_de_busca(url) or eh_pagina_de_listagem(host, url) or fonte_nao_e_loja(host, url))
+    except ValueError:
+        return False
 
 
 def fonte_nao_e_loja(dominio: str, url: str) -> bool:
@@ -566,7 +599,8 @@ async def _tavily_aberto(consulta: str, limite: int, rodizio: _RodizioChaves, lo
     while rodizio.atual:
         try:
             r = await AsyncTavilyClient(api_key=rodizio.atual).search(
-                q, search_depth="basic", max_results=10, include_images=True, country="brazil",
+                q, search_depth="basic", max_results=10, include_images=True,
+                include_image_descriptions=True, country="brazil",
                 exclude_domains=list(LOJAS) + BLOQUEADOS, timeout=20)
             brutos = [(x.get("title"), x.get("url"), x.get("content")) for x in r.get("results", [])]
             imagens = [ImagemWeb(i.get("url", ""), i.get("description") or "") if isinstance(i, dict) else ImagemWeb(i)
@@ -591,22 +625,27 @@ async def _serper_aberto(consulta: str, limite: int, local: Local | None) -> Res
 
 async def _buscar_aberta(consulta: str, limite: int, rodizio: _RodizioChaves, local: Local | None) -> RespostaBusca:
     """Nunca levanta exceção: busca aberta que falha só deixa o item com as lojas da lista fixa."""
+    imagens = []
     try:
         r = await _tavily_aberto(consulta, limite, rodizio, local)
+        imagens = r.imagens
         if r.resultados:
             return r
     except Exception as exc:  # noqa: BLE001
         logger.info("Busca aberta no Tavily falhou (%s); tentando Serper e DuckDuckGo", type(exc).__name__)
     try:
         r = await _serper_aberto(consulta, limite, local)
+        r.imagens = r.imagens + imagens
         if r.resultados:
             return r
     except Exception as exc:  # noqa: BLE001
         logger.info("Busca aberta no Serper falhou (%s); tentando DuckDuckGo", type(exc).__name__)
     try:
-        return await _duckduckgo_aberto(consulta, limite, local)
+        r = await _duckduckgo_aberto(consulta, limite, local)
+        r.imagens = r.imagens + imagens
+        return r
     except Exception as exc:  # noqa: BLE001
-        return RespostaBusca(consulta, "nenhum", erro=f"busca aberta: {type(exc).__name__}")
+        return RespostaBusca(consulta, "nenhum", imagens=imagens, erro=f"busca aberta: {type(exc).__name__}")
 
 
 async def _com_prazo(fazer_busca, prazo_s: float, consulta: str) -> RespostaBusca:
@@ -652,11 +691,12 @@ async def buscar(consulta: str, limite: int | None = None, rodizio: _RodizioChav
         resp.resultados = juntos[: s.pesquisa_max_anuncios]
         if resp.resultados:
             resp.erro = None
-        if not resp.imagens:
-            resp.imagens = aberta.imagens
+        resp.imagens = resp.imagens + aberta.imagens + regional.imagens
         if resp.provedor == "nenhum":
             resp.provedor = aberta.provedor
     resp.imagem = await escolher_imagem_verificada(resp.imagens, consulta)
+    if not resp.imagem:
+        await completar_imagem(resp, consulta)
     resp.ms = int((time.perf_counter() - t0) * 1000)
     return resp
 

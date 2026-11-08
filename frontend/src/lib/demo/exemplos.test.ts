@@ -26,17 +26,20 @@ describe("exemplos para baixar na /demo", () => {
     }
   });
 
-  it.each([...MODELOS_DEMO, ...EXEMPLOS_DEMO])("$arquivo é lido pelo leitor real do site, curto e sem erro", async (ex) => {
+  it.each([...MODELOS_DEMO, ...EXEMPLOS_DEMO])("$arquivo é lido pelo site com pendências apenas quando documentadas", async (ex) => {
     const bytes = new Uint8Array(readFileSync(join(PUBLICO, ex.arquivo)));
     const r = await lerArquivo({ nome: ex.arquivo, bytes, aba: null, pdfjs: pdfjsLegacy as never });
     expect(ehErro(r), JSON.stringify(r).slice(0, 200)).toBe(false);
     const imp = r as Importacao;
     expect(imp.itens.length).toBeGreaterThanOrEqual(3);
-    expect(imp.itens.length).toBeLessThanOrEqual(15);   // curto: a pesquisa termina rápido na demo
+    expect(imp.itens.length).toBeLessThanOrEqual(10);
     expect(modoPeloArquivo(ex.arquivo)).toBe(ex.modo);
     // nenhum campo que trave o envio, exceto DXF (a planta traz medidas, não o nome do material: o jurado descreve)
     const erros = contarErros(errosPorId(importacaoParaLinhas(imp, novoId)));
-    if (ex.modo !== "dxf") expect(erros).toBe(0);
+    if (ex.arquivo === "teste_2.skp") {
+      expect(imp.itens.filter(i => i.quantidade == null)).toHaveLength(1);
+      expect(erros).toBeGreaterThan(0); // área precisa ser informada pelo arquiteto
+    } else if (ex.modo !== "dxf") expect(erros).toBe(0);
   });
 
   it("a aba acompanha a extensão do arquivo solto", () => {
@@ -47,7 +50,7 @@ describe("exemplos para baixar na /demo", () => {
   });
 
   // Os itens que o leitor do site tira de cada teste ficam numa fixture que o backend usa para garantir, com as regras
-  // REAIS do revisor e dos complementos, que todo teste mostra erro, complemento e item genérico
+  // REAIS do revisor e dos complementos, os dois percursos: pesquisa específica e revisão
   // (tests/test_exemplos_demo.py). Mudou um arquivo de exemplo? Rode com ATUALIZAR_FIXTURE_DEMO=1.
   it("a fixture dos itens dos testes está em dia com os arquivos", async () => {
     const atual: Record<string, unknown> = {};
@@ -60,5 +63,21 @@ describe("exemplos para baixar na /demo", () => {
     if (process.env.ATUALIZAR_FIXTURE_DEMO === "1") writeFileSync(caminho, JSON.stringify(atual, null, 1) + "\n");
     expect(existsSync(caminho), "rode com ATUALIZAR_FIXTURE_DEMO=1").toBe(true);
     expect(JSON.parse(readFileSync(caminho, "utf-8"))).toEqual(JSON.parse(JSON.stringify(atual)));
+  });
+
+  it("preserva os quantitativos descritos no roteiro, sem confundir saco com kg nem instância com área", () => {
+    const itens = JSON.parse(readFileSync(join(__dirname, "fixtures/itens-exemplos.json"), "utf8"));
+    const quantidades = (nome: string) => itens[nome].map((i: { quantidade: number | null }) => i.quantidade);
+    for (const ext of ["csv", "xlsx", "txt", "pdf"]) {
+      expect(quantidades(`teste_1.${ext}`)).toEqual([6, 4, 8, 40, 18]);
+    }
+    for (const ext of ["ifc", "skp"]) {
+      expect(quantidades(`teste_1.${ext}`)).toEqual([6, 4, 8, 2, 1]);
+      expect(itens[`teste_1.${ext}`].every((i: { unidade: string }) => i.unidade === "un")).toBe(true);
+    }
+    expect(quantidades("teste_1.dxf")).toEqual([4, 8, 1]);
+    expect(quantidades("teste_2.dxf")).toEqual([18, 18, 2, 4]);
+    expect(quantidades("teste_2.ifc")).toEqual([18, 4, 30, 4, 2]);
+    expect(quantidades("teste_2.skp")).toEqual([null, 6, 4, 8, 1]);
   });
 });
