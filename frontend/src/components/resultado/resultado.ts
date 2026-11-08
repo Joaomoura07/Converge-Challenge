@@ -97,6 +97,18 @@ export function urlExportar(id: string, base: string | undefined = process.env.N
   return b ? `${b}/orcamentos/${encodeURIComponent(id)}/exportar.xlsx` : null;
 }
 
+/** Link público do trace no Langfuse ("raciocínio da IA", gravado pela B em `orcamentos.trace_url`).
+ *  Só http(s); qualquer outra coisa (ou vazio) vira null e a tela esconde o link. */
+export function linkRaciocinio(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export const faixa = (v: Viabilidade) =>
   v.total_min != null && v.total_max != null ? `${reais(v.total_min)} a ${reais(v.total_max)}` : null;
 

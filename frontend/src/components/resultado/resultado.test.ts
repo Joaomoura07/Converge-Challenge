@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ItemLinha, Viabilidade } from "@/lib/orcamento/tipos";
-import { contagem, foraDoSubtotal, itemParaTela, itensParaTela, linhasDocumento, mesAno, notaDocumento, resumoParaTela, subtotal, tituloEditorial, urlExportar, veredito } from "./resultado";
+import { contagem, foraDoSubtotal, itemParaTela, itensParaTela, linhasDocumento, linkRaciocinio, mesAno, notaDocumento, resumoParaTela, subtotal, tituloEditorial, urlExportar, veredito } from "./resultado";
 
 let n = 0;
 const item = (p: Partial<ItemLinha>): ItemLinha => ({
@@ -178,5 +178,23 @@ describe("textos editoriais", () => {
   });
   it("mês e ano em português", () => {
     expect(mesAno("2026-11-07T10:00:00Z")).toBe("novembro de 2026");
+  });
+});
+
+describe("linkRaciocinio (trace público do Langfuse)", () => {
+  it("devolve o link quando é http(s)", () => {
+    expect(linkRaciocinio("https://us.cloud.langfuse.com/project/p1/traces/abc")).toBe(
+      "https://us.cloud.langfuse.com/project/p1/traces/abc",
+    );
+  });
+  it("esconde o link quando vem vazio (Langfuse fora ou orçamento antigo)", () => {
+    expect(linkRaciocinio(null)).toBeNull();
+    expect(linkRaciocinio(undefined)).toBeNull();
+    expect(linkRaciocinio("")).toBeNull();
+  });
+  it("recusa protocolo perigoso e texto que não é endereço", () => {
+    expect(linkRaciocinio("javascript:alert(1)")).toBeNull();
+    expect(linkRaciocinio("data:text/html,oi")).toBeNull();
+    expect(linkRaciocinio("não é um link")).toBeNull();
   });
 });
