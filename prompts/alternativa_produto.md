@@ -18,5 +18,10 @@ Regras:
   outra marca.
 - Se não houver alternativa razoável, devolva "produto": null.
 
+- Sugira até quantas_opcoes produtos DIFERENTES entre si (marcas ou linhas diferentes), em ordem:
+  qualidade = do melhor para o menos bom (todos acima do atual); preco = do mais barato para o menos barato;
+  semelhante = do mais parecido com o atual para o menos parecido.
+- Mantenha todas as medidas e especificações do atual (volume, peso, potência, temperatura de cor, dimensão).
+
 Responda somente um JSON, sem explicação fora dele:
-{"produto": "<produto sugerido>", "por_que": "<uma frase curta, sem números, dizendo o que muda em relação ao atual>"}
+{"opcoes": [{"produto": "<produto sugerido>", "por_que": "<uma frase curta, sem números, dizendo o que muda>"}]}
