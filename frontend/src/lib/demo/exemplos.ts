@@ -31,6 +31,16 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
   { arquivo: "teste_2.dxf", modo: "dxf", obra: "Planta exportada do AutoCAD" },
 ];
 
+/** Um MODELO por formato: o arquivo-padrão que mostra ao usuário como montar a lista para enviar ao sistema.
+ *  Aparece destacado, antes dos testes. É uma cópia do teste_1 de cada formato. */
+export const MODELOS_DEMO: ExemploDemo[] = [
+  { arquivo: "MODELO.csv", modo: "csv", obra: "Modelo de lista em CSV" },
+  { arquivo: "MODELO.xlsx", modo: "excel", obra: "Modelo de lista em Excel" },
+  { arquivo: "MODELO.txt", modo: "revit", obra: "Modelo de tabela exportada do Revit" },
+  { arquivo: "MODELO.pdf", modo: "pdf", obra: "Modelo de lista em PDF com texto" },
+  { arquivo: "MODELO.dxf", modo: "dxf", obra: "Modelo de planta DXF" },
+];
+
 const MODO_POR_EXTENSAO: Record<string, FormatoDemo["modo"]> = {
   csv: "csv", xlsx: "excel", xls: "excel", xlsm: "excel", txt: "revit", pdf: "pdf", dxf: "dxf", dwg: "dxf",
   ifc: "ifc", ifczip: "ifc", skp: "skp",

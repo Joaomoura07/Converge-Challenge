@@ -6,7 +6,7 @@ import { lerArquivo } from "@/lib/importar/arquivo";
 import { importacaoParaLinhas } from "@/lib/importar/paraLinhas";
 import { ehErro, type Importacao } from "@/lib/importar/tipos";
 import { contarErros, errosPorId } from "@/lib/lista";
-import { EXEMPLOS_DEMO, FORMATOS_DEMO, modoPeloArquivo } from "./exemplos";
+import { EXEMPLOS_DEMO, MODELOS_DEMO, FORMATOS_DEMO, modoPeloArquivo } from "./exemplos";
 
 const PUBLICO = join(__dirname, "../../../public/exemplos/demo");
 let n = 0;
@@ -20,7 +20,13 @@ describe("exemplos para baixar na /demo", () => {
     }
   });
 
-  it.each(EXEMPLOS_DEMO)("$arquivo é lido pelo leitor real do site, curto e sem erro", async (ex) => {
+  it("1 MODELO por formato", () => {
+    for (const f of FORMATOS_DEMO) {
+      expect(MODELOS_DEMO.filter((m) => m.modo === f.modo).map((m) => m.arquivo.split(".")[0]), f.rotulo).toEqual(["MODELO"]);
+    }
+  });
+
+  it.each([...MODELOS_DEMO, ...EXEMPLOS_DEMO])("$arquivo é lido pelo leitor real do site, curto e sem erro", async (ex) => {
     const bytes = new Uint8Array(readFileSync(join(PUBLICO, ex.arquivo)));
     const r = await lerArquivo({ nome: ex.arquivo, bytes, aba: null, pdfjs: pdfjsLegacy as never });
     expect(ehErro(r), JSON.stringify(r).slice(0, 200)).toBe(false);

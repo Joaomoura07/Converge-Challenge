@@ -1,7 +1,7 @@
 // Chips pequenos de download (2 por formato) acima da área de envio da /demo. O jurado baixa e arrasta o arquivo para
 // dentro, como um arquiteto faria com a exportação do Revit, do SketchUp ou da planilha.
 
-import { EXEMPLOS_DEMO, FORMATOS_DEMO, PASTA_DEMO } from "@/lib/demo/exemplos";
+import { EXEMPLOS_DEMO, FORMATOS_DEMO, MODELOS_DEMO, PASTA_DEMO } from "@/lib/demo/exemplos";
 
 function IconeArquivo() {
   return (
@@ -25,7 +25,7 @@ export function ExemplosDownload() {
     <section className="demo-exemplos" aria-labelledby="demo-exemplos-titulo">
       <div className="demo-exemplos__cabeca">
         <h3 id="demo-exemplos-titulo">Não tem uma lista à mão? Baixe um exemplo</h3>
-        <p>Obras fictícias de Recife, exportadas como um escritório exportaria. Baixe e arraste para a área abaixo.</p>
+        <p>O arquivo <strong>MODELO</strong> de cada formato mostra o padrão para montar a sua lista. Os testes são obras fictícias de Recife: baixe e arraste para a área abaixo.</p>
       </div>
       <div className="demo-exemplos__grupos">
         {FORMATOS_DEMO.map((f) => (
@@ -37,6 +37,18 @@ export function ExemplosDownload() {
               {f.rotulo}
             </summary>
             <ul>
+              {MODELOS_DEMO.filter((m) => m.modo === f.modo).map((m) => (
+                <li key={m.arquivo}>
+                  <a className="demo-chip demo-chip--modelo" href={`${PASTA_DEMO}/${m.arquivo}`} download={m.arquivo}
+                     title="Use este arquivo como padrão para montar a sua lista"
+                     aria-label={`Baixar ${m.arquivo}: modelo para montar a sua lista`}>
+                    <IconeArquivo />
+                    <span className="demo-chip__nome">{m.arquivo}</span>
+                    <span className="demo-chip__selo">padrão</span>
+                    <IconeBaixar />
+                  </a>
+                </li>
+              ))}
               {EXEMPLOS_DEMO.filter((e) => e.modo === f.modo).map((e) => (
                 <li key={e.arquivo}>
                   <a className="demo-chip" href={`${PASTA_DEMO}/${e.arquivo}`} download={e.arquivo} title={e.obra}
