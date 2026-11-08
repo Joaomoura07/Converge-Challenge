@@ -5,6 +5,7 @@
 // automática do PapaParse erra com tabulação e vírgula decimal.
 
 import Papa from "papaparse";
+import { lerLinhaLivre, lerListaTexto, numeroBr, unidadeLivre } from "./textoLivre";
 import {
   LIMITE_BYTES,
   LIMITE_ITENS,
@@ -170,9 +171,13 @@ const SINONIMOS: Record<Papel, string[]> = {
   descricao: [
     "descricao", "descricao do item", "descricao do material", "description", "produto", "material", "item",
     "nome", "especificacao", "familia e tipo", "family and type", "definition name", "nome da definicao", "material nome", "material name", "material de acabamento",
+    // jeitos de quem monta a planilha à mão (teste "como leigo", 08/11)
+    "o que", "oque", "materiais", "produtos", "insumo", "insumos", "discriminacao", "descricao dos materiais",
+    "descricao dos servicos", "servico", "servicos", "especificacoes", "itens", "material servico",
   ],
-  quantidade: ["quantidade", "qtd", "qtde", "quant", "qty", "quantity", "count", "contagem", "area", "material area", "length", "comprimento"],
-  unidade: ["unidade", "unidade de medida", "un", "und", "unid", "unit", "units"],
+  quantidade: ["quantidade", "qtd", "qtde", "quant", "qty", "quantity", "count", "contagem", "area", "material area", "length", "comprimento",
+    "quantidades", "qte", "qtdade", "quantia", "qtd total", "quantidade total"],
+  unidade: ["unidade", "unidade de medida", "un", "und", "unid", "unit", "units", "medida", "u m", "um", "un medida", "unid medida"],
   categoria: ["categoria", "category", "tag", "grupo", "classe"],
   nivel: ["nivel", "level", "pavimento", "andar", "ambiente", "room"],
 };
@@ -374,10 +379,102 @@ export type EntradaMapa = {
   codificacao: string | null;
 };
 
+/** Embalagem no plural (planilha feita à mão) → a grafia que a revisão E1 conhece, para ela propor "un" com 1 clique. */
+const EMBALAGEM_SINGULAR: Record<string, string> = {
+  sacos: "saco", latas: "lata", caixas: "caixa", barras: "barra", rolos: "rolo", pacotes: "pct", pacote: "pct",
+  galao: "gl", galoes: "gl", scs: "sc", cxs: "cx",
+};
+
+/** Arquivo de uma coluna só (ou .txt que não é tabela): lista em texto livre, um item por linha. */
+export function comoListaTexto(
+  linhas: string[],
+  linhaInicial: number,
+  meta: { nome: string; formato: EntradaMapa["formato"]; aba: string | null; delimitador: string | null; codificacao: string | null; avisos: AvisoImportacao[] },
+): ResultadoImportacao {
+  // 1ª linha que é só o título da coluna ("Materiais", "Descrição", "Lista") não é material
+  let inicio = 0;
+  while (inicio < linhas.length && !linhas[inicio].trim()) inicio++;
+  const titulo = normalizarNome(linhas[inicio] ?? "");
+  const pulaTitulo = SINONIMOS.descricao.includes(titulo) || /^(lista( de (materiais|compras))?|materiais?)$/.test(titulo);
+  const { itens, avisos } = lerListaTexto(pulaTitulo ? linhas.slice(inicio + 1) : linhas, linhaInicial + (pulaTitulo ? inicio + 1 : 0));
+  if (itens.length === 0) {
+    return erro("CABECALHO_NAO_ENCONTRADO", "Não achei materiais neste arquivo. Deixe um material por linha (ex.: \"10 sacos de cimento\") ou use uma planilha com colunas de descrição e quantidade.");
+  }
+  if (itens.length > LIMITE_ITENS) {
+    return erro("ARQUIVO_GRANDE_DEMAIS", `A lista tem mais de ${LIMITE_ITENS.toLocaleString("pt-BR")} itens. Divida em partes.`);
+  }
+  const primeiro: AvisoImportacao = {
+    linha: null,
+    codigo: "LISTA_TEXTO",
+    mensagem: "Li o arquivo como uma lista, um material por linha. Confira as quantidades e unidades na tabela.",
+  };
+  return {
+    origem: {
+      arquivo: meta.nome, formato: meta.formato, software: "desconhecido", aba: meta.aba, delimitador: meta.delimitador,
+      codificacao: meta.codificacao, linhas_lidas: linhas.length, linhas_descartadas: linhas.length - itens.length,
+    },
+    itens,
+    avisos: [...meta.avisos, primeiro, ...avisos],
+  };
+}
+
+type RegistroTextoSimples = { linha: number; celulas: string[] };
+
+/** Quantidade numa célula: "10", "2,5", "10 sacos", "30m²". */
+function pareceQuantidade(c: string): boolean {
+  const t = c.trim();
+  if (numeroBr(t) !== null) return true;
+  if (!/^\d/.test(t) || t.length > 20) return false;
+  const r = lerLinhaLivre(`${t} x`); // "10 sacos x" → quantidade com embalagem/unidade
+  return r !== null && r.quantidade !== null && (r.descricao === "x" || r.descricao.startsWith("x ("));
+}
+const pareceUnidade = (c: string): boolean => {
+  const t = c.trim();
+  return t !== "" && t.length <= 18 && !/\d{2,}/.test(t) && (unidadeLivre(t) !== null || /^(sc|sacos?|br|barras?|cx|caixas?|lt|latas?|gal[aã]o|rolos?|pct|pacotes?|kit|milheiros?|pe[cç]as?|folhas?)$/i.test(t));
+};
+const pareceTexto = (c: string): boolean => /[a-zà-ú]{2}/i.test(c) && !pareceUnidade(c) && numeroBr(c.trim()) === null;
+
+/**
+ * Planilha SEM cabeçalho: escolhe as colunas pelo conteúdo. Exige uma coluna de texto (o material) e uma de número
+ * (a quantidade) na maioria das linhas; senão devolve null e o arquivo é recusado com orientação (TC-054 continua
+ * recusado: "Foo;Bar;Baz" sobre "1;2;3" não tem coluna de texto).
+ */
+function deduzirColunas(linhas: RegistroTextoSimples[]): { desc: number; qtd: number; un: number | null; primeiraEhCabecalho: boolean } | null {
+  if (linhas.length === 0) return null;
+  const amostra = (linhas.length > 2 ? linhas.slice(1) : linhas).slice(0, 80);
+  const largura = Math.max(...linhas.map((r) => r.celulas.length));
+  const fracao = (j: number, teste: (c: string) => boolean) =>
+    amostra.filter((r) => teste(r.celulas[j] ?? "")).length / amostra.length;
+  const melhor = (teste: (c: string) => boolean, excluir: number[]) => {
+    let idx = -1;
+    let valor = 0;
+    for (let j = 0; j < largura; j++) {
+      if (excluir.includes(j)) continue;
+      const f = fracao(j, teste);
+      if (f > valor) { valor = f; idx = j; }
+    }
+    return valor >= 0.6 ? idx : -1;
+  };
+  // numeração da linha (1, 2, 3...) não é quantidade
+  const sequencia = (j: number) => {
+    const v = amostra.map((r) => numeroBr((r.celulas[j] ?? "").trim()));
+    return v.length > 1 && v.every((n, i) => n !== null && (i === 0 || n === (v[i - 1] as number) + 1));
+  };
+  const numeracoes = Array.from({ length: largura }, (_, j) => j).filter(sequencia);
+  const qtd = melhor(pareceQuantidade, numeracoes);
+  if (qtd < 0) return null;
+  const desc = melhor(pareceTexto, [qtd, ...numeracoes]);
+  if (desc < 0) return null;
+  const un = melhor(pareceUnidade, [qtd, desc]);
+  const primeira = linhas[0].celulas;
+  const primeiraEhCabecalho = !pareceQuantidade(primeira[qtd] ?? "") && linhas.length > 1;
+  return { desc, qtd, un: un >= 0 ? un : null, primeiraEhCabecalho };
+}
+
 /** Núcleo compartilhado por CSV e Excel: acha o cabeçalho, mapeia colunas, lê números e unidades, monta o contrato. */
 export function mapearRegistros({ registros, avisos, nome, formato, aba, delimitador, codificacao }: EntradaMapa): ResultadoImportacao {
   type RegistroTexto = { linha: number; celulas: string[]; brutas: Celula[] };
-  const naoVazios: RegistroTexto[] = registros
+  let naoVazios: RegistroTexto[] = registros
     .map((r) => ({ linha: r.linha, celulas: r.celulas.map(aTexto), brutas: r.celulas }))
     .filter((r) => r.celulas.some((c) => !vazio(c)));
 
@@ -399,10 +496,43 @@ export function mapearRegistros({ registros, avisos, nome, formato, aba, delimit
     idxCab++;
   }
   if (idxCab < 0) {
+    // Quem monta a lista à mão nem sempre põe cabeçalho (teste "como leigo", 08/11). Antes de desistir:
+    // (1) uma coluna só = lista em texto livre, um item por linha ("10 sacos de cimento");
+    // (2) planilha sem cabeçalho = colunas deduzidas pelo conteúdo (texto = descrição, número = quantidade).
+    const umaColuna = naoVazios.every((r) => r.celulas.filter((c) => !vazio(c)).length <= 1);
+    if (umaColuna && naoVazios.some((r) => /[a-zà-ú]{2}/i.test(r.celulas.join(" ")))) {
+      const linhasTexto = registros.map((r) => r.celulas.map(aTexto).filter((c) => !vazio(c)).join(delimitador ?? " "));
+      return comoListaTexto(linhasTexto, registros[0]?.linha ?? 1, { nome, formato, aba, delimitador, codificacao, avisos });
+    }
+    const deduzido = deduzirColunas(naoVazios);
+    if (deduzido) {
+      const nomes = (n: number) => Array.from({ length: n }, (_, i) =>
+        i === deduzido.desc ? "Descrição" : i === deduzido.qtd ? "Quantidade" : i === deduzido.un ? "Unidade" : `coluna_${i + 1}`);
+      const largura = Math.max(...naoVazios.map((r) => r.celulas.length));
+      if (deduzido.primeiraEhCabecalho) {
+        naoVazios[0] = { ...naoVazios[0], celulas: nomes(largura) };
+      } else {
+        naoVazios = [{ linha: Math.max(0, naoVazios[0].linha - 1), celulas: nomes(largura), brutas: [] }, ...naoVazios];
+      }
+      const letra = (i: number | null) => (i === null ? "" : `coluna ${i + 1}`);
+      avisos.push({
+        linha: null,
+        codigo: "SEM_CABECALHO",
+        mensagem:
+          `A lista não tem cabeçalho; entendi as colunas pelo conteúdo: descrição na ${letra(deduzido.desc)}, ` +
+          `quantidade na ${letra(deduzido.qtd)}${deduzido.un !== null ? `, unidade na ${letra(deduzido.un)}` : ""}. Confira.`,
+      });
+      idxCab = 0;
+    }
+  }
+  if (idxCab < 0) {
     const primeira = naoVazios[0];
-    return erro("CABECALHO_NAO_ENCONTRADO", "Não encontrei colunas de quantitativo.", {
-      colunas_encontradas: primeira ? primeira.celulas.map((c) => c.trim()).filter((c) => c !== "") : [],
-    });
+    return erro(
+      "CABECALHO_NAO_ENCONTRADO",
+      "Não encontrei colunas de quantitativo. Deixe uma coluna com o nome do material e outra com a quantidade " +
+        "(a unidade é opcional), ou cole a lista no Cadastro manual, um item por linha.",
+      { colunas_encontradas: primeira ? primeira.celulas.map((c) => c.trim()).filter((c) => c !== "") : [] },
+    );
   }
   const cab = naoVazios[idxCab];
   const antes = idxCab > 0 ? naoVazios[idxCab - 1] : null;
@@ -432,9 +562,17 @@ export function mapearRegistros({ registros, avisos, nome, formato, aba, delimit
   const prioridade = (p: Papel, nomeCol: string) => SINONIMOS[p].indexOf(normalizarNome(nomeCol.replace(/\s*[([].*$/, "")));
   // escolhe, para cada papel, a coluna com o sinônimo de maior prioridade
   const melhorPorPapel = new Map<Papel, { indice: number; pri: number }>();
+  // Coluna "Item" com a numeração (1, 2, 3) não é a descrição, mesmo sendo sinônimo dela: havia planilha com
+  // "Item" e "O que" e a descrição virava "1", "2", "3" (teste "como leigo", 08/11).
+  const dadosAbaixo = naoVazios.slice(idxCab + 1, idxCab + 81);
+  const soNumeros = (i: number) => {
+    const v = dadosAbaixo.map((r) => (r.celulas[i] ?? "").trim()).filter((c) => c !== "");
+    return v.length > 0 && v.filter((c) => /^\d+([.,]\d+)?$/.test(c)).length / v.length >= 0.8;
+  };
   nomesCab.forEach((n, i) => {
     const p = papelDe(n);
     if (!p) return;
+    if (p.papel === "descricao" && soNumeros(i)) return;
     const pri = prioridade(p.papel, n);
     const atual = melhorPorPapel.get(p.papel);
     if (!atual || (pri >= 0 && pri < atual.pri)) melhorPorPapel.set(p.papel, { indice: i, pri: pri < 0 ? 999 : pri });
@@ -523,7 +661,9 @@ export function mapearRegistros({ registros, avisos, nome, formato, aba, delimit
     if (/^(sub)?total( geral)?\b|^grand total\b/i.test(cel[0] ?? "")) {
       descartadas++;
       if (!/^subtotal/i.test(cel[0] ?? "")) {
-        const informado = valorDoTotal(cel);
+        // Só a 1ª célula ("Total geral: 10") e a coluna de QUANTIDADE contam: o total em reais de uma coluna de preço
+        // gerava "total divergente" falso numa planilha de orçamento comum (teste "como leigo", 08/11).
+        const informado = valorDoTotal(cQtd ? cel.map((c, i) => (i === 0 || i === cQtd.indice ? c : "")) : cel);
         if (informado !== null && Math.abs(informado - somaQuantidades) > 0.01) {
           avisos.push({
             linha: r.linha,
@@ -561,7 +701,7 @@ export function mapearRegistros({ registros, avisos, nome, formato, aba, delimit
       return v;
     };
 
-    const descricao = cDesc ? cortar(cel[cDesc.indice]) : null;
+    let descricao = cDesc ? cortar(cel[cDesc.indice]) : null;
     const categoria = cCat ? cortar(cel[cCat.indice]) : null;
     const nivelDaCelula = cNiv ? cortar(cel[cNiv.indice]) : null;
     const nivel = nivelDaCelula ? nivelDaCelula : (nivelAtual ?? nivelDaCelula);
@@ -610,13 +750,35 @@ export function mapearRegistros({ registros, avisos, nome, formato, aba, delimit
         } else if (n.tipo === "ambiguo") {
           avisos.push({ linha: r.linha, codigo: "NUMERO_AMBIGUO", mensagem: `O número "${bruto}" na linha ${r.linha} pode ser decimal ou milhar. Confira a quantidade.` });
         } else {
-          avisos.push({ linha: r.linha, codigo: "VALOR_NAO_NUMERICO", mensagem: `A quantidade "${bruto}" na linha ${r.linha} não é um número.` });
+          // "10 sacos", "3 latas", "2 milheiros": quantidade com a embalagem na mesma célula (planilha feita à mão)
+          const livre = /^\d/.test(bruto) ? lerLinhaLivre(`${bruto} x`) : null;
+          // o "x" acrescentado tem que ser tudo o que sobrou: a célula inteira era quantidade + embalagem/unidade
+          const consumiuTudo = livre !== null && (livre.descricao === "x" || livre.descricao.startsWith("x ("));
+          if (livre && consumiuTudo && livre.quantidade !== null && (livre.embalagem || livre.milheiro || livre.unidade)) {
+            quantidade = livre.quantidade;
+            if (!unidade || livre.milheiro) unidade = livre.unidade;
+            if (livre.embalagem && descricao) descricao = `${descricao} (${livre.embalagem})`;
+            avisos.push({
+              linha: r.linha,
+              codigo: "EMBALAGEM_COMO_UNIDADE",
+              mensagem: `Linha ${r.linha}: "${bruto}" virou ${livre.quantidade} ${livre.unidade}${livre.embalagem ? " (a embalagem foi para a descrição)" : ""}. Confira.`,
+            });
+          } else {
+            avisos.push({ linha: r.linha, codigo: "VALOR_NAO_NUMERICO", mensagem: `A quantidade "${bruto}" na linha ${r.linha} não é um número.` });
+          }
         }
       }
     }
     if (!unidade && cQtd?.unidadePadrao) unidade = cQtd.unidadePadrao;
     if (!unidade && software === "sketchup") unidade = "un";
-    if (unidade) unidade = normalizarUnidade(unidade) ?? unidade.trim();
+    // "milheiro" na coluna de unidade: 2 milheiros = 2.000 unidades (a quantidade é convertida e avisada)
+    if (unidade && /^(milheiro|milheiros|milh|mil)$/i.test(unidade.trim()) && quantidade !== null) {
+      avisos.push({ linha: r.linha, codigo: "EMBALAGEM_COMO_UNIDADE", mensagem: `Linha ${r.linha}: ${quantidade} milheiro(s) = ${quantidade * 1000} unidades. Confira.` });
+      quantidade *= 1000;
+      unidade = "un";
+    }
+    // unidade por extenso ("metro quadrado", "quilos") também vale
+    if (unidade) unidade = normalizarUnidade(unidade) ?? unidadeLivre(unidade) ?? EMBALAGEM_SINGULAR[normalizarNome(unidade)] ?? unidade.trim();
     if (quantidade !== null) somaQuantidades += quantidade;
 
     let imperial = false;

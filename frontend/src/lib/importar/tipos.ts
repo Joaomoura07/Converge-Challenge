@@ -32,7 +32,11 @@ export type CodigoAviso =
   | "EXTENSAO_INCORRETA"
   | "CABECALHO_MULTILINHA"
   | "EMBALAGEM_COMO_UNIDADE"
-  | "EXTRACAO_AMBIGUA";
+  | "EXTRACAO_AMBIGUA"
+  /** Lista lida como texto livre (um item por linha): títulos e conversa ignorados. */
+  | "LISTA_TEXTO"
+  /** Planilha sem cabeçalho: as colunas foram deduzidas pelo conteúdo. */
+  | "SEM_CABECALHO";
 
 export type ItemImportado = {
   /** Linha do arquivo original (1 = primeira linha). */
