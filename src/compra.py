@@ -21,7 +21,7 @@ UNIDADES = {"m²": "m2", "m2": "m2", "m³": "m3", "m3": "m3", "m": "m", "metro":
             "cm": "cm", "mm": "mm"}
 _FATOR = {"ml": 0.001, "g": 0.001}
 
-_CONTEUDO = re.compile(r"(\d+(?:[.,]\d+)?)\s*(m²|m2|m³|m3|ml|litros?|lt|l|kg|g|metros?|m|un|und|unid\w*|p[cç]s?|pe[cç]as?)(?![a-z0-9²³])",
+_CONTEUDO = re.compile(r"(\d+(?:[.,]\d+)?)\s*(m²|m2|m³|m3|ml|litros?|lt|l|kg|g|metros?|m|un|und|unid\w*|p[cç]s?|pe[cç]as?)(?![^\W_]|[²³])",
                        re.I)
 # "kit 2 latas", "pacote 100 un", "caixa com 12 unidades". A palavra da unidade é OBRIGATÓRIA e o número não
 # pode ter decimal — senão "caixa 2,16 m²" virava "2 caixas de 16 m²" (bug pego na própria revisão do código).
@@ -145,6 +145,11 @@ def qtd_embalagens(produto: str, quantidade: float | None, unidade_item: str | N
     """Número de embalagens a comprar (arredonda para cima) com a perda do material.
     Devolve (n, perda, premissa) ou (None, perda, motivo) quando a conversão não é possível."""
     perda = perda_para(produto)
+    # Quantidade já em unidade de COMPRA (litros, kg, peças) é o que o arquiteto quer comprar: a perda de obra
+    # (corte, demão) só vale quando a conta parte da área ou do comprimento. Medido em 08/11 no exemplo da demo:
+    # "Tinta Suvinil 18L, 18 l" virava 2 latas (18 × 1,05 = 18,9 L) e "Argamassa 20kg, 40 kg" virava 3 sacos.
+    if normalizar_unidade(unidade_item) in ("l", "kg", "un"):
+        perda = 0.0
     if quantidade is None or conteudo is None or conteudo.quantidade <= 0:
         return None, perda, "sem quantidade ou embalagem conhecida"
     nec = necessidade_na_unidade(produto, quantidade, unidade_item, conteudo.unidade)

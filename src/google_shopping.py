@@ -97,6 +97,7 @@ _CHAPA = re.compile(r"\b(mdf|mdp|compensado|osb|chapa|chapas|granito|marmore|qua
 _LADOS = re.compile(r"\b\d\s*(?:l|f|lados?|faces?)\b", re.I)    # "2l", "2f", "2 faces": lados da chapa, não litros
 _NUM = r"(\d+(?:[.,]\d+)?)"
 _DIMENSOES = re.compile(rf"{_NUM}\s*(mm|cm|m)?\s*[x×]\s*{_NUM}\s*(mm|cm|m)?(?:\s*[x×]\s*{_NUM}\s*(mm|cm|m)?)?", re.I)
+_REVESTIMENTO = re.compile(r"\b(porcelanato|ceramica|piso|revestimento|azulejo|pastilha|laminado|vinilico)\b")
 AREA_MINIMA_M2 = 0.3        # peça menor que isso (pedrinha, batente) não é o material do quantitativo em m²
 AREA_MAXIMA_M2 = 20.0
 
@@ -137,7 +138,10 @@ def area_pelas_dimensoes(titulo: str) -> float | None:
 def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> str | None:
     """Rótulo curto da embalagem lida no título ("20 kg", "18 L", "kit 5 unidades"), que a tela mostra e o cálculo
     relê. Antes ia o título inteiro e a tela mostrava "Compre Produtos QUARTZOLIT em Promoção..." como embalagem."""
-    if normalizar_unidade(unidade_item) == "m2" and _CHAPA.search(_sem_acento(f"{descricao} {titulo}")):
+    # A chapa/pedra é decidida pelo PEDIDO, não pelo título: "Porcelanato Portobello Mármore Bianco 60x60" é piso
+    # (padrão mármore), não pedra; medido em 08/11 virou "0,36 m²" por peça e o total de 18 m² foi a R$ 5.853.
+    eh_revestimento = bool(_REVESTIMENTO.search(_sem_acento(descricao)))
+    if normalizar_unidade(unidade_item) == "m2" and not eh_revestimento and _CHAPA.search(_sem_acento(descricao)):
         area = area_pelas_dimensoes(titulo)
         if area is None:
             return None             # peça pequena ou sem medidas: não dá para comparar em R$/m²
@@ -151,6 +155,8 @@ def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> st
         return f"{q} {_ROTULO_UNIDADE.get(c.unidade, c.unidade)}"
     if normalizar_unidade(unidade_item) in ("un", None):
         return "unidade"
+    if normalizar_unidade(unidade_item) == "m2" and eh_revestimento:
+        return "m²"   # piso/revestimento sem caixa no título: as lojas anunciam o preço por m²
     return None
 
 

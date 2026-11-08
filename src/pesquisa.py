@@ -336,7 +336,9 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
             [o for o in anterior.extracao.ofertas if mesmo_codigo(item.descricao, o.titulo)])
     if anterior and not anterior.vencido:
         calc = calcular(item, anterior.extracao, generico)
-        if calc.tem_preco:
+        # 1 loja só no cache (medido em 08/11: Spot Stella a R$ 377 de uma loja, contra R$ 55 na busca nova):
+        # busca de novo; o cache continua de reserva se a busca falhar
+        if calc.tem_preco and len({f.loja for f in calc.fontes}) >= 2:
             return Rascunho(item, _resultado(
                 item, calc, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
                 anterior.atualizado_em, anterior.iteracoes, pergunta=pergunta_para(item.descricao) if generico else None))

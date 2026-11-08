@@ -74,6 +74,8 @@ def _referencia(validas: list[_Normalizada], item: ItemEntrada) -> Conteudo:
     if do_item and do_item.unidade == unidade:
         return do_item
     conteudos = [v.conteudo for v in validas]
+    if unidade == "un" and Conteudo(1.0, "un") in conteudos:
+        return Conteudo(1.0, "un")   # peça avulsa à venda: o preço é por peça, não pelo kit de 5 (08/11)
     reais = [c for c in conteudos if c.quantidade != 1.0] or conteudos
     contagem = Counter(reais)
     # Com a quantidade do item: a embalagem com MENOR custo total para a necessidade, pelos preços vistos.
@@ -172,6 +174,54 @@ def e_outro_tipo_de_produto(o: Oferta, pedido: str) -> bool:
     return any(w not in p for w in OUTRO_TIPO.findall(_norm(o.titulo)))
 
 
+# Tipos de produto que não se confundem. Medido em 08/11 no exemplo da demo: "Tomada Tramontina Liz 20A" aceitava o
+# "Conjunto 4x2 com 1 interruptor Tramontina Liz" (mesma marca e linha, outro produto).
+TIPOS = frozenset("tomada interruptor joelho luva curva tinta massa selador argamassa rejunte porcelanato spot "
+                  "luminaria plafon fita cabo disjuntor registro torneira misturador cuba assento bacia chuveiro "
+                  "ducha sifao lampada refletor".split())
+_PALAVRAS_VAZIAS = {"de", "da", "do", "das", "dos", "e", "com", "para"}
+
+
+def _palavras(texto: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", _norm(texto))
+
+
+def _singular(p: str) -> str:
+    return p[:-1] if p.endswith("s") and len(p) > 4 else p
+
+
+_KIT = re.compile(r"\b(?:kit|jogo|pack|pacote|conjunto|cx|caixa)\s*(?:com\s*|c/\s*)?(\d{1,3})(?![\d.,x])\b(?!\s*(?:mm|cm|m|l|kg|w|v|a|m2)\b)")
+
+
+def pecas_do_kit(titulo: str) -> int | None:
+    """'Kit 5 Spot Embutido' -> 5; 'Conjunto 4x2' -> None (medida da placa); 'Kit 1' -> None."""
+    achou = _KIT.search(_norm(titulo))
+    n = int(achou.group(1)) if achou else 0
+    return n if 2 <= n <= 200 else None
+
+
+def e_tipo_diferente(o: Oferta, pedido: str) -> bool:
+    """O título fala de OUTRO tipo de produto da lista e não do tipo pedido (1ª palavra do item)."""
+    ped = [_singular(p) for p in _palavras(pedido)]
+    tipo = next((p for p in ped if p in TIPOS), None)
+    if not tipo:
+        return False
+    tit = {_singular(p) for p in _palavras(o.titulo)}
+    return tipo not in tit and bool((tit & TIPOS) - set(ped))
+
+
+def marca_ausente(o: Oferta, pedido: str) -> str | None:
+    """Marca de OUTRA empresa no título, sem nenhuma das pedidas (lista de marcas da revisão). Medido em 08/11:
+    "Argamassa Quartzolit AC-III" aceitava a Votorantim. Título sem marca nenhuma não é julgado: muita página de
+    loja não repete a marca no título."""
+    from .revisao import marcas_encontradas
+    pedidas = set(marcas_encontradas(pedido))
+    if not pedidas:
+        return None
+    no_titulo = set(marcas_encontradas(o.titulo))
+    return next(iter(sorted(no_titulo)), None) if no_titulo and not (no_titulo & pedidas) else None
+
+
 def e_oferta_shopping(o: Oferta) -> bool:
     """Anúncio do Google Shopping (src/google_shopping.py): preço e loja vêm estruturados do Google, não lidos por LLM.
     O link abre no google.com (que é bloqueado como fonte de TEXTO), por isso fica fora desses dois filtros."""
@@ -189,6 +239,10 @@ def motivo_descarte(o: Oferta, pedido: str) -> str | None:
         return "embalagem não confere com o título"
     if e_outro_tipo_de_produto(o, pedido):
         return "outro tipo de produto (ferramenta/acessório)"
+    if e_tipo_diferente(o, pedido):
+        return "outro tipo de produto da mesma linha"
+    if marca_ausente(o, pedido):
+        return "marca diferente da pedida"
     return None
 
 
@@ -217,6 +271,8 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         if c is None:
             descartadas["embalagem desconhecida"] += 1
             continue
+        if c.unidade == "un" and c.quantidade == 1 and (n_kit := pecas_do_kit(o.titulo)):
+            c = Conteudo(float(n_kit), "un")   # "Kit 5 Spot..." a R$ 59,90 são 5 peças, não 1
         if generico and c.quantidade < MIN_EMBALAGEM_OBRA.get(c.unidade, 0):
             descartadas["embalagem pequena (não é de obra)"] += 1
             continue
