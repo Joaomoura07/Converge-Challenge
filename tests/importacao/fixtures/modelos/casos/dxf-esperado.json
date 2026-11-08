@@ -1,0 +1,42 @@
+{
+  "_nota": "Valores calculados a mao a partir da geometria de cada DXF (nao saem do leitor). Ordem das linhas = ordem em que o layer/bloco aparece primeiro no arquivo.",
+  "dxf-01-apto-metros.dxf": {
+    "avisos": [{ "linha": 9, "codigo": "EXTRACAO_AMBIGUA" }],
+    "itens": [
+      { "linha": 1, "descricao": "Porta", "categoria": "Esquadrias", "quantidade": 3, "unidade": "un", "conta": "3 INSERT PORTA_80" },
+      { "linha": 2, "descricao": "Janela", "categoria": "Esquadrias", "quantidade": 2, "unidade": "un", "conta": "2 INSERT JANELA_120" },
+      { "linha": 3, "descricao": "Ponto elétrico", "categoria": "Elétrica", "quantidade": 6, "unidade": "un", "conta": "1 INSERT TOMADA_2P em matriz 3x2" },
+      { "linha": 4, "descricao": "Piso (área)", "categoria": "Revestimentos", "quantidade": 20, "unidade": "m2", "conta": "5 x 4" },
+      { "linha": 5, "descricao": "Piso (área)", "categoria": "Revestimentos", "quantidade": 10.5, "unidade": "m2", "conta": "3 x 3,5" },
+      { "linha": 6, "descricao": "Piso (área)", "categoria": "Revestimentos", "quantidade": 5, "unidade": "m2", "conta": "2 x 2,5" },
+      { "linha": 7, "descricao": "Parede (comprimento)", "categoria": "Alvenaria", "quantidade": 17, "unidade": "m", "conta": "polilinha aberta 5+4+5 = 14, mais LINE 3" },
+      { "linha": 8, "descricao": "Forro (área)", "categoria": "Forro", "quantidade": 12, "unidade": "m2", "conta": "triangulo base 6 x altura 4 / 2" },
+      { "linha": 9, "descricao": "MOBILIARIO_X (área)", "categoria": null, "quantidade": 1, "unidade": "m2", "conta": "1 x 1, layer desconhecido" }
+    ]
+  },
+  "dxf-02-pes.dxf": {
+    "avisos": [],
+    "itens": [
+      { "linha": 1, "descricao": "Piso (área)", "categoria": "Revestimentos", "quantidade": 18.58, "unidade": "m2", "conta": "10 ft x 20 ft = 200 ft2 x 0,09290304" },
+      { "linha": 2, "descricao": "Parede (comprimento)", "categoria": "Alvenaria", "quantidade": 9.14, "unidade": "m", "conta": "(10+20) ft x 0,3048 = 9,144" },
+      { "linha": 3, "descricao": "Porta", "categoria": "Esquadrias", "quantidade": 1, "unidade": "un", "conta": "1 INSERT" }
+    ]
+  },
+  "dxf-03-milimetros.dxf": {
+    "avisos": [],
+    "itens": [
+      { "linha": 1, "descricao": "Piso (área)", "categoria": "Revestimentos", "quantidade": 20, "unidade": "m2", "conta": "4000 x 5000 mm" },
+      { "linha": 2, "descricao": "Parede (comprimento)", "categoria": "Alvenaria", "quantidade": 9, "unidade": "m", "conta": "(4000+5000) mm" },
+      { "linha": 3, "descricao": "Janela", "categoria": "Esquadrias", "quantidade": 2, "unidade": "un", "conta": "2 INSERT" }
+    ]
+  },
+  "dxf-04-so-blocos-sem-unidade.dxf": {
+    "avisos": [],
+    "itens": [
+      { "linha": 1, "descricao": "Porta", "categoria": "Esquadrias", "quantidade": 3, "unidade": "un", "conta": "3 INSERT PORTA_90; contagem nao depende da unidade" },
+      { "linha": 2, "descricao": "Ponto elétrico", "categoria": "Elétrica", "quantidade": 1, "unidade": "un", "conta": "1 INSERT" }
+    ]
+  },
+  "dxf-05-sem-dados.dxf": { "avisos": [{ "linha": null, "codigo": "SEM_DADOS" }], "itens": [] },
+  "dxf-06-truncado.dxf": { "erro": "ARQUIVO_CORROMPIDO" }
+}

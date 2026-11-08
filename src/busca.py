@@ -48,6 +48,14 @@ LOJAS: dict[str, str] = {
     "padovani.com.br": "Padovani",
     "tumelero.com.br": "Tumelero",
 }
+
+# Redes com LOJA FÍSICA no estado da obra (só as confirmadas; o resto do país entra pela busca aberta, que já usa a
+# cidade do CEP). Quando a obra é no estado, essas lojas vêm antes na busca e a fonte é marcada "perto da obra".
+REDES_REGIONAIS: dict[str, set[str]] = {
+    "PE": {"ferreiracosta.com", "armazemcoral.com.br"},
+    "AL": {"ferreiracosta.com"},
+    "BA": {"ferreiracosta.com"},
+}
 MAX_POR_LOJA = 2   # evita 5 resultados da mesma loja (a média precisa de lojas diferentes)
 
 PALAVRAS_RUIDO = re.compile(r"\b(\d+[.,]?\d*\s*(m2|m²|m3|m³|un|und|unid|pç|pc)\b)", re.I)
@@ -253,8 +261,17 @@ def _filtra(brutos: list[tuple[str, str, str]], limite: int) -> list[ResultadoWe
         vistos.add(url)
         por_loja[loja] = por_loja.get(loja, 0) + 1
         saida.append(ResultadoWeb(titulo=titulo or "", url=url, dominio=dom, loja=loja, trecho=(trecho or "")[:1200]))
-    saida.sort(key=lambda r: not tem_preco(r.titulo, r.trecho))   # sort estável: mantém a ordem da busca
+    local = LOCAL_DA_OBRA.get()
+    # com preço antes; entre eles, lojas com unidade no estado da obra antes (sort estável: mantém a ordem da busca)
+    saida.sort(key=lambda r: (not tem_preco(r.titulo, r.trecho), not perto_da_obra(r.dominio, local)))
     return saida[:limite]
+
+
+def perto_da_obra(dominio: str, local: "Local | None") -> bool:
+    """A loja tem unidade física no estado da obra (tabela REDES_REGIONAIS)."""
+    if not local or not dominio:
+        return False
+    return any(dominio == d or dominio.endswith("." + d) for d in REDES_REGIONAIS.get(local.uf.upper(), ()))
 
 
 # ------------------------------------------------------------------ busca aberta (lojas da região da obra)

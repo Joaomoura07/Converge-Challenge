@@ -16,7 +16,10 @@
         {
           "dominio": "leroymerlin.com.br",
           "embalagem": "lata 18 L",
+          "embalagem_anunciada": null,
           "loja": "Leroy Merlin",
+          "perto_da_obra": false,
+          "preco_anunciado": null,
           "preco_embalagem": 455.9,
           "url": "https://www.leroymerlin.com.br/p/1"
         }
@@ -49,7 +52,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -67,7 +71,10 @@
         {
           "dominio": "cec.com.br",
           "embalagem": "barrica 25 kg",
+          "embalagem_anunciada": null,
           "loja": "C&C",
+          "perto_da_obra": false,
+          "preco_anunciado": null,
           "preco_embalagem": 98.5,
           "url": "https://www.cec.com.br/p/2"
         }
@@ -100,7 +107,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -143,7 +151,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "un",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -186,7 +195,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": true,
@@ -204,7 +214,10 @@
         {
           "dominio": "leroymerlin.com.br",
           "embalagem": "lata 18 L",
+          "embalagem_anunciada": null,
           "loja": "Leroy Merlin",
+          "perto_da_obra": false,
+          "preco_anunciado": null,
           "preco_embalagem": 38.0,
           "url": "https://www.leroymerlin.com.br/p/1"
         }
@@ -239,7 +252,8 @@
       "sugestao_motivo": "Para 48 m² de piso costumam faltar argamassa.",
       "sugestao_regra": "porcelanato",
       "unidade": "un",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     }
   ],
   "orcamento": {

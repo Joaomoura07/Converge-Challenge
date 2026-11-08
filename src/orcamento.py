@@ -29,6 +29,7 @@ from .busca import local_do_cep, na_regiao
 from .custo import acumular as acumular_custo
 from .modelos import ItemEntrada, ResultadoItem
 from .pesquisa import aceitar_mais_proximo, pesquisar_item, pesquisar_itens
+from .validacao_serper import validar as validar_preco
 
 logger = logging.getLogger(__name__)
 
@@ -258,6 +259,18 @@ async def _gravar_metricas(banco: Banco, orcamento_id: str, inicio: float) -> No
     await banco.metricas(orcamento_id, campos)
 
 
+async def _gravar_e_conferir(banco: Banco, r: ResultadoItem) -> None:
+    """Grava o item (a tela já o mostra) e, se houver chave do Serper, confere o preço numa 2ª fonte e regrava só
+    se isso trouxe algo. Falha da conferência nunca desfaz nem atrasa a gravação do item."""
+    await banco.gravar_item(r)
+    try:
+        conferido = await validar_preco(r)
+        if conferido.validacao is not None and conferido is not r:
+            await banco.gravar_item(conferido)
+    except Exception:  # noqa: BLE001
+        logger.warning("Conferência de preço do item %s falhou", r.item_id, exc_info=True)
+
+
 @observe(name="orcamento")
 async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) -> dict:
     if not await banco.reservar(orcamento_id):
@@ -266,7 +279,7 @@ async def _pesquisar_orcamento(orcamento_id: str, banco: Banco, opcoes: dict) ->
     with acumular_custo() as custo:
         try:
             itens = await banco.itens_para_pesquisar(orcamento_id)
-            resultados = await pesquisar_itens(itens, ao_terminar=banco.gravar_item, **opcoes)
+            resultados = await pesquisar_itens(itens, ao_terminar=lambda r: _gravar_e_conferir(banco, r), **opcoes)
         except Exception as exc:  # noqa: BLE001 — erro geral (banco fora, etc.): marca falhou e libera novo clique
             logger.exception("Pesquisa do orçamento %s falhou", orcamento_id)
             await banco.concluir(orcamento_id, erro=f"{type(exc).__name__}: {exc}"[:500], custo_usd=custo.usd)
@@ -351,7 +364,7 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
             resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
         if alt is not None:
             resultado, _ = decidir(resultado, anterior, alt, objetivo, item.descricao)
-    await banco.gravar_item(resultado)
+    await _gravar_e_conferir(banco, resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
     if orcamento_id:
         await banco.somar_custo(orcamento_id, custo.usd)

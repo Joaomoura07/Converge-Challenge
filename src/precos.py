@@ -182,7 +182,8 @@ async def _chamar(cliente, modelo: str, produto: str, anuncios: str):
         async with chaves_llm.pool_extracao().vaga(evitar=falhou) as chave:
             cli = cliente or _cliente(chave)
             try:
-                r = await cli.chat.completions.create(model=modelo, messages=mensagens, temperature=0, max_tokens=400)
+                r = await cli.chat.completions.create(model=modelo, messages=mensagens, temperature=0, top_p=get_settings().llm_top_p,
+                                                      max_tokens=400)
             except APIStatusError as exc:
                 if exc.status_code in ERROS_DA_CHAVE:
                     chaves_llm.esfriar(chave)

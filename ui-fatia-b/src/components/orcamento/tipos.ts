@@ -10,6 +10,19 @@ export interface Fonte {
   url: string;
   preco_embalagem: number;
   embalagem?: string | null;
+  /** Preço e embalagem como estão no anúncio (o que a pessoa vê ao clicar). Ausentes em itens antigos. */
+  preco_anunciado?: number | null;
+  embalagem_anunciada?: string | null;
+  /** Rede com loja física no estado da obra. */
+  perto_da_obra?: boolean;
+}
+
+export interface Validacao {
+  status: "confirmado" | "divergente_leve" | "divergente" | "sem_dados";
+  fonte?: string;
+  mediana?: number | null;
+  diferenca_pct?: number | null;
+  n?: number;
 }
 
 export interface ItemOrcamento {
@@ -37,6 +50,8 @@ export interface ItemOrcamento {
   motivo?: string | null;
   preco_data?: string | null;
   iteracoes?: number;
+  /** Conferência do preço numa 2ª fonte (Google Shopping): só informa, nunca troca o preço. */
+  validacao?: Validacao | null;
 }
 
 /** "Pesquisar de novo" buscando outro produto (POST /orcamento-itens/{id}/repesquisar com {objetivo}). */

@@ -141,3 +141,37 @@ def test_base_de_preco_de_licitacao_nao_e_loja():
     assert fonte_nao_e_loja("bancodeprecos.com.br", "https://www.bancodeprecos.com.br/CertificadoAutenticidade?to=1")
     assert fonte_nao_e_loja("buscadorsinapi.com.br", "https://buscadorsinapi.com.br/x")
     assert fonte_nao_e_loja("static.tre-al.jus.br", "https://static.tre-al.jus.br/cotacao")
+
+
+# ---------------------------------------------------------------- preço do anúncio e loja perto da obra (07/11 noite)
+def test_fonte_guarda_o_preco_e_a_embalagem_do_anuncio():
+    """No site, o galão de 3,6 L a R$ 69,90 aparecia como R$ 349,50 (equivalente em 18 L) e o link 'não batia'."""
+    c = calcular(ItemEntrada(id="1", descricao="Selador Coral", quantidade=180, unidade="m2"),
+                 ResultadoExtracao(ofertas=SELADOR[1:]))
+    armazem = next(f for f in c.fontes if f.loja == "Armazemcoral")
+    assert (armazem.preco_anunciado, armazem.embalagem_anunciada) == (69.9, "galão 3,6 L")
+    assert armazem.preco_embalagem == 349.5 and armazem.embalagem == "lata 18 L"   # a conta continua comparável
+
+
+def test_loja_com_unidade_no_estado_da_obra_vem_primeiro_e_marcada():
+    from src.busca import Local, na_regiao, perto_da_obra
+    recife = Local("Recife", "PE")
+    assert perto_da_obra("ferreiracosta.com", recife) and not perto_da_obra("ferreiracosta.com", Local("Curitiba", "PR"))
+    assert not perto_da_obra("leroymerlin.com.br", recife) and not perto_da_obra("ferreiracosta.com", None)
+    ofertas = [of("Telhanorte", 239.9, "lata 18 L", "Selador 18L", dominio="telhanorte.com.br"),
+               of("Ferreira Costa", 259.9, "lata 18 L", "Selador 18L", dominio="ferreiracosta.com")]
+    item = ItemEntrada(id="1", descricao="Selador Coral", quantidade=180, unidade="m2")
+    with na_regiao(recife):
+        c = calcular(item, ResultadoExtracao(ofertas=ofertas))
+    assert [f.loja for f in c.fontes] == ["Ferreira Costa", "Telhanorte"] and c.fontes[0].perto_da_obra
+    sem_local = calcular(item, ResultadoExtracao(ofertas=ofertas))
+    assert not any(f.perto_da_obra for f in sem_local.fontes)
+
+
+def test_busca_fixa_poe_a_loja_da_regiao_antes():
+    from src.busca import Local, _filtra, na_regiao
+    brutos = [("Selador 18L", "https://www.telhanorte.com.br/selador/p", "R$ 239,90"),
+              ("Selador 18L", "https://www.ferreiracosta.com/produto/1/selador", "R$ 259,90")]
+    with na_regiao(Local("Recife", "PE")):
+        assert [r.loja for r in _filtra(brutos, 5)] == ["Ferreira Costa", "Telhanorte"]
+    assert [r.loja for r in _filtra(brutos, 5)] == ["Telhanorte", "Ferreira Costa"]

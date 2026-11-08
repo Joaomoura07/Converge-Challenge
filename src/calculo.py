@@ -16,7 +16,7 @@ import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 
-from .busca import eh_pagina_de_listagem, fonte_nao_e_loja
+from .busca import LOCAL_DA_OBRA, eh_pagina_de_listagem, fonte_nao_e_loja, perto_da_obra
 from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normalizar_unidade, qtd_embalagens
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
@@ -254,7 +254,10 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         return round(v * ref.quantidade, 2)
 
     fontes = [Fonte(loja=n.oferta.loja, dominio=n.oferta.dominio, url=n.oferta.url,
-                    preco_embalagem=emb(n.unitario), embalagem=rotulo) for n in validas]
+                    preco_embalagem=emb(n.unitario), embalagem=rotulo,
+                    preco_anunciado=n.oferta.preco, embalagem_anunciada=n.oferta.embalagem,
+                    perto_da_obra=perto_da_obra(n.oferta.dominio, LOCAL_DA_OBRA.get())) for n in validas]
+    fontes.sort(key=lambda f: not f.perto_da_obra)   # perto da obra primeiro (sort estável)
 
     # 4. R$ por unidade do quantitativo só quando a unidade da embalagem é a mesma do item (m² com m²)
     ui = normalizar_unidade(item.unidade)

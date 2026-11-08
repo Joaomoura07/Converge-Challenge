@@ -2,6 +2,7 @@
 
 import { importarCsv } from "./csv";
 import { importarDxf } from "./dxf";
+import { importarIfc } from "./ifc";
 import { importarExcel, type AbaInfo } from "./excel";
 import { importarPdf, type PdfjsMinimo } from "./pdf";
 import { importarTxt } from "./txt";
@@ -28,12 +29,14 @@ export async function lerArquivo({
   if (["xlsx", "xls", "xlsm", "ods"].includes(ext)) return importarExcel({ nome, bytes, aba });
   if (ext === "txt") return importarTxt({ nome, bytes }); // tabela tabulada do Revit
   if (ext === "dxf") return importarDxf({ nome, bytes });
+  if (ext === "ifc") return importarIfc({ nome, bytes });
+  if (ext === "ifczip") return erro("FORMATO_NAO_SUPORTADO", "IFCZIP é compactado. Descompacte ou exporte o modelo como .ifc comum.");
   if (ext === "dwg") return erro("FORMATO_NAO_SUPORTADO", "DWG é um formato fechado. No AutoCAD use Salvar como e escolha DXF; depois envie o .dxf.");
   if (ext === "pdf") {
     const motor = pdfjs ?? (await (await import("./pdfNavegador")).carregarPdfjs());
     return importarPdf({ nome, bytes, pdfjs: motor });
   }
-  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx, .xls, .txt do Revit ou .pdf com texto.`);
+  return erro("FORMATO_NAO_SUPORTADO", `Formato .${ext || "desconhecido"} não suportado. Use .csv, .xlsx, .xls, .txt do Revit, .pdf com texto, .dxf ou .ifc.`);
 }
 
 /** Abas que a pessoa poderia escolher: visíveis e com dados. */

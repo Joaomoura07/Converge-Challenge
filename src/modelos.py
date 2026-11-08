@@ -38,6 +38,23 @@ class Fonte(_Base):
     url: str
     preco_embalagem: float = Field(gt=0)
     embalagem: str | None = None
+    # Como está NO ANÚNCIO (o que a pessoa vê ao clicar no link). `preco_embalagem`/`embalagem` são o mesmo preço
+    # convertido para a embalagem de referência do item, para comparar lojas e somar (a Fatia C usa estes).
+    # Medido no site em 07/11: a loja vendia o galão de 3,6 L a R$ 69,90 e a tela mostrava R$ 349,50 (o equivalente
+    # em 18 L): ao clicar, o preço "não batia".
+    preco_anunciado: float | None = Field(default=None, gt=0)
+    embalagem_anunciada: str | None = None
+    perto_da_obra: bool = False   # rede com loja física no estado da obra (src/busca.py, REDES_REGIONAIS)
+
+
+class Validacao(_Base):
+    """Conferência do preço do item numa segunda fonte. Só informa: o preço e as `fontes` continuam sendo as lojas."""
+
+    status: Literal["confirmado", "divergente_leve", "divergente", "sem_dados"]
+    fonte: str = "google_shopping"
+    mediana: float | None = None          # mediana da 2ª fonte, já convertida para a embalagem do item
+    diferenca_pct: float | None = None    # |nosso - mediana| / mediana, em %
+    n: int = 0                            # anúncios comparáveis usados
 
 
 class ResultadoItem(_Base):
@@ -64,6 +81,7 @@ class ResultadoItem(_Base):
     motivo: str | None = None             # por que pendente / não encontrado / erro
     preco_data: datetime | None = None    # quando o preço foi obtido (cache vencido mostra a data)
     iteracoes: int = Field(default=0, ge=0)  # quantas vezes o agente refez a busca
+    validacao: Validacao | None = None    # conferência do preço numa 2ª fonte (Google Shopping); nunca troca o preço
 
     @model_validator(mode="after")
     def _regras(self) -> "ResultadoItem":

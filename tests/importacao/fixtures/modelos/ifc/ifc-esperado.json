@@ -1,0 +1,18 @@
+{
+  "_nota": "IFC escrito a mao (NAO validado com ifcopenshell). O site AINDA NAO le IFC (etapa 17 do plano). Hoje o resultado correto e recusar .ifc com orientacao. Abaixo, o que o leitor futuro deve devolver.",
+  "ifc-01-apto-minimo.ifc": {
+    "resultado_hoje": "erro: formato nao suportado (nenhum item e nenhuma gravacao)",
+    "itens_esperados_no_futuro": [
+      { "descricao": "Piso Sala (área)", "quantidade": 20, "unidade": "m2", "origem": "IfcSpace Sala, NetFloorArea" },
+      { "descricao": "Piso Banheiro (área)", "quantidade": 5, "unidade": "m2", "origem": "IfcSpace Banheiro, NetFloorArea" },
+      { "descricao": "Porta 80", "quantidade": 2, "unidade": "un", "origem": "2 IfcDoor com mesmo nome" },
+      { "descricao": "Porta 70", "quantidade": 1, "unidade": "un", "origem": "1 IfcDoor" },
+      { "descricao": "Janela 120x100", "quantidade": 1, "unidade": "un", "origem": "1 IfcWindow" },
+      { "descricao": "Vaso Sanitario", "quantidade": 1, "unidade": "un", "origem": "IfcSanitaryTerminal TOILETPAN" },
+      { "descricao": "Lavatorio", "quantidade": 1, "unidade": "un", "origem": "IfcSanitaryTerminal WASHHANDBASIN" },
+      { "descricao": "Parede 15cm (área)", "quantidade": 30, "unidade": "m2", "origem": "IfcWall NetSideArea" }
+    ],
+    "total_linhas": 8,
+    "nao_deve_aparecer": "marca, cor ou modelo (o IFC nao traz): todos viram pendente_especificacao"
+  }
+}

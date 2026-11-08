@@ -25,6 +25,15 @@
         "3100"
       ],
       "port": 3100
+    },
+    {
+      "name": "orca-frontend-verif",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set NEXT_DIST_DIR=.next-verif&& npm --prefix frontend run dev -- -p 3110"
+      ],
+      "port": 3110
     }
   ]
 }

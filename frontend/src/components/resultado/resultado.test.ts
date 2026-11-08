@@ -57,12 +57,14 @@ describe("linhasDocumento e subtotal", () => {
 });
 
 describe("notaDocumento", () => {
-  it("só frete quando tudo está precificado", () => {
-    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Frete não incluído\. Estimativa sujeita/);
+  it("tudo precificado: só o aviso, sem citar frete (em pausa na demo)", () => {
+    expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).toMatch(/^Estimativa sujeita/);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).not.toMatch(/frete/i);
   });
-  it("singular e plural, como no Figma ('Frete e 1 item pendente não incluídos')", () => {
-    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^Frete e 1 item pendente não incluídos\./);
-    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^Frete, 4 itens pendentes e 2 itens sem preço não incluídos\./);
+  it("singular e plural ('1 item pendente não incluído')", () => {
+    expect(notaDocumento({ pendentes: 1, semPreco: 0, total: 1 })).toMatch(/^1 item pendente não incluído\./);
+    expect(notaDocumento({ pendentes: 3, semPreco: 0, total: 3 })).toMatch(/^3 itens pendentes não incluídos\./);
+    expect(notaDocumento({ pendentes: 4, semPreco: 2, total: 6 })).toMatch(/^4 itens pendentes e 2 itens sem preço não incluídos\./);
   });
   it("não diz que os preços são fictícios (vêm de pesquisa real, com fonte)", () => {
     expect(notaDocumento({ pendentes: 0, semPreco: 0, total: 0 })).not.toMatch(/fictíci/i);
@@ -196,5 +198,21 @@ describe("linkRaciocinio (trace público do Langfuse)", () => {
     expect(linkRaciocinio("javascript:alert(1)")).toBeNull();
     expect(linkRaciocinio("data:text/html,oi")).toBeNull();
     expect(linkRaciocinio("não é um link")).toBeNull();
+  });
+});
+
+describe("fonte mostra o preço do anúncio", () => {
+  it("usa preco_anunciado e a embalagem do anúncio (o mesmo que aparece ao clicar no link)", () => {
+    const fonte = { loja: "Armazemcoral", dominio: "armazemcoral.com.br", url: "https://armazemcoral.com.br/selador",
+      preco_embalagem: 349.5, embalagem: "lata 18 L", preco_anunciado: 69.9, embalagem_anunciada: "galão 3,6 L" };
+    const tela = itemParaTela({ id: "s", descricao: "Selador Coral", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
+      preco_emb_min: 239.9, preco_emb_med: 294.7, preco_emb_max: 349.5, fontes: [fonte] } as never);
+    expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 69,90 / galão 3,6 L");
+  });
+  it("item antigo, sem preco_anunciado, continua mostrando o convertido", () => {
+    const fonte = { loja: "Telhanorte", dominio: "telhanorte.com.br", url: "https://t/s", preco_embalagem: 239.9, embalagem: "lata 18 L" };
+    const tela = itemParaTela({ id: "s", descricao: "Selador", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
+      preco_emb_min: 239.9, preco_emb_med: 239.9, preco_emb_max: 239.9, fontes: [fonte] } as never);
+    expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 239,90 / lata 18 L");
   });
 });

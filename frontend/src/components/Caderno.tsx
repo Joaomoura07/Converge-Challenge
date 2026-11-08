@@ -21,6 +21,9 @@ import { conteudoDoEnvio, montarCorpo } from "@/lib/envio/corpo";
 import { lerRascunho, salvarRascunho } from "@/lib/envio/rascunho";
 import { LIMITE_ITENS_ORCAMENTO } from "@/lib/importar/tipos";
 import { Importador } from "./Importador";
+import { ExemplosDownload } from "./demo/ExemplosDownload";
+import { PassosDemo, type PassoDemo } from "./demo/PassosDemo";
+import { modoPeloArquivo } from "@/lib/demo/exemplos";
 import { TabelaMateriais, idCampo } from "./TabelaMateriais";
 
 const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
@@ -29,13 +32,18 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "excel", rotulo: "Excel", etapa: null },
   { id: "revit", rotulo: "TXT do Revit", etapa: null },
   { id: "pdf", rotulo: "PDF com texto", etapa: null },
-  // Demo: abas de modelos ficam escondidas até NEXT_PUBLIC_MODELOS=1.
-  ...(process.env.NEXT_PUBLIC_MODELOS === "1" ? [{ id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null }] : []),
+  // Planta em DXF ligada por padrão (decisão de 07/11, noite). Para esconder a aba: NEXT_PUBLIC_MODELOS=0.
+  ...(process.env.NEXT_PUBLIC_MODELOS !== "0" ? [
+        { id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null },
+        { id: "ifc" as ModoEntrada, rotulo: "Modelo (IFC)", etapa: null },
+      ] : []),
 ];
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
-export function Caderno() {
+/** `demo`: a página /demo usa o mesmo caderno com passos numerados, exemplos para baixar e sem o atalho de exemplo
+ *  (o jurado baixa e arrasta o arquivo, como um arquiteto). Sem `demo`, a /nova fica como sempre foi. */
+export function Caderno({ demo = false }: { demo?: boolean } = {}) {
   const [obra, setObra] = useState<Obra | null>(null);
   const [editandoObra, setEditandoObra] = useState(false);
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
@@ -108,17 +116,33 @@ export function Caderno() {
   }
 
   const mostrandoFormulario = !obra || editandoObra;
+  const passo: PassoDemo = mostrandoFormulario ? 1 : itensPreenchidos === 0 ? 2 : envioBloqueado ? 3 : 4;
   const modoAtual = MODOS.find((m) => m.id === lista.modo)!;
 
   return (
     <main className="pagina">
-      <CabecalhoPagina
-        trilha={[{ rotulo: "Projetos", href: "/projetos" }, { rotulo: "Nova estimativa" }, { rotulo: "01 de 03" }]}
-        etiqueta="Preparação / lista de materiais"
-        titulo={mostrandoFormulario ? "Do desenho ao" : undefined}
-        destaque={mostrandoFormulario ? "quantitativo." : undefined}
-        apoio={mostrandoFormulario ? "Um bom orçamento começa com uma lista bem especificada." : undefined}
-      />
+      {demo ? (
+        <CabecalhoPagina
+          trilha={[{ rotulo: "Início", href: "/" }, { rotulo: "Demo" }]}
+          etiqueta="Demonstração"
+          titulo={mostrandoFormulario ? "Faça um orçamento" : undefined}
+          destaque={mostrandoFormulario ? "de verdade." : undefined}
+          apoio={
+            mostrandoFormulario
+              ? "Use o CEP e o orçamento de uma obra que você conhece. Os preços são pesquisados agora, em lojas reais."
+              : undefined
+          }
+        />
+      ) : (
+        <CabecalhoPagina
+          trilha={[{ rotulo: "Projetos", href: "/projetos" }, { rotulo: "Nova estimativa" }, { rotulo: "01 de 03" }]}
+          etiqueta="Preparação / lista de materiais"
+          titulo={mostrandoFormulario ? "Do desenho ao" : undefined}
+          destaque={mostrandoFormulario ? "quantitativo." : undefined}
+          apoio={mostrandoFormulario ? "Um bom orçamento começa com uma lista bem especificada." : undefined}
+        />
+      )}
+      {demo && <PassosDemo atual={passo} />}
 
       {mostrandoFormulario ? (
         <NovaObra
@@ -163,6 +187,8 @@ export function Caderno() {
               Lista de revisão
             </h2>
 
+            {demo && <ExemplosDownload />}
+
             <div className="modos" role="tablist" aria-label="Como adicionar materiais">
               {MODOS.map((m) => (
                 <button
@@ -198,6 +224,10 @@ export function Caderno() {
                 <p className="apoio">
                   Envie um PDF com texto (pedido de cotação ou quadro de acabamentos). A leitura reconstrói a tabela pela posição do texto: confira cada linha antes de enviar, principalmente quando a quantidade vier em embalagens. PDF escaneado não funciona; use CSV, Excel ou digite os materiais.
                 </p>
+              ) : lista.modo === "ifc" ? (
+                <p className="apoio">
+                  Envie o modelo BIM exportado como IFC (Revit: Arquivo › Exportar › IFC, com &quot;Exportar quantidades base&quot; ligado). Cada ambiente vira a área de piso; paredes e revestimentos, a área declarada; portas, janelas e louças, contagens por pavimento. O modelo não diz marca nem modelo do produto: você descreve depois. Áreas não declaradas entram sem quantidade.
+                </p>
               ) : lista.modo === "dxf" ? (
                 <p className="apoio">
                   Envie a planta em DXF (no AutoCAD: Salvar como DXF; DWG não é lido). O arquivo traz medidas, não o produto: blocos viram contagens, polilinhas fechadas viram área e abertas viram comprimento. Você descreve o material depois.
@@ -214,6 +244,11 @@ export function Caderno() {
                 linhasExistentes={itensPreenchidos}
                 novoId={gerarUuid}
                 onAplicar={aplicarImportacao}
+                semExemplos={demo}
+                onArquivoSolto={(nome) => {
+                  const modo = modoPeloArquivo(nome);
+                  if (modo && modo !== lista.modo && MODOS.some((m) => m.id === modo)) despachar({ tipo: "alternar_modo", modo });
+                }}
               />
             </div>
 

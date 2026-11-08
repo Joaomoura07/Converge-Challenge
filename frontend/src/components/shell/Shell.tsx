@@ -10,6 +10,10 @@ export function MarcaOrcaAI({ tamanho = 34 }: { tamanho?: number }) {
   return <Image src="/marca/orca.png" alt="" aria-hidden="true" width={tamanho} height={tamanho} priority unoptimized />;
 }
 
+/** Navegação completa do produto (links, Entrar, Criar estimativa, escritório). Na demo fica ESCONDIDA e o topo
+ *  mostra só a marca centralizada; o código continua aqui. Para voltar: NEXT_PUBLIC_NAV_COMPLETA=1. */
+const NAV_COMPLETA = process.env.NEXT_PUBLIC_NAV_COMPLETA === "1";
+
 const LINKS = [
   { href: "/", rotulo: "Início" },
   { href: "/projetos", rotulo: "Projetos" },
@@ -43,7 +47,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="sh-app">
-      <header className="oa-nav" data-modo={site ? "site" : "app"} data-rolou={rolou}>
+      <header className="oa-nav" data-modo={site ? "site" : "app"} data-rolou={rolou} data-enxuta={!NAV_COMPLETA}>
         <div className="oa-nav__dentro">
           <Link href="/" className="oa-marca" aria-label="OrçaAI, página inicial">
             <MarcaOrcaAI />
@@ -51,6 +55,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Orça<b>AI</b>
             </span>
           </Link>
+          {NAV_COMPLETA && (
           <nav aria-label="Principal" style={{ display: "contents" }}>
             <ul className="oa-links">
               {LINKS.map((l) => (
@@ -62,6 +67,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
               ))}
             </ul>
           </nav>
+          )}
+          {NAV_COMPLETA && (
           <div className="oa-direita">
             {site ? (
               <>
@@ -84,6 +91,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </>
             )}
           </div>
+          )}
         </div>
       </header>
 

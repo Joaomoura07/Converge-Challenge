@@ -149,7 +149,7 @@ class _ClienteLento:
 
 def test_principal_lento_dispara_a_reserva_em_paralelo_e_cancela_o_lento(monkeypatch, tres_chaves):
     monkeypatch.setattr(p, "_cliente", lambda chave=None: _ClienteLento(chave))
-    monkeypatch.setattr(p, "get_settings", lambda: NS(pesquisa_hedge_s=0.05, pesquisa_modelo_extracao="Qwen/Qwen3-32B"))
+    monkeypatch.setattr(p, "get_settings", lambda: NS(pesquisa_hedge_s=0.05, pesquisa_modelo_extracao="Qwen/Qwen3-32B", llm_top_p=0.1))
     monkeypatch.setattr(p, "_indisponivel_ate", {})
     _ClienteLento.cancelado = False
     r = asyncio.run(asyncio.wait_for(p.extrair_e_conferir("Tinta Suvinil 18L", ANUNCIOS), timeout=3))

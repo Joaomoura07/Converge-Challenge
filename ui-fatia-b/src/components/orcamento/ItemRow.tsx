@@ -178,7 +178,14 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
           {lojas.map((f) => (
             <li key={f.url}>
               <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
-              <span>{reais(f.preco_embalagem)}</span>
+              {f.perto_da_obra && <span className="orc-item__perto">perto da obra</span>}
+              {/* o preço do anúncio (o mesmo que aparece ao clicar), com a embalagem quando ela é outra */}
+              <span>
+                {reais(f.preco_anunciado ?? f.preco_embalagem)}
+                {f.preco_anunciado != null && f.embalagem_anunciada && f.embalagem_anunciada !== f.embalagem
+                  ? ` · ${f.embalagem_anunciada}`
+                  : ""}
+              </span>
             </li>
           ))}
         </ul>

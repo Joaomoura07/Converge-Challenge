@@ -52,17 +52,18 @@ export function foraDoSubtotal(itens: ItemLinha[]): ForaDoSubtotal {
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
-/** Nota do rodapé do documento. Frete está em pausa: o texto diz que ele não está incluído. */
+/** Nota do rodapé do documento: o que ficou fora do subtotal (frete não é citado na demo: está em pausa). */
 export function notaDocumento(fora: ForaDoSubtotal): string {
-  const partes = ["Frete"];
+  const aviso =
+    "Estimativa sujeita à confirmação de preços e disponibilidade. " +
+    "Os preços vêm de uma pesquisa automática em lojas on-line, com a fonte em cada item: confirme com o fornecedor antes de comprar.";
+  const partes: string[] = [];
   if (fora.pendentes) partes.push(plural(fora.pendentes, "item pendente", "itens pendentes"));
   if (fora.semPreco) partes.push(plural(fora.semPreco, "item sem preço", "itens sem preço"));
+  if (!partes.length) return aviso;
   const quais = partes.length > 1 ? `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}` : partes[0];
-  const verbo = partes.length > 1 || fora.total ? "não incluídos" : "não incluído";
-  return (
-    `${quais} ${verbo}. Estimativa sujeita à confirmação de preços e disponibilidade. ` +
-    "Os preços vêm de uma pesquisa automática em lojas on-line, com a fonte em cada item: confirme com o fornecedor antes de comprar."
-  );
+  const verbo = partes.length > 1 || fora.total > 1 ? "não incluídos" : "não incluído";
+  return `${quais} ${verbo}. ${aviso}`;
 }
 
 export type Tom = "sim" | "talvez" | "nao";
@@ -170,7 +171,11 @@ export function itemParaTela(i: ItemLinha): ItemTela {
       loja: f.loja,
       dominio: f.dominio,
       url: hmm(f.url),
-      preco: `${reais(f.preco_embalagem)}${f.embalagem || i.embalagem ? ` / ${f.embalagem || i.embalagem}` : ""}`,
+      // o preço do anúncio (o que se vê ao clicar no link); itens antigos sem ele mostram o convertido
+      preco:
+        f.preco_anunciado != null
+          ? `${reais(f.preco_anunciado)}${f.embalagem_anunciada ? ` / ${f.embalagem_anunciada}` : ""}`
+          : `${reais(f.preco_embalagem)}${f.embalagem || i.embalagem ? ` / ${f.embalagem || i.embalagem}` : ""}`,
       data: dataFonte(i.preco_data),
     }));
   const melhorLoja = fontes[0]?.loja;

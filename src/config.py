@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     featherless_model: str = "zai-org/GLM-5.2"
     featherless_model_fast: str = ""
     featherless_model_fallback: str = ""
-    llm_temperature: float = 0.2
+    llm_temperature: float = 0.0   # extração de preço e agente de busca: determinístico (sem criatividade)
+    llm_top_p: float = 0.1         # junto com temperature=0: só os tokens mais prováveis
     llm_timeout_seconds: float = 60
     llm_max_retries: int = 3
     agent_max_steps: int = 8
@@ -46,9 +47,9 @@ class Settings(BaseSettings):
 
     # Busca de preços (Fatia B): várias chaves Tavily separadas por vírgula (1 conta por integrante)
     tavily_api_keys: str = ""
-    # Serper (Google Shopping / Google Maps) e OpenRouteService (distância/tempo por rua)
-    serper_api_keys: str = ""
-    ors_api_key: str = ""
+    # Segunda fonte de preço (Google Shopping via serper.dev) e lojas próximas. Vazio = recurso desligado.
+    serper_api_keys: str = ""              # várias chaves separadas por vírgula (rodízio, como o Tavily)
+    ors_api_key: str = ""                  # OpenRouteService: rota de carro (km e minutos) até as lojas
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo
     pesquisa_max_lojas: int = 5             # anúncios da lista fixa de lojas
@@ -78,6 +79,10 @@ class Settings(BaseSettings):
     @property
     def langfuse_url(self) -> str:
         return self.langfuse_base_url or self.langfuse_host
+
+    @property
+    def serper_keys(self) -> list[str]:
+        return [k.strip().strip('"').strip("'") for k in self.serper_api_keys.split(",") if k.strip().strip('"\'')]
 
     @property
     def tavily_keys(self) -> list[str]:

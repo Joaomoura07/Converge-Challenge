@@ -5,12 +5,24 @@ import { PlantaViva } from "./PlantaViva";
 
 // Página inicial (protótipo OrçaAI, referência Mercury): hero em tela cheia com planta baixa 3D viva (PlantaViva),
 // prévia do produto, como funciona, regras do agente, números do ensaio e chamada final.
-// Dados da prévia são fictícios e rotulados. Números do ensaio: orçamento real de 07/11 (16 itens, cozinha 03).
+// Dados da prévia são fictícios e rotulados.
 
+// Números da faixa "Horas viram minutos": orçamento REAL gravado no Supabase ("Teste final Casa Aldeia", 7/11/2026,
+// 21h10 em Recife): 53 itens, tempo_ms = 110037 (1 min 50 s), custo_usd = 0,019963 (≈ R$ 0,11 a R$ 5,50 o dólar).
+// "À mão" NÃO é medida: 18 min por item é a estimativa do time (src/ganho.py), em validação com arquitetos (Google
+// Forms, pergunta 2; 13 respostas em 7/11). Com a contagem do Forms, troque ESTIMATIVA_A_MAO pelo dado com fonte.
+const ENSAIO = { itens: 53, segundos: 110, custoReais: 0.11, obra: "uma casa térrea" };
+const MINUTOS_POR_ITEM_ESTIMADOS = 18;
+const ESTIMATIVA_A_MAO = ENSAIO.itens * MINUTOS_POR_ITEM_ESTIMADOS; // minutos
+
+// Fotos: as mesmas que a pesquisa escolheu para esses produtos (cache de preços); o item pendente mostra um parecido.
 const ITENS_PREVIA = [
-  { nome: "Porcelanato Portobello Cimento 90×90", qtd: "24 m², 11 caixas", min: 89.9, med: 104.5, max: 129.0, loja: "Leroy Merlin", status: "definido" },
-  { nome: "Argamassa AC-III Quartzolit 20 kg", qtd: "15 sacos, sugerido", min: 38.9, med: 42.0, max: 49.9, loja: "Telhanorte", status: "definido" },
-  { nome: "Tinta acrílica branca fosca", qtd: "120 m²", min: 0, med: 0, max: 0, loja: "", status: "pendente" },
+  { nome: "Porcelanato Portobello Cimento 90×90", qtd: "24 m², 11 caixas", min: 89.9, med: 104.5, max: 129.0, loja: "Leroy Merlin", status: "definido",
+    foto: "https://cdn.leroymerlin.com.br/products/porcelanato_acetinado_interno_90x90cm_nord_portobello_92308265_88df_1800x1800.png" },
+  { nome: "Argamassa AC-III Quartzolit 20 kg", qtd: "15 sacos, sugerido", min: 38.9, med: 42.0, max: 49.9, loja: "Telhanorte", status: "definido",
+    foto: "https://telhanorte.vtexassets.com/arquivos/ids/1320983-400-auto" },
+  { nome: "Tinta acrílica branca fosca", qtd: "120 m², 2 latas 18 L", min: 289.9, med: 339.9, max: 389.9, loja: "", status: "pendente",
+    foto: "https://telhanorte.vtexassets.com/arquivos/ids/360263/Tinta--acrilica-Prolar-18-litros-branco-Sherwin-Williams-1024327.jpg?v=637069382597770000" },
 ] as const;
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -44,14 +56,21 @@ function Previa() {
         </div>
       </div>
       <div className="in-previa__resumo">
-        <span className="ok">✓ 14 itens com preço</span>
-        <span className="pend">? 2 pendentes de especificação</span>
+        <span className="ok">
+          <i className="in-ico" aria-hidden="true">✓</i>14 itens com preço
+        </span>
+        <span className="pend">
+          <i className="in-ico" aria-hidden="true">?</i>2 com preço aproximado
+        </span>
         <span>Cabe no orçamento do cliente</span>
       </div>
       <ul className="in-previa__itens">
         {ITENS_PREVIA.map((i, n) => (
           <li key={i.nome} style={{ "--i": n } as React.CSSProperties}>
-            <span className="foto" aria-hidden="true" />
+            <span className="foto">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={i.foto} alt={i.nome} loading="lazy" />
+            </span>
             <span className="nome">
               {i.nome}
               <small>{i.qtd}</small>
@@ -66,7 +85,10 @@ function Previa() {
               </>
             ) : (
               <>
-                <span className="pergunta">Qual marca e linha? Sem isso, não há preço.</span>
+                <span className="pergunta">
+                  <strong>≈ {reais.format(i.med)} a lata</strong>, pela média de produtos parecidos. Quer especificar marca
+                  e linha?
+                </span>
                 <span className="loja">
                   <span className="selo pend">? Pendente</span>
                 </span>
@@ -98,14 +120,14 @@ export default function Inicio() {
             A OrçaAI é um <strong>AI Agent</strong> que pesquisa os preços da sua obra e entrega o plano de compra pronto.
           </p>
           <div className="in-acoes">
-            <Link href="/nova" className="oa-botao oa-botao--principal" data-planta-foco>
-              Criar estimativa
+            <Link href="/demo" className="oa-botao oa-botao--principal" data-planta-foco>
+              Visualizar Demo
             </Link>
-            <Link href="/previa-c?cenario=cabe" className="oa-botao oa-botao--fantasma">
-              Ver um exemplo
-            </Link>
+            <a href="#sobre" className="oa-botao oa-botao--fantasma">
+              Conhecer projeto
+            </a>
           </div>
-          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit e PDF com texto.</p>
+          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit, PDF com texto e planta em DXF.</p>
         </div>
       </section>
 
@@ -114,7 +136,77 @@ export default function Inicio() {
       </div>
       </div>
 
-      <section id="como-funciona" className="in-faixa in-faixa--grade" aria-labelledby="in-como">
+      <section id="sobre" className="in-faixa in-sobre" aria-labelledby="in-sobre">
+        <div className="in-cabeca" data-revelar>
+          <h2 id="in-sobre">Sobre o projeto</h2>
+          <p>A OrçaAI foi criada no Converge Challenge, em Recife, em novembro de 2026, pelo time Avisa que é Agente.</p>
+        </div>
+        <div className="in-sobre__grade" data-revelar>
+          <div>
+            <h3>O problema</h3>
+            <p>
+              Montar o orçamento de uma obra é cotar dezenas de itens loja por loja, conferir embalagens e refazer contas.
+              É lento, repetitivo, e é aí que o projeto estoura o orçamento do cliente sem ninguém perceber a tempo.
+            </p>
+          </div>
+          <div>
+            <h3>Para quem</h3>
+            <p>
+              Arquitetos autônomos e escritórios de arquitetura e interiores que precisam de um preço de referência
+              confiável antes de falar com as lojas e com o cliente.
+            </p>
+          </div>
+          <div>
+            <h3>A solução</h3>
+            <p>
+              Um AI Agent que lê a lista de materiais do projeto, revisa, pesquisa o preço de cada item em lojas reais e
+              entrega o plano de compra, sempre com a fonte de cada valor.
+            </p>
+          </div>
+        </div>
+
+        <h3 className="in-sobre__sub" data-revelar>
+          Como o agente trabalha
+        </h3>
+        <ol className="in-passos in-agente" data-revelar>
+          <li>
+            <span className="n">1</span>
+            <h3>Lê a lista</h3>
+            <p>Planilha, CSV, tabela do Revit, PDF com texto ou planta: tudo vira a mesma lista editável.</p>
+          </li>
+          <li>
+            <span className="n">2</span>
+            <h3>Revisa antes de pesquisar</h3>
+            <p>Aponta unidade errada e item duplicado e sugere o que costuma faltar. Nada entra sem o seu clique.</p>
+          </li>
+          <li>
+            <span className="n">3</span>
+            <h3>Pesquisa em lojas reais</h3>
+            <p>Busca cada item em lojas de construção, com as lojas da região da obra primeiro.</p>
+          </li>
+          <li>
+            <span className="n">4</span>
+            <h3>Confere o anúncio</h3>
+            <p>É o mesmo produto? O preço está escrito no anúncio? Sem fonte, o preço é descartado.</p>
+          </li>
+          <li>
+            <span className="n">5</span>
+            <h3>Refaz a busca sozinho</h3>
+            <p>Achou poucas lojas com o produto certo? O agente reescreve a consulta e procura de novo.</p>
+          </li>
+          <li>
+            <span className="n">6</span>
+            <h3>Pergunta em vez de chutar</h3>
+            <p>Item genérico ganha um preço aproximado, marcado como tal, e uma pergunta para você especificar.</p>
+          </li>
+        </ol>
+        <p className="in-sobre__tec" data-revelar>
+          Feito com Featherless (GLM-5.2 e Qwen3), Tavily, Supabase Realtime, Langfuse, FastAPI e Next.js na Vercel. Cada
+          passo do agente fica registrado no Langfuse para auditoria.
+        </p>
+      </section>
+
+      <section id="como-funciona"className="in-faixa in-faixa--grade" aria-labelledby="in-como">
         <div className="in-cabeca" data-revelar>
           <h2 id="in-como">Como funciona</h2>
           <p>Três passos. Você confere cada decisão; o agente faz a busca.</p>
@@ -123,20 +215,27 @@ export default function Inicio() {
           <li>
             <span className="n">1</span>
             <h3>Envie a lista da obra</h3>
-            <p>Arraste a planilha ou o TXT do Revit, ou use um exemplo pronto. Informe o CEP e o orçamento do cliente.</p>
+            <p>
+              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit, PDF ou planta em DXF)
+              ou use um exemplo. O CEP define a cidade da busca e põe primeiro as lojas com unidade na região.
+            </p>
           </li>
           <li>
             <span className="n">2</span>
-            <h3>Revise o que a IA apontou</h3>
+            <h3>Feche a lista completa de primeira</h3>
             <p>
-              Unidades erradas, itens duplicados e o que costuma ser esquecido, como argamassa e rejunte. Nada entra sem
+              Antes de pesquisar, a IA revisa a lista: aponta unidades erradas e itens duplicados e sugere o que costuma
+              faltar, como argamassa e rejunte para o porcelanato. O orçamento sai completo de primeira, e nada entra sem
               o seu clique.
             </p>
           </li>
           <li>
             <span className="n">3</span>
             <h3>Receba o plano de compra</h3>
-            <p>Preço mínimo, médio e máximo com a loja e o link, onde comprar, se cabe no orçamento e o arquivo em Excel.</p>
+            <p>
+              Preço mínimo, médio e máximo com a loja e o link, quantas embalagens comprar, onde comprar e se cabe no
+              orçamento. O plano de compra também sai em planilha do Excel, para mandar às lojas ou ao cliente.
+            </p>
           </li>
         </ol>
       </section>
@@ -153,7 +252,8 @@ export default function Inicio() {
               <strong>Sem fonte, sem preço.</strong> Todo valor vem com a loja e o link.
             </li>
             <li>
-              <strong>Pergunta em vez de chutar.</strong> Item genérico vira pergunta para você.
+              <strong>Pergunta em vez de chutar.</strong> Item genérico ganha um preço aproximado, marcado como tal, e
+              uma pergunta para você especificar.
             </li>
             <li>
               <strong>Sugere, não aplica.</strong> Correções e complementos esperam o seu aceite.
@@ -186,26 +286,28 @@ export default function Inicio() {
       <section className="in-faixa" aria-labelledby="in-numeros">
         <div className="in-cabeca" data-revelar>
           <h2 id="in-numeros">Horas viram minutos</h2>
-          <p>Ensaio real com a lista de uma cozinha, 16 itens, em 7 de novembro de 2026.</p>
+          <p>
+            Orçamento real de {ENSAIO.obra}, {ENSAIO.itens} itens, pesquisado pela OrçaAI em 7 de novembro de 2026.
+          </p>
         </div>
         <div className="in-numeros" data-revelar>
           <div>
             <strong>
-              <Contador ate={75} formato="tempo" />
+              <Contador ate={ENSAIO.segundos} formato="tempo" />
             </strong>
-            <span>para pesquisar os 16 itens com a OrçaAI</span>
+            <span>para pesquisar os {ENSAIO.itens} itens com a OrçaAI</span>
           </div>
           <div>
             <strong>
-              <Contador ate={288} formato="horas" atraso={150} />
+              <Contador ate={ESTIMATIVA_A_MAO} formato="horas" atraso={150} />
             </strong>
-            <span>à mão, estimando 18 minutos por item</span>
+            <span>à mão, numa estimativa de {MINUTOS_POR_ITEM_ESTIMADOS} min por item (em validação com arquitetos)</span>
           </div>
           <div>
             <strong>
-              <Contador ate={0.02} formato="reais" atraso={300} />
+              <Contador ate={ENSAIO.custoReais} formato="reais" atraso={300} />
             </strong>
-            <span>de custo de IA no ensaio inteiro</span>
+            <span>de custo de IA no orçamento inteiro</span>
           </div>
         </div>
       </section>
@@ -213,8 +315,8 @@ export default function Inicio() {
       <section className="in-faixa in-final" data-revelar aria-labelledby="in-final">
         <h2 id="in-final">Mais tempo para projetar.</h2>
         <p>Deixe a busca de preços com o agente e chegue à reunião com o orçamento pronto.</p>
-        <Link href="/nova" className="oa-botao oa-botao--principal">
-          Criar estimativa
+        <Link href="/demo" className="oa-botao oa-botao--principal">
+          Visualizar Demo
         </Link>
       </section>
       <Revelar />

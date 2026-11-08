@@ -47,14 +47,18 @@ MODELO_RESERVA_AGENTE = "Qwen/Qwen3-32B"
 MIN_TEMPO_AGENTE_S = 8   # com menos que isso não dá nem uma chamada ao GLM (9–13 s medidos): nem começa
 
 # Pergunta ao arquiteto por tipo de material (regras, sem LLM). A primeira que casar vale.
+# É um CONVITE, não um bloqueio: sem a resposta o item segue com a faixa estimada (produtos parecidos).
+SEM_RESPOSTA = " Sem isso, usamos a média de produtos parecidos."
 PERGUNTAS = [
-    (r"tinta|esmalte|verniz|textura|selador", "Qual marca, linha, cor e acabamento (fosco, acetinado, semibrilho)?"),
+    (r"tinta|esmalte|verniz|textura|selador",
+     "Quer especificar marca, linha, cor e acabamento (fosco, acetinado, semibrilho)?" + SEM_RESPOSTA),
     (r"porcelanato|piso|revestimento|azulejo|ceramic|pastilha|laminado|vinilico",
-     "Qual marca, linha, dimensão (ex.: 60x60) e acabamento?"),
-    (r"misturador|torneira|registro|ducha|chuveiro|valvula|monocomando", "Qual marca e modelo (ou o código do fabricante)?"),
-    (r"cuba|pia|vaso|bacia|louca|lavatorio|tanque", "Qual marca, modelo e medidas?"),
+     "Quer especificar marca, linha, dimensão (ex.: 60x60) e acabamento?" + SEM_RESPOSTA),
+    (r"misturador|torneira|registro|ducha|chuveiro|valvula|monocomando",
+     "Quer especificar marca e modelo (ou o código do fabricante)?" + SEM_RESPOSTA),
+    (r"cuba|pia|vaso|bacia|louca|lavatorio|tanque", "Quer especificar marca, modelo e medidas?" + SEM_RESPOSTA),
 ]
-PERGUNTA_PADRAO = "Qual marca e modelo exatos?"
+PERGUNTA_PADRAO = "Quer especificar marca e modelo?" + SEM_RESPOSTA
 
 
 def _norm(s: str) -> str:
