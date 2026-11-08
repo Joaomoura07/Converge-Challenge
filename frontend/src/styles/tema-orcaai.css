@@ -644,3 +644,7 @@ html .demo-chip__selo {
   font-size: 11px; line-height: 1; padding: 3px 7px; border-radius: var(--raio-pilula);
   background: var(--color-cobalt); color: #fff; text-transform: uppercase; letter-spacing: .04em;
 }
+
+/* Arquivo lido: some a caixa tracejada de upload; fica só o cartão de confirmação */
+html .importador--concluido { padding: 0; border: 0; background: transparent; }
+html .arquivo-ok { background: color-mix(in srgb, #2f9e6b 12%, var(--papel-2)); border: 1px solid #2f9e6b; border-radius: var(--raio-cartao); }

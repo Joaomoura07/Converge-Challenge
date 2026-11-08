@@ -25,7 +25,7 @@ type Situacao =
   | { tipo: "livre" }
   | { tipo: "lendo"; nome: string }
   | { tipo: "erro"; mensagem: string; nome: string }
-  | { tipo: "pronto"; resumo: string; avisos: string[] };
+  | { tipo: "pronto"; resumo: string; avisos: string[]; arquivo: string };
 
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
@@ -109,10 +109,10 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
     const avisos = resumoAvisos(resultado).linhas;
     if (linhasAtuais.current > 0) {
       setPendente({ importacao: resultado, linhas, nome });
-      setSituacao({ tipo: "pronto", resumo, avisos });
+      setSituacao({ tipo: "pronto", resumo, avisos, arquivo: nome });
     } else {
       onAplicar(linhas, "substituir");
-      setSituacao({ tipo: "pronto", resumo, avisos });
+      setSituacao({ tipo: "pronto", resumo, avisos, arquivo: nome });
     }
   }
 
@@ -171,9 +171,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
     });
   }
 
+  // Arquivo lido e aplicado à lista: a caixa grande de upload cede lugar a um cartão de confirmação.
+  const concluido = situacao.tipo === "pronto" && !pendente && mostrarArquivo;
+
   return (
     <div
-      className={`importador${arrastando ? " importador--arrastando" : ""}`}
+      className={`importador${arrastando ? " importador--arrastando" : ""}${concluido ? " importador--concluido" : ""}`}
       onDragOver={(e) => {
         if (!Array.from(e.dataTransfer.types).includes("Files")) return;
         e.preventDefault();
@@ -185,10 +188,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       }}
       onDrop={aoSoltar}
     >
-      <p className="importador-soltar" aria-hidden="true">
-        {arrastando ? "Solte para ler a lista" : "Arraste o arquivo para cá ou escolha abaixo"}
-      </p>
-      <div className="importador-acoes">
+      {!concluido && (
+        <p className="importador-soltar" aria-hidden="true">
+          {arrastando ? "Solte para ler a lista" : "Arraste o arquivo para cá ou escolha abaixo"}
+        </p>
+      )}
+      <div className="importador-acoes" hidden={concluido}>
         {mostrarArquivo && (
           <>
             <input
@@ -243,7 +248,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
         </div>
       )}
 
-      {exemplosAbertos && (
+      {exemplosAbertos && !concluido && (
         <ul id="lista-exemplos" className="exemplos">
           {EXEMPLOS.map((ex) => (
             <li key={ex.id}>
@@ -316,7 +321,22 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
       )}
 
       {situacao.tipo === "pronto" && (
-        <div className="aviso-ok" role="status">
+        <div className={concluido ? "arquivo-ok" : "aviso-ok"} role="status">
+          {concluido && (
+            <div className="arquivo-ok__topo">
+              <svg className="arquivo-ok__icone" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="11" fill="currentColor" />
+                <path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className="arquivo-ok__texto">
+                <p className="arquivo-ok__nome">{situacao.arquivo}</p>
+                <p className="arquivo-ok__sub">Arquivo lido</p>
+              </div>
+              <button type="button" className="botao-link" onClick={() => entrada.current?.click()}>
+                Trocar arquivo
+              </button>
+            </div>
+          )}
           <p className="aviso-titulo">{situacao.resumo}</p>
           {situacao.avisos.length > 0 && (
             <details>

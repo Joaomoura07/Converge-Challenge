@@ -681,3 +681,18 @@ button:disabled {
 .sugestoes-todas button {
   min-height: 40px;
 }
+
+/* Arquivo lido: o cartão de confirmação substitui a caixa de upload */
+.arquivo-ok {
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--ok, #2f9e6b);
+  background: color-mix(in srgb, var(--ok, #2f9e6b) 10%, transparent);
+}
+.arquivo-ok p { margin: 0 0 6px; }
+.arquivo-ok__topo { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.arquivo-ok__icone { flex: none; color: var(--ok, #2f9e6b); }
+.arquivo-ok__texto { flex: 1 1 160px; min-width: 0; }
+.arquivo-ok__nome { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.arquivo-ok__sub { margin: 0; font-size: 0.8125rem; opacity: 0.75; }
+.importador-acoes[hidden] { display: none; }
