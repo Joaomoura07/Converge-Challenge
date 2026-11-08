@@ -89,10 +89,6 @@ class Settings(BaseSettings):
         return [k.strip().strip('"').strip("'") for k in self.tavily_api_keys.split(",") if k.strip().strip('"\'')]
 
     @property
-    def serper_keys(self) -> list[str]:
-        return [k.strip().strip('"').strip("'") for k in self.serper_api_keys.split(",") if k.strip().strip('"\'')]
-
-    @property
     def ors_key(self) -> str:
         return self.ors_api_key.strip().strip('"').strip("'")
 
