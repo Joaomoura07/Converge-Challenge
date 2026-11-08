@@ -12,7 +12,7 @@ const bricolage = Bricolage_Grotesque({ subsets: ["latin"], axes: ["opsz"], vari
 export const metadata: Metadata = {
   title: "OrçaAI — do projeto ao orçamento",
   description:
-    "A OrçaAI lê a lista de materiais do projeto, aponta o que ficou faltando, pesquisa preços com fonte e diz se cabe no orçamento do cliente.",
+    "A OrçaAI é um agente de inteligência artificial que lê a lista de materiais da obra, aponta o que ficou faltando, pesquisa preços em lojas reais e entrega o plano de compra.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#171721" };

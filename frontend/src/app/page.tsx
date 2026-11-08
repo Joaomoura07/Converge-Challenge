@@ -89,15 +89,16 @@ export default function Inicio() {
         <PlantaViva />
       <section className="in-hero" aria-labelledby="in-titulo">
         <div className="in-hero__conteudo">
-          <p className="in-selo">Agente de orçamento para escritórios de arquitetura</p>
+          <p className="in-selo">Agente de IA para escritórios de arquitetura</p>
           <h1 id="in-titulo">
             Menos tempo cotando material.
             <br />
             Mais tempo projetando.
           </h1>
           <p className="in-sub">
-            A OrçaAI pesquisa os preços da lista de materiais da obra em lojas reais, aponta o que ficou faltando e
-            entrega o plano de compra pronto para o cliente.
+            A OrçaAI é um <strong>agente de inteligência artificial</strong> que trabalha por você: lê a lista de
+            materiais da obra, pesquisa os preços em lojas reais, aponta o que ficou faltando e entrega o plano de compra
+            pronto para o cliente.
           </p>
           <div className="in-acoes">
             <Link href="/nova" className="oa-botao oa-botao--principal" data-planta-foco>
