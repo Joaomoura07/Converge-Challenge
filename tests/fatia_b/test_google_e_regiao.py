@@ -324,6 +324,17 @@ def test_pagina_da_loja_desconhecida_exige_o_nome_da_loja_no_dominio():
     assert g.pagina_da_loja(o, None, outra, "Joelho Tigre 25") is None     # domínio de outra loja: nunca liga
 
 
+def test_resolver_recusa_categoria_da_dexco_com_nome_do_produto():
+    descricao = "Bacia sanitária Deca Vogue Plus"
+    oferta = Oferta(loja="Loja Dexco", dominio="lojadexco.com.br", titulo=descricao,
+                   url="https://www.google.com/shopping/product/123", preco=1595.90,
+                   embalagem="unidade", mesmo_produto="sim")
+    categoria = "https://www.lojadexco.com.br/ceusa/bacias/bacia-sanitaria-para-caixa-acoplada"
+    organicos = [{"title": descricao, "link": categoria}]
+    assert g.pagina_da_loja(oferta, "lojadexco.com.br", organicos, descricao) is None
+    assert g.trocar_links_do_google(descricao, [oferta], organicos) == [oferta]
+
+
 def test_pagina_da_loja_recusa_google_busca_e_produto_diferente():
     o = _of("Leroy Merlin", "Joelho Tigre 25 mm soldável 90 graus")
     ruins = [{"title": "Joelho Tigre 25 mm soldável 90 graus", "link": "https://www.google.com/search?q=x", "snippet": ""},

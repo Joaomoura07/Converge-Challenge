@@ -59,6 +59,9 @@ export function linkDiretoProduto(url: string): boolean {
     const u = new URL(url);
     return ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
       && !/(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\./i.test(u.hostname)
+      && !(/(^|\.)lojadexco\.com\.br$/i.test(u.hostname)
+        && /^\/(deca|ceusa)\/bacias(\/|$)/i.test(u.pathname)
+        && !/\/p\/?$/.test(u.pathname))
       && u.pathname.replaceAll("/", "").length > 0
       && !/\/(busca|search|pesquisa|categoria|category|catalogo|collections?)(\/|$)/i.test(u.pathname)
       && !["q", "query", "busca", "ft"].some((k) => u.searchParams.has(k));

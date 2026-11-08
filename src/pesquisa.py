@@ -40,6 +40,7 @@ from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
+from .paginas_produto import verificar_ofertas
 from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, conferir_resposta,
                      extrair_e_conferir, semaforo_do_loop)
 from .tools import ToolArgs, ToolRegistry
@@ -142,6 +143,11 @@ async def buscar_e_extrair(consulta: str, produto: str):
     return b, await extrair_e_conferir(produto, b.resultados)
 
 
+async def _conferir_links(item: ItemEntrada, ofertas: list[Oferta]) -> list[Oferta]:
+    async with _porteiro_busca():
+        return await verificar_ofertas(item.descricao, ofertas)
+
+
 # ------------------------------------------------------------------ agente que refaz a busca
 class BuscarPrecoArgs(ToolArgs):
     consulta: str = Field(min_length=3, max_length=120,
@@ -169,7 +175,7 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     coleta.buscas_agente += 1
     coleta.consultas.append(args.consulta)
     b, ext = await buscar_e_extrair(args.consulta, item.descricao)
-    coleta.juntar(ext.ofertas)
+    coleta.juntar(await _conferir_links(item, ext.ofertas))
     coleta.imagem = coleta.imagem or b.imagem
     return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item))}
 
@@ -335,6 +341,7 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
         anterior.extracao.ofertas = priorizar_links_diretos(
             [o for o in anterior.extracao.ofertas if mesmo_codigo(item.descricao, o.titulo)])
     if anterior and not anterior.vencido:
+        anterior.extracao.ofertas = await _conferir_links(item, anterior.extracao.ofertas)
         calc = calcular(item, anterior.extracao, generico)
         # 1 loja só no cache (medido em 08/11: Spot Stella a R$ 377 de uma loja, contra R$ 55 na busca nova):
         # busca de novo; o cache continua de reserva se a busca falhar
@@ -363,6 +370,7 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
+    coleta.ofertas = await _conferir_links(item, coleta.ofertas)
     calc = calcular(item, coleta.extracao(), generico)
 
     precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured
@@ -412,6 +420,8 @@ async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCa
 
     # falha total: cache vencido vale como reserva, com a data
     if anterior:
+        if anterior.vencido:
+            anterior.extracao.ofertas = await _conferir_links(item, anterior.extracao.ofertas)
         calc_v = calcular(item, anterior.extracao, generico)
         if calc_v.tem_preco:
             return _resultado(item, calc_v, "pendente_especificacao" if generico else "definido", anterior.imagem_url,

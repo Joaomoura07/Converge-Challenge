@@ -44,7 +44,7 @@ class Fonte(_Base):
     # em 18 L): ao clicar, o preço "não batia".
     preco_anunciado: float | None = Field(default=None, gt=0)
     embalagem_anunciada: str | None = None
-    link_verificado: bool = False   # True só se a página da loja foi aberta e o preço conferido (esta pesquisa não abre: fica False)
+    link_verificado: bool = False   # a página da loja confirmou o produto e o preço anunciado
     perto_da_obra: bool = False   # loja da região da obra (Google Maps pelo CEP) ou rede com loja no estado
     distancia_km: float | None = None   # de carro, aproximada, da obra até a loja (só lojas da região)
     endereco: str | None = None         # endereço da loja da região (Google Maps)
