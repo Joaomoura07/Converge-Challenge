@@ -1,6 +1,6 @@
 // Formatação para a tela: moeda, unidades e a frase de compra ("180 m² → 2 latas 18 L").
 
-import type { Objetivo } from "./tipos";
+import type { Fonte, Objetivo } from "./tipos";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
@@ -63,4 +63,9 @@ export function linkDiretoProduto(url: string): boolean {
       && !/\/(busca|search|pesquisa|categoria|category|catalogo|collections?)(\/|$)/i.test(u.pathname)
       && !["q", "query", "busca", "ft"].some((k) => u.searchParams.has(k));
   } catch { return false; }
+}
+
+export function linkDeCompra(fonte: Fonte): string | null {
+  return fonte.link_verificado === true && fonte.preco_anunciado != null && fonte.preco_anunciado > 0
+    && linkDiretoProduto(fonte.url) ? fonte.url : null;
 }

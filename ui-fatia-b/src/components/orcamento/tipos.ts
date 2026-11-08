@@ -13,6 +13,7 @@ export interface Fonte {
   /** Preço e embalagem como estão no anúncio (o que a pessoa vê ao clicar). Ausentes em itens antigos. */
   preco_anunciado?: number | null;
   embalagem_anunciada?: string | null;
+  link_verificado?: boolean;
   /** Rede com loja física no estado da obra. */
   perto_da_obra?: boolean;
   /** Loja da região da obra (Google Maps pelo CEP): distância de carro aproximada e endereço. */

@@ -284,6 +284,7 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         return Fonte(loja=n.oferta.loja, dominio=n.oferta.dominio, url=n.oferta.url,
                      preco_embalagem=emb(n.unitario), embalagem=rotulo,
                      preco_anunciado=n.oferta.preco, embalagem_anunciada=n.oferta.embalagem,
+                     link_verificado=n.oferta.link_verificado,
                      perto_da_obra=regional is not None or perto_da_obra(n.oferta.dominio, LOCAL_DA_OBRA.get()),
                      distancia_km=regional.km if regional else None,
                      endereco=regional.endereco if regional else None)

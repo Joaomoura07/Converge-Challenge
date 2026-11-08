@@ -33,7 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .google_shopping import ofertas_google, ofertas_regionais, resolver_links_das_lojas
+from .google_shopping import MIN_MESMO, ofertas_google, ofertas_regionais, resolver_links_das_lojas, semelhanca
 from .busca import ResultadoWeb, buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -41,7 +41,7 @@ from .modelos import ItemEntrada, ResultadoItem
 from .precos import (TENTATIVAS_RESPOSTA_VAZIA, Oferta, RespostaVazia, ResultadoExtracao, conferir_resposta,
                      extrair_e_conferir, semaforo_do_loop)
 from .tools import ToolArgs, ToolRegistry
-from .especificacao import orientacao
+from .especificacao import conflitos_explicitos, orientacao
 from .paginas_produto import aprofundar
 from .imagens import imagem_do_cache
 
@@ -167,7 +167,7 @@ async def _verificar_fontes(item: ItemEntrada, extracao: ResultadoExtracao) -> R
     extracao = replace(extracao, ofertas=[o for o in extracao.ofertas if o.url not in indisponiveis])
     s = get_settings()
     if not s.pesquisa_paginas_por_rodada or not s.tavily_keys:
-        return extracao
+        return replace(extracao, ofertas=[o.model_copy(update={"link_verificado": False}) for o in extracao.ofertas])
     calc = calcular(item, extracao)
     if not calc.tem_preco and not calc.estimativa:
         calc = calcular(item, extracao, generico=True)
@@ -180,7 +180,16 @@ async def _verificar_fontes(item: ItemEntrada, extracao: ResultadoExtracao) -> R
     async with _porteiro_busca():
         validas = await aprofundar(item.descricao, candidatos, limite=20)
     removidas = {f.url for f in candidatos} - {f.url for f in validas}
-    return replace(extracao, ofertas=[o for o in extracao.ofertas if o.url not in removidas])
+    ofertas_verificadas = []
+    for o in extracao.ofertas:
+        if o.url in removidas:
+            continue
+        pagina = acc.compras_lidas.get(o.url) if acc else None
+        verificado = bool(pagina and pagina[1] == o.preco
+                          and semelhanca(o.titulo, pagina[0]) >= MIN_MESMO
+                          and not conflitos_explicitos(item.descricao, pagina[0]))
+        ofertas_verificadas.append(o.model_copy(update={"link_verificado": verificado}))
+    return replace(extracao, ofertas=ofertas_verificadas)
 
 
 # ------------------------------------------------------------------ agente que refaz a busca

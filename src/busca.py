@@ -397,6 +397,9 @@ def link_direto_produto(url: str) -> bool:
             return False
         if re.search(r"(^|\.)(google|googleadservices|bing|duckduckgo|yahoo)\.", host):
             return False
+        if host == "mercadolivre.com.br" or host.endswith(".mercadolivre.com.br"):
+            if re.match(r"^/(?:loja|perfil|ofertas|mais-vendidos|categorias|c)(?:/|$)", p.path, re.I):
+                return False
         if not p.path.strip("/") or re.search(r"/(?:categoria|category|catalogo|catalog|departamento|collections?)(/|$)", p.path, re.I):
             return False
         return not (eh_pagina_de_busca(url) or eh_pagina_de_listagem(host, url) or fonte_nao_e_loja(host, url))

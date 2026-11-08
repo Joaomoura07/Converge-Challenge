@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     tavily_api_keys: str = Field(default="", repr=False)
     # Segunda fonte de preço (Google Shopping via serper.dev) e lojas próximas. Vazio = recurso desligado.
     serper_api_keys: str = Field(default="", repr=False)  # várias chaves em rodízio
+    serper_debug_json: bool = False  # diagnóstico temporário do primeiro anúncio do Shopping
     ors_api_key: str = Field(default="", repr=False)  # OpenRouteService: rota até as lojas
     pesquisa_concorrencia_llm: int = 3     # "porteiro": chamadas simultâneas à Featherless (medido: 6 simultâneas ao Qwen3-32B → 3 respostas vazias)
     pesquisa_concorrencia_busca: int = 8   # buscas simultâneas no Tavily/DuckDuckGo

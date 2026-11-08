@@ -142,6 +142,39 @@ def test_link_removido_da_loja_nao_volta_do_cache(mundo, monkeypatch, vencido):
     assert r.status == ("nao_encontrado" if vencido else "definido")
 
 
+@pytest.mark.parametrize("detalhes,verificado,tem_fonte", [
+    ("De R$ 899,90 por R$ 739,90\n10x de R$ 73,99\nComprar agora", True, True),
+    ("R$ 849,90\nComprar agora", False, True),
+    ("Filtrar por preço\nR$ 739,90\nComprar agora", False, True),
+    ("Produto indisponível\nR$ 739,90", False, False),
+    ("R$ 739,90\nR$ 849,90\nComprar agora", False, True),
+    ("R$ 739,90\nno Pix\nComprar agora", False, True),
+])
+def test_link_de_compra_so_com_preco_da_pagina(mundo, monkeypatch, detalhes, verificado, tem_fonte):
+    import tavily
+
+    s = p.get_settings()
+    monkeypatch.setattr(s, "tavily_api_keys", "tvly-teste-sintetico")
+    monkeypatch.setattr(s, "pesquisa_paginas_por_rodada", 2)
+    oferta = of("Loja teste", 739.9).model_copy(update={"url": "https://loja.example/tinta"})
+
+    class Leitor:
+        def __init__(self, **kwargs):
+            pass
+
+        async def extract(self, urls, **kwargs):
+            assert urls == [oferta.url]
+            return {"results": [{"url": oferta.url, "raw_content": f"# {TINTA.descricao}\n{detalhes}"}]}
+
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", Leitor)
+    mundo({}, padrao=[oferta])
+    r = rodar(TINTA, usar_agente=False)
+    assert bool(r.fontes) is tem_fonte
+    if tem_fonte:
+        assert r.fontes[0].link_verificado is verificado
+        assert r.preco_emb_med == 739.9
+
+
 def test_achou_lojas_suficientes_nao_chama_agente(mundo):
     m = mundo({}, padrao=[of("Telhanorte", 739.9), of("Magazine Luiza", 849.0), of("Sertão", 749.9)])
     llm = LLMFalso([])

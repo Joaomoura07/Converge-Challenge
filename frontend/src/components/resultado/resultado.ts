@@ -2,7 +2,7 @@
 // Entrada: as linhas de `orcamento_itens` e a linha de `orcamentos` (logistica, viabilidade, ganho) que o
 // useOrcamento entrega. Referência visual: Figma, tela 08 · Documento de orçamento.
 
-import { embalagens, precoDoAnuncio, quantidade as formatarQtd, reais, unidade as formatarUnidade } from "../orcamento/formato";
+import { embalagens, linkDeCompra, precoDoAnuncio, quantidade as formatarQtd, reais, unidade as formatarUnidade } from "../orcamento/formato";
 import { normalizarApiUrl } from "@/lib/apiUrl";
 import type { ItemLinha, Viabilidade } from "@/lib/orcamento/tipos";
 
@@ -184,13 +184,16 @@ export function itemParaTela(i: ItemLinha): ItemTela {
   const fontes: FonteTela[] = (i.fontes ?? [])
     .slice()
     .sort((a, b) => a.preco_embalagem - b.preco_embalagem)
-    .map((f) => ({
-      loja: f.loja,
-      dominio: f.dominio,
-      url: hmm(f.url),
-      preco: precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada),
-      data: dataFonte(i.preco_data),
-    }));
+    .map((f) => {
+      const url = linkDeCompra(f);
+      return {
+        loja: f.loja,
+        dominio: f.dominio,
+        url,
+        preco: precoDoAnuncio(url ? f.preco_anunciado : null, f.embalagem_anunciada),
+        data: dataFonte(i.preco_data),
+      };
+    });
   const melhorLoja = fontes[0]?.loja;
   const nome = i.produto_normalizado || i.descricao;
   const unitario =

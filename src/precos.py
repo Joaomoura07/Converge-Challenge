@@ -50,6 +50,7 @@ class Oferta(BaseModel):
     mesmo_produto: Literal["sim", "parecido", "nao"]
     evidencia: str = ""
     pagina_lida: bool = False
+    link_verificado: bool = False
     especificacoes_nao_confirmadas: list[str] = []
     imagem: str | None = None   # foto do anúncio (o Google Shopping devolve `imageUrl` em todos os anúncios)
 
