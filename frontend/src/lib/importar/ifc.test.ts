@@ -54,6 +54,21 @@ describe("leitor de IFC", () => {
     expect(r.avisos.filter((a) => a.codigo === "QUANTIDADE_AUSENTE")).toHaveLength(3);
   });
 
+  it("ifc-03: área só nas propriedades (padrão ArchiCAD), em texto com vírgula ou número, preferindo a líquida", async () => {
+    const r = ok(await ler("ifc-03-areas-em-propriedades.ifc"));
+    const por = Object.fromEntries(r.itens.map((i) => [i.descricao, i]));
+    // '63,8' em IFCLABEL (texto com vírgula decimal)
+    expect(por["Piso 119 (área)"]).toMatchObject({ quantidade: 63.8, unidade: "m2", nivel: "1. korrus" });
+    expect((por["Piso 119 (área)"].extras.origem_ifc as { area_da_propriedade?: string }).area_da_propriedade).toBe("120_Pindala");
+    // líquida (5,8) vence a bruta (7,1)
+    expect(por["Piso 53-3 (área)"].quantidade).toBe(5.8);
+    // quantidade declarada vence a propriedade
+    expect(por["Piso 200 (área)"].quantidade).toBe(1230);
+    // parede: propriedade de área vazia e "Projected Component/Skin Area" (de camada) não contam
+    expect(por["ARVUND-01 (área)"].quantidade).toBeNull();
+    expect(r.avisos.filter((a) => a.codigo === "QUANTIDADE_AUSENTE")).toHaveLength(1);
+  });
+
   it("recusa vazio, não-IFC, truncado e IFCZIP, com orientação", async () => {
     const vazio = await ler("a.ifc", new Uint8Array());
     expect(ehErro(vazio) && vazio.erro.codigo).toBe("ARQUIVO_VAZIO");
