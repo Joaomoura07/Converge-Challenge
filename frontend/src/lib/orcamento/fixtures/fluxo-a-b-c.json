@@ -52,7 +52,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -106,7 +107,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -149,7 +151,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "un",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": null,
@@ -192,7 +195,8 @@
       "sugestao_motivo": null,
       "sugestao_regra": null,
       "unidade": "m2",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     },
     {
       "aceito": true,
@@ -248,7 +252,8 @@
       "sugestao_motivo": "Para 48 m² de piso costumam faltar argamassa.",
       "sugestao_regra": "porcelanato",
       "unidade": "un",
-      "unidade_preco": null
+      "unidade_preco": null,
+      "validacao": null
     }
   ],
   "orcamento": {

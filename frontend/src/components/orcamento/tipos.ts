@@ -17,6 +17,14 @@ export interface Fonte {
   perto_da_obra?: boolean;
 }
 
+export interface Validacao {
+  status: "confirmado" | "divergente_leve" | "divergente" | "sem_dados";
+  fonte?: string;
+  mediana?: number | null;
+  diferenca_pct?: number | null;
+  n?: number;
+}
+
 export interface ItemOrcamento {
   id: string;
   descricao: string;
@@ -42,6 +50,8 @@ export interface ItemOrcamento {
   motivo?: string | null;
   preco_data?: string | null;
   iteracoes?: number;
+  /** Conferência do preço numa 2ª fonte (Google Shopping): só informa, nunca troca o preço. */
+  validacao?: Validacao | null;
 }
 
 /** "Pesquisar de novo" buscando outro produto (POST /orcamento-itens/{id}/repesquisar com {objetivo}). */
