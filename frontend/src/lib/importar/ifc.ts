@@ -165,32 +165,48 @@ export function lerEntidades(texto: string): Map<number, Entidade> {
 
 // ---------- o que vira item ----------
 
-type Regra = { categoria: string; medida: "area" | "contagem" | "comprimento"; quantidades?: string[]; prefixo?: string };
+type Medida = "area" | "volume" | "comprimento";
+/** Medidas tentadas em ordem; a primeira que o elemento declara vale. `contar` = item discreto (conta em un). */
+type Regra = { categoria: string; contar?: boolean; medidas?: { medida: Medida; nomes: string[] }[]; prefixo?: string; areaPorComprimentoAltura?: boolean };
 
-const AREA_PAREDE = ["NetSideArea", "GrossSideArea", "NetArea", "GrossArea"];
+// Nomes de quantidade aceitos (sem diferenciar maiúsculas). "Projected Component/Skin Area" e "Skin/Component Volume" são do
+// ArchiCAD: ele guarda as medidas por camada (IfcPhysicalComplexQuantity "Component 1…"), não as Qto_* padrão.
+const SKIN_AREA = "Projected Component/Skin Area";
+const AREA_PAREDE = ["NetSideArea", "GrossSideArea", "NetArea", "GrossArea", SKIN_AREA];
 const AREA_PISO = ["NetFloorArea", "GrossFloorArea", "NetArea", "GrossArea"];
-const AREA = ["NetArea", "GrossArea", "NetSideArea", "GrossSideArea"];
+const AREA = ["NetArea", "GrossArea", "NetSideArea", "GrossSideArea", SKIN_AREA];
+const VOLUME = ["NetVolume", "GrossVolume", "Volume", "Skin/Component Volume"];
+const area = (nomes: string[]) => ({ medida: "area" as const, nomes });
+const volume = { medida: "volume" as const, nomes: VOLUME };
 
 /** Classe IFC -> como medir. Classes fora daqui são ignoradas (estrutura espacial, eixos, anotações...). */
 const REGRAS: Record<string, Regra> = {
-  IFCSPACE: { categoria: "Revestimentos", medida: "area", quantidades: AREA_PISO, prefixo: "Piso " },
-  IFCWALL: { categoria: "Alvenaria", medida: "area", quantidades: AREA_PAREDE },
-  IFCWALLSTANDARDCASE: { categoria: "Alvenaria", medida: "area", quantidades: AREA_PAREDE },
-  IFCSLAB: { categoria: "Estrutura", medida: "area", quantidades: AREA },
-  IFCCOVERING: { categoria: "Revestimentos", medida: "area", quantidades: AREA },
-  IFCROOF: { categoria: "Cobertura", medida: "area", quantidades: AREA },
-  IFCCURTAINWALL: { categoria: "Esquadrias", medida: "area", quantidades: AREA },
-  IFCRAILING: { categoria: "Serralheria", medida: "comprimento", quantidades: ["Length"] },
-  IFCDOOR: { categoria: "Esquadrias", medida: "contagem" },
-  IFCWINDOW: { categoria: "Esquadrias", medida: "contagem" },
-  IFCSANITARYTERMINAL: { categoria: "Louças e metais", medida: "contagem" },
-  IFCLIGHTFIXTURE: { categoria: "Elétrica", medida: "contagem" },
-  IFCOUTLET: { categoria: "Elétrica", medida: "contagem" },
-  IFCSWITCHINGDEVICE: { categoria: "Elétrica", medida: "contagem" },
-  IFCFURNISHINGELEMENT: { categoria: "Mobiliário", medida: "contagem" },
-  IFCFURNITURE: { categoria: "Mobiliário", medida: "contagem" },
-  IFCFLOWTERMINAL: { categoria: "Instalações", medida: "contagem" },
-  IFCVALVE: { categoria: "Hidráulica", medida: "contagem" },
+  IFCSPACE: { categoria: "Revestimentos", medidas: [area(AREA_PISO)], prefixo: "Piso " },
+  IFCWALL: { categoria: "Alvenaria", medidas: [area(AREA_PAREDE)], areaPorComprimentoAltura: true },
+  IFCWALLSTANDARDCASE: { categoria: "Alvenaria", medidas: [area(AREA_PAREDE)], areaPorComprimentoAltura: true },
+  IFCSLAB: { categoria: "Estrutura", medidas: [area(AREA)] },
+  IFCCOVERING: { categoria: "Revestimentos", medidas: [area(AREA)] },
+  IFCROOF: { categoria: "Cobertura", medidas: [area(AREA)] },
+  IFCCURTAINWALL: { categoria: "Esquadrias", medidas: [area(AREA)] },
+  IFCRAILING: { categoria: "Serralheria", medidas: [{ medida: "comprimento", nomes: ["Length"] }] },
+  IFCBEAM: { categoria: "Estrutura", medidas: [volume] },
+  IFCCOLUMN: { categoria: "Estrutura", medidas: [volume] },
+  IFCFOOTING: { categoria: "Estrutura", medidas: [volume] },
+  IFCSTAIRFLIGHT: { categoria: "Escadas e rampas", medidas: [area(AREA), volume] },
+  IFCRAMP: { categoria: "Escadas e rampas", medidas: [area(AREA), volume] },
+  IFCRAMPFLIGHT: { categoria: "Escadas e rampas", medidas: [area(AREA), volume] },
+  IFCDOOR: { categoria: "Esquadrias", contar: true },
+  IFCWINDOW: { categoria: "Esquadrias", contar: true },
+  IFCSANITARYTERMINAL: { categoria: "Louças e metais", contar: true },
+  IFCLIGHTFIXTURE: { categoria: "Elétrica", contar: true },
+  IFCOUTLET: { categoria: "Elétrica", contar: true },
+  IFCSWITCHINGDEVICE: { categoria: "Elétrica", contar: true },
+  IFCFURNISHINGELEMENT: { categoria: "Mobiliário", contar: true },
+  IFCFURNITURE: { categoria: "Mobiliário", contar: true },
+  IFCFLOWTERMINAL: { categoria: "Instalações", contar: true },
+  IFCVALVE: { categoria: "Hidráulica", contar: true },
+  IFCTRANSPORTELEMENT: { categoria: "Elevadores e transporte", contar: true },
+  IFCBUILDINGELEMENTPROXY: { categoria: "Elementos genéricos", contar: true },
 };
 
 const NOME_CLASSE: Record<string, string> = {
@@ -198,20 +214,54 @@ const NOME_CLASSE: Record<string, string> = {
   IFCROOF: "Cobertura", IFCCURTAINWALL: "Pele de vidro", IFCRAILING: "Guarda-corpo", IFCDOOR: "Porta", IFCWINDOW: "Janela",
   IFCSANITARYTERMINAL: "Louça sanitária", IFCLIGHTFIXTURE: "Luminária", IFCOUTLET: "Tomada", IFCSWITCHINGDEVICE: "Interruptor",
   IFCFURNISHINGELEMENT: "Mobiliário", IFCFURNITURE: "Mobiliário", IFCFLOWTERMINAL: "Terminal", IFCVALVE: "Registro",
+  IFCBEAM: "Viga", IFCCOLUMN: "Pilar", IFCFOOTING: "Fundação", IFCSTAIRFLIGHT: "Lance de escada", IFCRAMP: "Rampa",
+  IFCRAMPFLIGHT: "Lance de rampa", IFCTRANSPORTELEMENT: "Elevador", IFCBUILDINGELEMENTPROXY: "Elemento genérico",
 };
 
 const texto = (v: Valor | undefined): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-/** Fator para metros (comprimento) e m² (área) a partir de IfcUnitAssignment. Padrão: metro e m². */
-function fatores(ents: Map<number, Entidade>): { comprimento: number; area: number } {
-  const PREFIXO: Record<string, number> = { MILLI: 1e-3, CENTI: 1e-2, DECI: 1e-1, KILO: 1e3 };
-  const f = { comprimento: 1, area: 1 };
-  for (const e of ents.values()) {
-    if (e.tipo !== "IFCSIUNIT") continue;
-    const tipo = ehEnum(e.args[1]) ? e.args[1].enum : "";
-    const pre = ehEnum(e.args[2]) ? PREFIXO[e.args[2].enum] ?? 1 : 1;
-    if (tipo === "LENGTHUNIT") f.comprimento = pre;
-    if (tipo === "AREAUNIT") f.area = pre * pre;
+type Fatores = { comprimento: number; area: number; volume: number };
+const PREFIXO: Record<string, number> = { MICRO: 1e-6, MILLI: 1e-3, CENTI: 1e-2, DECI: 1e-1, HECTO: 1e2, KILO: 1e3, MEGA: 1e6 };
+
+/**
+ * Fator para metros, m² e m³ a partir de IfcUnitAssignment (ou, sem ele, das unidades soltas no arquivo).
+ * Aceita unidade SI com prefixo (milímetro) e unidade convertida (IfcConversionBasedUnit: pé, polegada).
+ */
+function fatores(ents: Map<number, Entidade>): Fatores {
+  const f: Fatores = { comprimento: 1, area: 1, volume: 1 };
+  const EXPOENTE: Record<string, [keyof Fatores, number]> = { LENGTHUNIT: ["comprimento", 1], AREAUNIT: ["area", 2], VOLUMEUNIT: ["volume", 3] };
+  const prefixoSi = (id: Valor | undefined): number | null => {
+    if (!ehRef(id as Valor)) return null;
+    const u = ents.get((id as Ref).ref);
+    if (!u || u.tipo !== "IFCSIUNIT") return null;
+    return ehEnum(u.args[2]) ? PREFIXO[u.args[2].enum] ?? 1 : 1;
+  };
+  const aplicar = (u: Entidade) => {
+    const tipo = ehEnum(u.args[1]) ? u.args[1].enum : "";
+    const alvo = EXPOENTE[tipo];
+    if (!alvo) return;
+    const [campo, exp] = alvo;
+    if (u.tipo === "IFCSIUNIT") {
+      const pre = ehEnum(u.args[2]) ? PREFIXO[u.args[2].enum] ?? 1 : 1;
+      // Comprimento e volume levam o prefixo; a área já vem como SQUARE_METRE (o prefixo, quando existe, vale ao quadrado).
+      f[campo] = pre ** exp;
+    } else if (u.tipo === "IFCCONVERSIONBASEDUNIT" && ehRef(u.args[3])) {
+      const conv = ents.get(u.args[3].ref);
+      const base = conv?.args[0];
+      const valor = typeof base === "number" ? base : base && typeof base === "object" && "valor" in base && typeof base.valor === "number" ? base.valor : null;
+      if (valor === null) return;
+      const pre = prefixoSi(conv?.args[1]) ?? 1;
+      f[campo] = valor * pre ** (exp === 1 ? 1 : exp);
+    }
+  };
+  const atribuicao = [...ents.values()].find((e) => e.tipo === "IFCUNITASSIGNMENT");
+  const lista = atribuicao && Array.isArray(atribuicao.args[0]) ? atribuicao.args[0].filter(ehRef).map((r) => ents.get(r.ref)).filter((x): x is Entidade => !!x) : null;
+  if (lista && lista.length) {
+    for (const u of lista) aplicar(u);
+  } else {
+    const todas = [...ents.values()];
+    for (const u of todas) if (u.tipo === "IFCSIUNIT") aplicar(u);
+    for (const u of todas) if (u.tipo === "IFCCONVERSIONBASEDUNIT") aplicar(u); // a unidade convertida vence a SI solta
   }
   return f;
 }
@@ -240,25 +290,43 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
 
   // Relações: elemento -> quantidades, material e pavimento.
   const quantidadesDe = new Map<number, Map<string, number>>();
+  const camadasDe = new Set<number>(); // elementos cuja área vem de várias camadas (ArchiCAD)
   const materialDe = new Map<number, string>();
   const pavimentoDe = new Map<number, string>();
   const nomeDe = (id: number | undefined) => (id != null ? texto(ents.get(id)?.args[2]) : null);
 
-  const lerQuantidades = (pset: Entidade): Map<string, number> => {
-    const m = new Map<string, number>();
-    const lista = pset.args[5];
-    if (!Array.isArray(lista)) return m;
-    for (const r of lista) {
-      if (!ehRef(r)) continue;
-      const q = ents.get(r.ref);
-      if (!q || !q.tipo.startsWith("IFCQUANTITY")) continue;
+  /**
+   * Lê um IfcElementQuantity. Além das quantidades simples, entra nas IfcPhysicalComplexQuantity (o ArchiCAD guarda as
+   * medidas por camada: "Component 1", "Component 2"…). Nomes repetidos: volume soma as camadas; as demais medidas valem
+   * pelo maior valor (a área da pele de cada camada é a face da parede; somar contaria a parede várias vezes).
+   */
+  const lerQuantidades = (pset: Entidade): { valores: Map<string, number>; porCamadas: boolean } => {
+    const acum = new Map<string, number[]>();
+    const coletar = (id: number, prof: number) => {
+      const q = ents.get(id);
+      if (!q || prof > 4) return;
+      if (q.tipo === "IFCPHYSICALCOMPLEXQUANTITY") {
+        if (Array.isArray(q.args[2])) for (const r of q.args[2]) if (ehRef(r)) coletar(r.ref, prof + 1);
+        return;
+      }
+      if (!q.tipo.startsWith("IFCQUANTITY")) return;
       const n = texto(q.args[0]);
       const v = q.args[3];
-      if (!n || typeof v !== "number") continue;
-      const fator = q.tipo === "IFCQUANTITYAREA" ? unid.area : q.tipo === "IFCQUANTITYLENGTH" ? unid.comprimento : 1;
-      m.set(n, v * fator);
+      if (!n || typeof v !== "number") return;
+      const fator = q.tipo === "IFCQUANTITYAREA" ? unid.area : q.tipo === "IFCQUANTITYLENGTH" ? unid.comprimento : q.tipo === "IFCQUANTITYVOLUME" ? unid.volume : 1;
+      const k = n.toLowerCase();
+      const lista = acum.get(k) ?? [];
+      lista.push(v * fator);
+      acum.set(k, lista);
+    };
+    if (Array.isArray(pset.args[5])) for (const r of pset.args[5]) if (ehRef(r)) coletar(r.ref, 0);
+    const valores = new Map<string, number>();
+    let porCamadas = false;
+    for (const [k, vs] of acum) {
+      valores.set(k, k.includes("volume") ? vs.reduce((x, y) => x + y, 0) : Math.max(...vs));
+      if (vs.length > 1 && k === SKIN_AREA.toLowerCase()) porCamadas = true;
     }
-    return m;
+    return { valores, porCamadas };
   };
 
   // Reserva: muitos exportadores (ArchiCAD, Revit sem "quantidades base") põem a área só numa PROPRIEDADE
@@ -322,7 +390,10 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
       }
       if (pset?.tipo !== "IFCELEMENTQUANTITY") continue;
       const q = lerQuantidades(pset);
-      for (const a of alvos) quantidadesDe.set(a, new Map([...(quantidadesDe.get(a) ?? []), ...q]));
+      for (const a of alvos) {
+        quantidadesDe.set(a, new Map([...(quantidadesDe.get(a) ?? []), ...q.valores]));
+        if (q.porCamadas) camadasDe.add(a);
+      }
     } else if (e.tipo === "IFCRELASSOCIATESMATERIAL" && ehRef(destino)) {
       const m = nomeMaterial(destino.ref);
       if (m) for (const a of alvos) materialDe.set(a, m);
@@ -340,8 +411,11 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     }
   }
 
-  // Agrupa por classe + nome + material + pavimento, na ordem em que aparecem no arquivo.
-  type Grupo = { regra: Regra; classe: string; nome: string; material: string | null; nivel: string | null; n: number; soma: number; semQtd: number; guids: string[]; daPropriedade?: string };
+  // Agrupa por classe + nome + material + pavimento (+ a medida usada), na ordem em que aparecem no arquivo.
+  type Grupo = {
+    regra: Regra; classe: string; nome: string; material: string | null; nivel: string | null; medida: Medida | "contagem";
+    n: number; soma: number; semQtd: number; guids: string[]; daPropriedade?: string; calculadas: number; porCamadas: number;
+  };
   const grupos = new Map<string, Grupo>();
   for (const e of [...ents.values()].sort((a, b) => a.id - b.id)) {
     const regra = REGRAS[e.tipo];
@@ -349,22 +423,55 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     const nomeEl = texto(e.args[2]) ?? (e.tipo === "IFCSPACE" ? texto(e.args[7]) : null) ?? NOME_CLASSE[e.tipo];
     const material = materialDe.get(e.id) ?? null;
     const nivel = pavimentoDe.get(e.id) ?? null;
-    const chave = [e.tipo === "IFCWALLSTANDARDCASE" ? "IFCWALL" : e.tipo, nomeEl, material, nivel].join("|");
-    const g = grupos.get(chave) ?? { regra, classe: e.tipo, nome: nomeEl, material, nivel, n: 0, soma: 0, semQtd: 0, guids: [] };
-    g.n++;
-    if (g.guids.length < 50 && texto(e.args[0])) g.guids.push(texto(e.args[0])!);
-    if (regra.medida !== "contagem") {
+
+    // Qual medida este elemento declara? A primeira da lista da classe que existir; senão, as reservas.
+    let medida: Medida | null = null;
+    let v: number | undefined;
+    let daPropriedade: string | undefined;
+    let calculada = false;
+    let nomeUsado: string | undefined;
+    if (!regra.contar) {
       const qs = quantidadesDe.get(e.id);
-      let v = regra.quantidades?.map((k) => qs?.get(k)).find((x) => typeof x === "number");
-      if (v == null && regra.medida === "area") {
-        const p = areaPorPropriedade.get(e.id);
-        if (p) {
-          v = p.valor;
-          g.daPropriedade = p.nome;
+      for (const m of regra.medidas ?? []) {
+        const nome = m.nomes.find((k) => typeof qs?.get(k.toLowerCase()) === "number");
+        if (nome) {
+          medida = m.medida;
+          v = qs!.get(nome.toLowerCase());
+          nomeUsado = nome;
+          break;
         }
       }
+      if (v == null && regra.areaPorComprimentoAltura) {
+        const comp = qs?.get("length");
+        const alt = qs?.get("height") ?? qs?.get("nominalheight");
+        if (comp != null && alt != null && comp > 0 && alt > 0) {
+          medida = "area";
+          v = comp * alt;
+          calculada = true;
+        }
+      }
+      if (v == null && regra.medidas?.[0]?.medida === "area") {
+        const p = areaPorPropriedade.get(e.id);
+        if (p) {
+          medida = "area";
+          v = p.valor;
+          daPropriedade = p.nome;
+        }
+      }
+    }
+    const medidaGrupo: Medida | "contagem" = regra.contar ? "contagem" : medida ?? regra.medidas?.[0]?.medida ?? "area";
+    const chave = [e.tipo === "IFCWALLSTANDARDCASE" ? "IFCWALL" : e.tipo, nomeEl, material, nivel, medidaGrupo].join("|");
+    const g = grupos.get(chave) ?? { regra, classe: e.tipo, nome: nomeEl, material, nivel, medida: medidaGrupo, n: 0, soma: 0, semQtd: 0, guids: [], calculadas: 0, porCamadas: 0 };
+    g.n++;
+    if (g.guids.length < 50 && texto(e.args[0])) g.guids.push(texto(e.args[0])!);
+    if (!regra.contar) {
       if (v == null) g.semQtd++;
-      else g.soma += v;
+      else {
+        g.soma += v;
+        if (daPropriedade) g.daPropriedade = daPropriedade;
+        if (calculada) g.calculadas++;
+        if (nomeUsado?.toLowerCase() === SKIN_AREA.toLowerCase() && camadasDe.has(e.id)) g.porCamadas++;
+      }
     }
     grupos.set(chave, g);
   }
@@ -372,31 +479,42 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
   const itens: ItemImportado[] = [];
   const avisos: AvisoImportacao[] = [];
   let linha = 0;
+  let elementosPorCamadas = 0;
+  const ROTULO: Record<Medida, { unidade: string; sufixo: string; falta: string }> = {
+    area: { unidade: "m2", sufixo: " (área)", falta: "a área" },
+    volume: { unidade: "m3", sufixo: " (volume)", falta: "o volume" },
+    comprimento: { unidade: "m", sufixo: " (comprimento)", falta: "a medida" },
+  };
   for (const g of grupos.values()) {
     linha++;
     let quantidade: number | null;
     let unidade: string;
     let descricao = g.regra.prefixo ? `${g.regra.prefixo}${g.nome}` : g.nome;
-    if (g.regra.medida === "contagem") {
+    if (g.medida === "contagem") {
       quantidade = g.n;
       unidade = "un";
     } else {
-      unidade = g.regra.medida === "area" ? "m2" : "m";
-      descricao += g.regra.medida === "area" ? " (área)" : " (comprimento)";
+      const rot = ROTULO[g.medida];
+      unidade = rot.unidade;
+      descricao += rot.sufixo;
       if (g.semQtd === g.n) {
         quantidade = null;
         avisos.push({
           linha,
           codigo: "QUANTIDADE_AUSENTE",
-          mensagem: `"${descricao}": o modelo não declara a ${g.regra.medida === "area" ? "área" : "medida"} (exporte o IFC com as quantidades base). Informe a medida.`,
+          mensagem: `"${descricao}": o modelo não declara ${rot.falta} (exporte o IFC com as quantidades base). Informe a medida.`,
         });
       } else {
         quantidade = Math.round(g.soma * 100) / 100;
         if (g.semQtd > 0) {
           avisos.push({ linha, codigo: "QUANTIDADE_AUSENTE", mensagem: `"${descricao}": ${g.semQtd} de ${g.n} elementos sem quantidade declarada; a soma pode estar baixa.` });
         }
+        if (g.calculadas > 0) {
+          avisos.push({ linha, codigo: "EXTRACAO_AMBIGUA", mensagem: `"${descricao}": a área de ${g.calculadas} elemento(s) foi calculada por comprimento × altura (o modelo não declara a área). Confira.` });
+        }
       }
     }
+    elementosPorCamadas += g.porCamadas;
     if (g.material) descricao += ` — ${g.material}`;
     itens.push({
       linha,
@@ -406,6 +524,13 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
       unidade,
       nivel: g.nivel,
       extras: { origem_ifc: { classe: g.classe, elementos: g.n, global_ids: g.guids, esquema, ...(g.material ? { material: g.material } : {}), ...(g.daPropriedade ? { area_da_propriedade: g.daPropriedade } : {}) } },
+    });
+  }
+  if (elementosPorCamadas > 0) {
+    avisos.push({
+      linha: null,
+      codigo: "EXTRACAO_AMBIGUA",
+      mensagem: `${elementosPorCamadas} elemento(s) trazem a área por camada (ArchiCAD). Usei a maior camada de cada elemento para não contar a mesma parede mais de uma vez. Confira.`,
     });
   }
 

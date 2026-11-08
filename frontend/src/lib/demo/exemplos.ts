@@ -16,6 +16,8 @@ export const FORMATOS_DEMO: FormatoDemo[] = [
   { modo: "revit", rotulo: "TXT do Revit" },
   { modo: "pdf", rotulo: "PDF com texto" },
   { modo: "dxf", rotulo: "Planta DXF" },
+  { modo: "ifc", rotulo: "Modelo IFC (BIM)" },
+  { modo: "skp", rotulo: "SketchUp (SKP)" },
 ];
 
 export const EXEMPLOS_DEMO: ExemploDemo[] = [
@@ -31,6 +33,10 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
   { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, escritório" },
   { arquivo: "teste_1.dxf", modo: "dxf", obra: "Planta baixa simples (cm)" },
   { arquivo: "teste_2.dxf", modo: "dxf", obra: "Planta exportada do AutoCAD" },
+  { arquivo: "teste_1.ifc", modo: "ifc", obra: "Apartamento mínimo (IFC4)" },
+  { arquivo: "teste_2.ifc", modo: "ifc", obra: "Casa com materiais (IFC4, mm)" },
+  { arquivo: "teste_1.skp", modo: "skp", obra: "Banheiro social (SketchUp)" },
+  { arquivo: "teste_2.skp", modo: "skp", obra: "Escritório, Ilha do Leite (SketchUp)" },
 ];
 
 /** Um MODELO por formato: o arquivo-padrão que mostra ao usuário como montar a lista para enviar ao sistema.
@@ -41,6 +47,8 @@ export const MODELOS_DEMO: ExemploDemo[] = [
   { arquivo: "MODELO.txt", modo: "revit", obra: "Modelo de tabela exportada do Revit" },
   { arquivo: "MODELO.pdf", modo: "pdf", obra: "Modelo de lista em PDF com texto" },
   { arquivo: "MODELO.dxf", modo: "dxf", obra: "Modelo de planta DXF" },
+  { arquivo: "MODELO.ifc", modo: "ifc", obra: "Modelo de projeto BIM em IFC" },
+  { arquivo: "MODELO.skp", modo: "skp", obra: "Modelo de projeto SketchUp" },
 ];
 
 const MODO_POR_EXTENSAO: Record<string, FormatoDemo["modo"]> = {

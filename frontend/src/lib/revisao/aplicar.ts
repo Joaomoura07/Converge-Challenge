@@ -1,7 +1,7 @@
 // Aplicação das propostas na lista. Funções puras: devolvem uma lista nova ou null; a lista original nunca é alterada.
 
 import type { Linha } from "../lista";
-import type { ComplementoSugerido, CorrecaoSugerida, ItemParaRevisao } from "./tipos";
+import type { ComplementoSugerido, CorrecaoSugerida, ErroRevisao, ItemParaRevisao } from "./tipos";
 
 const mesmo = (a: string, b: string) => a.trim() === b.trim();
 
@@ -72,4 +72,23 @@ export function complementoParaLinha(c: ComplementoSugerido, id: string): Linha 
       estimativaConsumo: c.estimativa_consumo,
     },
   };
+}
+
+/**
+ * "Aceitar todas as correções": simula a lista em sequência e devolve só as correções que ainda se aplicam.
+ * Se duas correções se atropelam (mexem na mesma célula ou uma remove a linha da outra), a primeira vence e a
+ * segunda NÃO entra: continua na tela para a pessoa decidir. Correção sem proposta automática também fica de fora.
+ */
+export function planejarAceiteTodas(linhas: Linha[], erros: ErroRevisao[]): { aplicar: ErroRevisao[]; restam: ErroRevisao[] } {
+  let atual = linhas;
+  const aplicar: ErroRevisao[] = [];
+  const restam: ErroRevisao[] = [];
+  for (const e of erros) {
+    const depois = e.correcao ? aplicarCorrecao(atual, e.correcao) : null;
+    if (depois) {
+      atual = depois;
+      aplicar.push(e);
+    } else restam.push(e);
+  }
+  return { aplicar, restam };
 }
