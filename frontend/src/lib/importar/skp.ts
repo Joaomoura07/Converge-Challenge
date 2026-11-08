@@ -40,7 +40,7 @@ const nomeUtil = (nome: string) => {
   const limpo = nome.trim();
   return /^(?:(?:group|grupo|component|componente)(?:\s*#?\d+)?|untitled|sem título)$/i.test(limpo) ? "" : limpo;
 };
-const pedeMedida = /\b(pisos?|floor|paredes?|walls?|lajes?|slabs?|forros?|ceilings?|revestimentos?|rodap[eé]s?|tubos?|tubula[cç][aã]o|pipes?)\b/i;
+const pedeMedida = /\b(pisos?|floors?|paredes?|walls?|lajes?|slabs?|forros?|ceilings?|revestimentos?|rodap[eé]s?|tubos?|tubula[cç][aã]o|pipes?|coberturas?|telhados?|roofs?|vigas?|beams?|pilares?|columns?|concreto|concrete|pintura|painting)\b/i;
 
 function montarLista(modelo: SkpModel, arquivo: string): ResultadoImportacao {
   const grupos = new Map<string, Grupo>();

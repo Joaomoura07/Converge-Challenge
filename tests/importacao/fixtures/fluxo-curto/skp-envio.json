@@ -1,0 +1,55 @@
+{
+  "orcamento_id": "11111111-1111-4111-8111-111111111111",
+  "obra": {
+    "nome": "Teste sintético de importação",
+    "cep": "51020000",
+    "orcamento_cliente": 10000
+  },
+  "origem": {
+    "tipo": "arquivo",
+    "modo": "skp"
+  },
+  "itens": [
+    {
+      "id": "item-1",
+      "linha": 1,
+      "categoria": "Esquadrias",
+      "descricao": "Porta de madeira",
+      "quantidade": 3,
+      "unidade": "un",
+      "origem_item": "arquivo",
+      "descricao_original": "Porta de madeira",
+      "nivel": null,
+      "extras": {
+        "origem_skp": {
+          "definicao": 12,
+          "ocorrencias": 2,
+          "referencias": [
+            "0:1",
+            "0:2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "item-2",
+      "linha": 2,
+      "categoria": null,
+      "descricao": "Cobertura cerâmica",
+      "quantidade": 7.5,
+      "unidade": "m2",
+      "origem_item": "arquivo",
+      "descricao_original": "Cobertura cerâmica",
+      "nivel": null,
+      "extras": {
+        "origem_skp": {
+          "definicao": 37,
+          "ocorrencias": 1,
+          "referencias": [
+            "0:3"
+          ]
+        }
+      }
+    }
+  ]
+}

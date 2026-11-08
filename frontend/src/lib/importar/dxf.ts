@@ -12,14 +12,26 @@ import type { AvisoImportacao, ItemImportado, ResultadoImportacao } from "./tipo
 // $INSUNITS -> metros por unidade de desenho
 const METROS: Record<number, number> = { 1: 0.0254, 2: 0.3048, 4: 0.001, 5: 0.01, 6: 1, 7: 1000 };
 
-type P = { x: number; y: number };
+type P = { x: number; y: number; bulge?: number };
 type Grupo = { chave: string; nome: string; tipo: "bloco" | "area" | "comprimento"; valor: number; n: number; handles: string[] };
 
-const area = (v: P[]) => Math.abs(v.reduce((s, p, i) => s + (p.x * v[(i + 1) % v.length].y - v[(i + 1) % v.length].x * p.y), 0)) / 2;
+/** DXF bulge = tan(ângulo/4). A área do segmento circular é orientada como o arco. */
+function arco(a: P, b: P) {
+  const corda = Math.hypot(b.x - a.x, b.y - a.y);
+  const bulge = a.bulge ?? 0;
+  if (Math.abs(bulge) < 1e-8 || !corda) return { comprimento: corda, area: 0 };
+  const angulo = 4 * Math.atan(bulge);
+  const raio = corda * (1 + bulge * bulge) / (4 * Math.abs(bulge));
+  return { comprimento: Math.abs(raio * angulo), area: raio * raio * (angulo - Math.sin(angulo)) / 2 };
+}
+const area = (v: P[]) => Math.abs(v.reduce((s, p, i) => {
+  const prox = v[(i + 1) % v.length];
+  return s + (p.x * prox.y - prox.x * p.y) / 2 + arco(p, prox).area;
+}, 0));
 const comprimento = (v: P[], fechada: boolean) => {
   let s = 0;
-  for (let i = 0; i < v.length - 1; i++) s += Math.hypot(v[i + 1].x - v[i].x, v[i + 1].y - v[i].y);
-  if (fechada && v.length > 2) s += Math.hypot(v[0].x - v[v.length - 1].x, v[0].y - v[v.length - 1].y);
+  for (let i = 0; i < v.length - 1; i++) s += arco(v[i], v[i + 1]).comprimento;
+  if (fechada && v.length > 1) s += arco(v[v.length - 1], v[0]).comprimento;
   return s;
 };
 
@@ -68,7 +80,7 @@ export function importarDxf({ nome, bytes }: { nome: string; bytes: Uint8Array }
     } else if (e.type === "LWPOLYLINE" || e.type === "POLYLINE") {
       const v = (e.vertices as P[] | undefined) ?? [];
       if (v.length < 2) continue;
-      const fechada = Boolean(e.shape) && v.length >= 3;
+      const fechada = Boolean(e.shape) && (v.length >= 3 || v.some(p => p.bulge));
       if (fechada) somar(`a:${layer}`, layer, "area", area(v), handle);
       else somar(`c:${layer}`, layer, "comprimento", comprimento(v, false), handle);
     } else if (e.type === "LINE") {
@@ -101,6 +113,10 @@ export function importarDxf({ nome, bytes }: { nome: string; bytes: Uint8Array }
         const bruto = g.tipo === "area" ? g.valor * metros * metros : g.valor * metros;
         quantidade = Math.round(bruto * 100) / 100;
       }
+    }
+    if (quantidade !== null && (!Number.isFinite(quantidade) || quantidade <= 0)) {
+      quantidade = null;
+      avisos.push({ linha, codigo: "QUANTIDADE_AUSENTE", mensagem: `Layer "${g.nome}": a medida não é positiva ou finita. Confira a geometria e informe a quantidade.` });
     }
     if (!m.conhecido) avisos.push({ linha, codigo: "EXTRACAO_AMBIGUA", mensagem: `"${g.nome}": não sei que material é; descreva-o.` });
     itens.push({

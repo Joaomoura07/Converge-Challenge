@@ -33,6 +33,10 @@ export type Linha = {
   categoria: string;
   /** linha do arquivo importado; ausente nas linhas digitadas */
   linhaOrigem?: number;
+  /** Rastreabilidade do arquivo preservada mesmo depois da revisão e do reenvio. */
+  descricaoOriginal?: string;
+  nivel?: string | null;
+  extras?: Record<string, unknown>;
   /** presente só nas linhas criadas por um complemento aceito */
   sugerida?: Sugerida;
 };

@@ -223,36 +223,40 @@ const texto = (v: Valor | undefined): string | null => (typeof v === "string" &&
 type Fatores = { comprimento: number; area: number; volume: number };
 const PREFIXO: Record<string, number> = { MICRO: 1e-6, MILLI: 1e-3, CENTI: 1e-2, DECI: 1e-1, HECTO: 1e2, KILO: 1e3, MEGA: 1e6 };
 
+/** A unidade da quantidade/propriedade prevalece sobre UnitsInContext. Referência inválida não vira metro. */
+function fatorUnidade(ents: Map<number, Entidade>, id: number, medida: Medida, caminho = new Set<number>()): number | null {
+  if (caminho.has(id) || caminho.size >= 16) return null;
+  caminho.add(id);
+  const u = ents.get(id);
+  const tipos = { comprimento: "LENGTHUNIT", area: "AREAUNIT", volume: "VOLUMEUNIT" };
+  const nomes = { comprimento: "METRE", area: "SQUARE_METRE", volume: "CUBIC_METRE" };
+  if (!u || !ehEnum(u.args[1]) || u.args[1].enum !== tipos[medida]) return null;
+  if (u.tipo === "IFCSIUNIT") {
+    if (!ehEnum(u.args[3]) || u.args[3].enum !== nomes[medida]) return null;
+    const pre = ehEnum(u.args[2]) ? PREFIXO[u.args[2].enum] : 1;
+    return pre === undefined ? null : pre ** ({ comprimento: 1, area: 2, volume: 3 }[medida]);
+  }
+  if (u.tipo !== "IFCCONVERSIONBASEDUNIT" || !ehRef(u.args[3])) return null;
+  const conv = ents.get(u.args[3].ref);
+  const base = conv?.args[0];
+  const valor = typeof base === "number" ? base : base && typeof base === "object" && "valor" in base ? base.valor : null;
+  if (typeof valor !== "number" || !Number.isFinite(valor) || valor <= 0 || !ehRef(conv?.args[1] as Valor)) return null;
+  const fator = fatorUnidade(ents, (conv!.args[1] as Ref).ref, medida, caminho);
+  return fator === null ? null : valor * fator;
+}
+
 /**
  * Fator para metros, m² e m³ a partir de IfcUnitAssignment (ou, sem ele, das unidades soltas no arquivo).
  * Aceita unidade SI com prefixo (milímetro) e unidade convertida (IfcConversionBasedUnit: pé, polegada).
  */
 function fatores(ents: Map<number, Entidade>): Fatores {
   const f: Fatores = { comprimento: 1, area: 1, volume: 1 };
-  const EXPOENTE: Record<string, [keyof Fatores, number]> = { LENGTHUNIT: ["comprimento", 1], AREAUNIT: ["area", 2], VOLUMEUNIT: ["volume", 3] };
-  const prefixoSi = (id: Valor | undefined): number | null => {
-    if (!ehRef(id as Valor)) return null;
-    const u = ents.get((id as Ref).ref);
-    if (!u || u.tipo !== "IFCSIUNIT") return null;
-    return ehEnum(u.args[2]) ? PREFIXO[u.args[2].enum] ?? 1 : 1;
-  };
+  const CAMPOS: Record<string, Medida> = { LENGTHUNIT: "comprimento", AREAUNIT: "area", VOLUMEUNIT: "volume" };
   const aplicar = (u: Entidade) => {
     const tipo = ehEnum(u.args[1]) ? u.args[1].enum : "";
-    const alvo = EXPOENTE[tipo];
-    if (!alvo) return;
-    const [campo, exp] = alvo;
-    if (u.tipo === "IFCSIUNIT") {
-      const pre = ehEnum(u.args[2]) ? PREFIXO[u.args[2].enum] ?? 1 : 1;
-      // Comprimento e volume levam o prefixo; a área já vem como SQUARE_METRE (o prefixo, quando existe, vale ao quadrado).
-      f[campo] = pre ** exp;
-    } else if (u.tipo === "IFCCONVERSIONBASEDUNIT" && ehRef(u.args[3])) {
-      const conv = ents.get(u.args[3].ref);
-      const base = conv?.args[0];
-      const valor = typeof base === "number" ? base : base && typeof base === "object" && "valor" in base && typeof base.valor === "number" ? base.valor : null;
-      if (valor === null) return;
-      const pre = prefixoSi(conv?.args[1]) ?? 1;
-      f[campo] = valor * pre ** (exp === 1 ? 1 : exp);
-    }
+    const campo = CAMPOS[tipo];
+    if (!campo) return;
+    f[campo] = fatorUnidade(ents, u.id, campo) ?? NaN;
   };
   const atribuicao = [...ents.values()].find((e) => e.tipo === "IFCUNITASSIGNMENT");
   const lista = atribuicao && Array.isArray(atribuicao.args[0]) ? atribuicao.args[0].filter(ehRef).map((r) => ents.get(r.ref)).filter((x): x is Entidade => !!x) : null;
@@ -312,8 +316,11 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
       if (!q.tipo.startsWith("IFCQUANTITY")) return;
       const n = texto(q.args[0]);
       const v = q.args[3];
-      if (!n || typeof v !== "number") return;
-      const fator = q.tipo === "IFCQUANTITYAREA" ? unid.area : q.tipo === "IFCQUANTITYLENGTH" ? unid.comprimento : q.tipo === "IFCQUANTITYVOLUME" ? unid.volume : 1;
+      if (!n || typeof v !== "number" || !Number.isFinite(v) || v <= 0) return;
+      const medidas: Record<string, Medida> = { IFCQUANTITYAREA: "area", IFCQUANTITYLENGTH: "comprimento", IFCQUANTITYVOLUME: "volume" };
+      const medida = medidas[q.tipo];
+      const fator = medida ? (ehRef(q.args[2]) ? fatorUnidade(ents, q.args[2].ref, medida) : unid[medida]) : 1;
+      if (fator === null || !Number.isFinite(v * fator) || fator <= 0) return;
       const k = n.toLowerCase();
       const lista = acum.get(k) ?? [];
       lista.push(v * fator);
@@ -341,14 +348,17 @@ export function importarIfc({ nome, bytes }: { nome: string; bytes: Uint8Array }
     const v = prop.args[2];
     let valor: number | null = null;
     if (v && typeof v === "object" && "tipo" in v) {
-      if (typeof v.valor === "number") valor = v.tipo === "IFCAREAMEASURE" ? v.valor * unid.area : v.valor;
+      if (typeof v.valor === "number") {
+        const fator = ehRef(prop.args[3]) ? fatorUnidade(ents, prop.args[3].ref, "area") : v.tipo === "IFCAREAMEASURE" ? unid.area : 1;
+        valor = fator === null ? null : v.valor * fator;
+      }
       else if (typeof v.valor === "string") {
         const s = v.valor.replace(/\s|m²|m2/gi, "");
         const num = /^\d+(\.\d{3})*(,\d+)?$/.test(s) ? Number(s.replace(/\./g, "").replace(",", ".")) : Number(s);
         valor = Number.isFinite(num) ? num : null;
       }
     }
-    if (valor == null || valor <= 0) return null;
+    if (valor == null || !Number.isFinite(valor) || valor <= 0) return null;
     // "Net/Neto/Liquida" vale mais que a área bruta; o resto empata e vence o primeiro.
     const prioridade = /(net|neto|liquid|netto)/.test(n) ? 2 : /(gross|bruta|brutto|ehitatav|hoonealune)/.test(n) ? 0 : 1;
     return { valor, nome, prioridade };

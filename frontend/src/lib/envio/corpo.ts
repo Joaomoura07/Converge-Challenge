@@ -12,6 +12,9 @@ export type ItemEnvio = {
   quantidade: number;
   unidade: string;
   origem_item: "arquivo" | "manual";
+  descricao_original?: string;
+  nivel?: string | null;
+  extras?: Record<string, unknown>;
   // complemento da C já decidido pelo arquiteto (só aceitos chegam aqui)
   sugerido?: boolean;
   sugestao_aceita_id?: string;
@@ -45,6 +48,9 @@ export function montarCorpo(args: { orcamentoId: string; obra: Obra; linhas: Lin
       quantidade: v.quantidade,
       unidade: v.unidade,
       origem_item: l.linhaOrigem !== undefined ? "arquivo" : "manual",
+      ...(l.descricaoOriginal !== undefined ? { descricao_original: l.descricaoOriginal } : {}),
+      ...(l.nivel !== undefined ? { nivel: l.nivel } : {}),
+      ...(l.extras !== undefined ? { extras: l.extras } : {}),
     };
     if (l.sugerida) {
       item.sugerido = true;
