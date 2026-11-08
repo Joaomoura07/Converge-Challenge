@@ -25,7 +25,8 @@ export function ExemplosDownload() {
     <section className="demo-exemplos" aria-labelledby="demo-exemplos-titulo">
       <div className="demo-exemplos__cabeca">
         <h3 id="demo-exemplos-titulo">Não tem uma lista à mão? Baixe um exemplo</h3>
-        <p>O arquivo <strong>MODELO</strong> de cada formato mostra o padrão para montar a sua lista. Os testes são obras fictícias de Recife: baixe e arraste para a área abaixo.</p>
+        <p>Comece pelo <strong>teste_1</strong>: materiais especificados em uma lista curta. O <strong>teste_2</strong> mostra revisão, complementos e perguntas ao arquiteto. São exemplos fictícios de 3 a 5 itens, sem preços prontos.</p>
+        <p>Use o <strong>MODELO</strong> para montar sua lista. Nos modelos DXF e SKP, confira as medidas e descreva o que falta. <a href={`${PASTA_DEMO}/ROTEIRO.md`} download>Baixar roteiro da demonstração</a>.</p>
       </div>
       <div className="demo-exemplos__grupos">
         {FORMATOS_DEMO.map((f) => (
@@ -55,6 +56,7 @@ export function ExemplosDownload() {
                      aria-label={`Baixar ${e.arquivo}: ${e.obra}`}>
                     <IconeArquivo />
                     <span className="demo-chip__nome">{e.arquivo}</span>
+                    <span className="demo-chip__selo">{e.arquivo.startsWith("teste_1") ? "pesquisa" : "revisão"}</span>
                     <IconeBaixar />
                   </a>
                 </li>

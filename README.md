@@ -9,6 +9,7 @@ de especificação, onde comprar e se cabe no orçamento do cliente.
 - **Repositório principal:** https://github.com/Joaomoura07/Converge-Challenge
 - **Site:** https://converge-challenge-3k6i.vercel.app
 - **API:** https://orca-api-x7k2.vercel.app (`/health`, `/docs`)
+- **Demonstração:** [roteiro dos exemplos para os jurados](frontend/public/exemplos/demo/ROTEIRO.md). Comece pelo `teste_1`: de três a cinco materiais especificados, sem preços pré-preenchidos.
 
 ## O problema
 

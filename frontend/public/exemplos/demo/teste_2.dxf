@@ -1,269 +1,95 @@
-  0
+0
 SECTION
-  2
-HEADER
-  9
-$ACADVER
-  1
-AC1015
-  9
-$INSUNITS
- 70
-4
-  9
-$DWGCODEPAGE
-  3
-ANSI_1252
-  0
-ENDSEC
-  0
-SECTION
-  2
-TABLES
-  0
-TABLE
-  2
-LAYER
- 70
-3
-  0
-LAYER
-  5
-11
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-0
- 70
-0
- 62
-7
-  6
-Continuous
-  0
-LAYER
-  5
-111
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-PAREDES_EXT
- 70
-0
- 62
-7
-  6
-Continuous
-  0
-LAYER
-  5
-112
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-PISO_COZINHA
- 70
-0
- 62
-7
-  6
-Continuous
-  0
-ENDTAB
-  0
-ENDSEC
-  0
-SECTION
-  2
-BLOCKS
-  0
-BLOCK
-  5
-20
-  8
-0
-  2
-PORTA_90
- 70
-0
- 10
-0
- 20
-0
- 30
-0
-  0
-LINE
-  5
-21
-  8
-0
- 10
-0
- 20
-0
- 30
-0
- 11
-900
- 21
-0
- 31
-0
-  0
-ENDBLK
-  5
-22
-  8
-0
-  0
-ENDSEC
-  0
-SECTION
-  2
-ENTITIES
-  0
-INSERT
-  5
-A0
-  8
-Esquadrias
-  2
-PORTA_90
- 10
-0
- 20
-0
- 30
-0
- 70
-3
- 71
 2
-  0
-POLYLINE
-  5
-B0
-  8
-PISO_COZINHA
- 66
+HEADER
+9
+$ACADVER
 1
- 70
-1
-  0
-VERTEX
-  5
-B1
-  8
-PISO_COZINHA
- 10
+AC1021
+9
+$INSUNITS
+70
+6
 0
- 20
+ENDSEC
 0
- 30
+SECTION
+2
+BLOCKS
 0
-  0
-VERTEX
-  5
-B1
-  8
-PISO_COZINHA
- 10
-3000
- 20
-0
- 30
-0
-  0
-VERTEX
-  5
-B1
-  8
-PISO_COZINHA
- 10
-3000
- 20
-4000
- 30
-0
-  0
-VERTEX
-  5
-B1
-  8
-PISO_COZINHA
- 10
-0
- 20
-4000
- 30
-0
-  0
-SEQEND
-  5
-B9
-  8
-PISO_COZINHA
-  0
-LWPOLYLINE
-  5
-C0
-  8
-PAREDES_EXT
- 90
-5
- 70
-0
- 10
-0
- 20
-0
- 10
-5000
- 20
-0
- 10
-5000
- 20
-6000
- 10
-0
- 20
-6000
- 10
-0
- 20
-0
-  0
-LINE
-  5
-D0
-  8
-PAREDES_EXT
- 10
-0
- 20
-0
- 30
-0
- 11
-0
- 21
-2500
- 31
-0
-0
-LWPOLYLINE
-5
-C9
+BLOCK
 8
-PORTAS
+0
+2
+PORTA
+70
+0
+10
+0
+20
+0
+30
+0
+3
+PORTA
+0
+LINE
+8
+0
+10
+0
+20
+0
+11
+0.2
+21
+0.2
+0
+ENDBLK
+8
+0
+0
+BLOCK
+8
+0
+2
+TOMADA
+70
+0
+10
+0
+20
+0
+30
+0
+3
+TOMADA
+0
+LINE
+8
+0
+10
+0
+20
+0
+11
+0.2
+21
+0.2
+0
+ENDBLK
+8
+0
+0
+ENDSEC
+0
+SECTION
+2
+ENTITIES
+0
+LWPOLYLINE
+8
+PISO
 90
 4
 70
@@ -273,18 +99,102 @@ PORTAS
 20
 0
 10
-800
+6
 20
 0
 10
-800
+6
 20
-2100
+3
 10
 0
 20
-2100
-  0
+3
+0
+LINE
+8
+RODAPE
+10
+0
+20
+0
+11
+18
+21
+0
+0
+INSERT
+8
+0
+2
+PORTA
+10
+0
+20
+0
+30
+0
+0
+INSERT
+8
+0
+2
+PORTA
+10
+1
+20
+0
+30
+0
+0
+INSERT
+8
+0
+2
+TOMADA
+10
+0
+20
+1
+30
+0
+0
+INSERT
+8
+0
+2
+TOMADA
+10
+1
+20
+1
+30
+0
+0
+INSERT
+8
+0
+2
+TOMADA
+10
+2
+20
+1
+30
+0
+0
+INSERT
+8
+0
+2
+TOMADA
+10
+3
+20
+1
+30
+0
+0
 ENDSEC
-  0
+0
 EOF

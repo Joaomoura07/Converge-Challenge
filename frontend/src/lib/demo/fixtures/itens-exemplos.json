@@ -1,708 +1,432 @@
 {
  "teste_1.csv": [
   {
-   "descricao": "Fundo preparador Suvinil",
-   "quantidade": 1450,
-   "unidade": "m2",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Massa acrílica Coral",
-   "quantidade": 220,
-   "unidade": "m2",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Metalatex verde oliva",
-   "quantidade": 900,
-   "unidade": "m2",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Decor Colors vermelho cardinal",
-   "quantidade": 180,
-   "unidade": "m2",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Esmalte Suvinil preto",
-   "quantidade": 120,
-   "unidade": "m2",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Fita 3M azul 2090",
-   "quantidade": 40,
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 6,
    "unidade": "un",
-   "categoria": "Pintura"
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Rolo Atlas 23 cm",
-   "quantidade": 30,
-   "unidade": "un",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Lixa Norton 150",
-   "quantidade": 200,
-   "unidade": "un",
-   "categoria": "Pintura"
-  },
-  {
-   "descricao": "Castelatto concreto 40x80",
-   "quantidade": 38,
-   "unidade": "m2",
-   "categoria": "Revestimentos e argamassas"
-  },
-  {
-   "descricao": "Quartzolit AC-III",
-   "quantidade": 38,
-   "unidade": "m2",
-   "categoria": "Revestimentos e argamassas"
-  },
-  {
-   "descricao": "Sikatop 107",
-   "quantidade": 85,
-   "unidade": "m2",
-   "categoria": "Estrutura e alvenaria"
-  },
-  {
-   "descricao": "Vedacit",
+   "descricao": "Spot Stella 7W 3000K",
    "quantidade": 4,
    "unidade": "un",
-   "categoria": "Estrutura e alvenaria"
+   "categoria": "Iluminação"
+  },
+  {
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
+   "unidade": "un",
+   "categoria": "Hidráulica"
+  },
+  {
+   "descricao": "Argamassa Quartzolit AC-III cinza 20kg",
+   "quantidade": 40,
+   "unidade": "kg",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 18,
+   "unidade": "l",
+   "categoria": "Pintura"
   }
  ],
  "teste_2.csv": [
   {
-   "descricao": "Roca_Debba_Suspensa",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Cuba_De_Apoio_Deca",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Torneira_Docol_Bica_Alta",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Ducha_Docol_20_Cm",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Base_Registro_Deca_3_4",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Acabamento_Registro_Deca",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Caixa_Sifonada_Tigre_150",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Ralo_Linear_Tigre_50",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Assento_Astra_Soft_Close",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Box_Temperado_1_20",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "ESQUADRIAS"
-  },
-  {
-   "descricao": "Spot_Stella_7W",
-   "quantidade": 3,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
-  },
-  {
-   "descricao": "Interruptor_Pial_Plus",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
-  },
-  {
-   "descricao": "Tomada_Liz_10A",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
-  },
-  {
-   "descricao": "Caixa_Sifonada_Tigre_150",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  }
- ],
- "teste_1.xlsx": [
-  {
-   "descricao": "Porcelanato Portobello Cimento 90x90 acetinado",
-   "quantidade": 120,
+   "descricao": "Porcelanato Portobello 60x60cm polido",
+   "quantidade": 18,
    "unidade": "m2",
    "categoria": "Revestimentos"
   },
   {
-   "descricao": "Cimento CP-II Votoran 50 kg",
-   "quantidade": 20,
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 4,
    "unidade": "m2",
-   "categoria": "Alvenaria"
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Tinta acrílica branca fosca",
-   "quantidade": 240,
+   "descricao": "Tinta acrílica fosca branca",
+   "quantidade": 30,
    "unidade": "m2",
    "categoria": "Pintura"
   },
   {
-   "descricao": "Luminária LED de embutir 60x60 Taschibra 40W",
-   "quantidade": 18,
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 4,
    "unidade": "un",
-   "categoria": "Elétrica"
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Interruptor Pial Plus 1 tecla",
-   "quantidade": 12,
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 2,
    "unidade": "un",
-   "categoria": "Elétrica"
-  },
+   "categoria": "Iluminação"
+  }
+ ],
+ "teste_1.xlsx": [
   {
-   "descricao": "Tomada Pial Plus 10A",
-   "quantidade": 30,
-   "unidade": "un",
-   "categoria": "Elétrica"
-  },
-  {
-   "descricao": "Divisória de vidro temperado 10 mm",
-   "quantidade": 24,
-   "unidade": "m2",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Porta de madeira semi-oca 80x210",
+   "descricao": "Tomada Tramontina Liz branca 20A",
    "quantidade": 6,
    "unidade": "un",
-   "categoria": "Esquadrias"
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Bacia sanitária Deca Vogue Plus com caixa acoplada",
-   "quantidade": 2,
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
    "unidade": "un",
-   "categoria": "Louças e metais"
+   "categoria": "Iluminação"
   },
   {
-   "descricao": "Cuba de embutir Deca L.37 branca",
-   "quantidade": 2,
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
    "unidade": "un",
-   "categoria": "Louças e metais"
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Torneira de mesa Docol Stillo cromada",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "Louças e metais"
+   "descricao": "Argamassa Quartzolit AC-III cinza 20kg",
+   "quantidade": 40,
+   "unidade": "kg",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 18,
+   "unidade": "l",
+   "categoria": "Pintura"
   }
  ],
  "teste_2.xlsx": [
   {
-   "descricao": "Arandela_Taschibra_Preta",
-   "quantidade": 10,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
+   "descricao": "Porcelanato Portobello 60x60cm polido",
+   "quantidade": 18,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
   },
   {
-   "descricao": "Lampada_Philips_9W",
-   "quantidade": 40,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 4,
+   "unidade": "m2",
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Fonte_12V_5A",
-   "quantidade": 6,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
+   "descricao": "Tinta acrílica fosca branca",
+   "quantidade": 30,
+   "unidade": "m2",
+   "categoria": "Pintura"
   },
   {
-   "descricao": "Cuba_Tramontina_Morgana",
-   "quantidade": 3,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Aquecedor_Rinnai_21_L",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Caixa_Sifonada_Tigre_150",
-   "quantidade": 6,
-   "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Ralo_Linear_Tigre_50",
+   "descricao": "Joelho Tigre soldável 25mm",
    "quantidade": 4,
    "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Celite_Azalea",
-   "quantidade": 4,
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 2,
    "unidade": "un",
-   "categoria": "LOUCAS_METAIS"
-  },
-  {
-   "descricao": "Split_LG_18000",
-   "quantidade": 5,
-   "unidade": "un",
-   "categoria": "CLIMATIZACAO"
-  },
-  {
-   "descricao": "Lampada_Philips_9W",
-   "quantidade": 12,
-   "unidade": "un",
-   "categoria": "ILUMINACAO_ELETRICA"
+   "categoria": "Iluminação"
   }
  ],
  "teste_1.txt": [
   {
-   "descricao": "Deca Vogue Plus : Padrão",
-   "quantidade": 2,
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 6,
    "unidade": "un",
-   "categoria": null
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Hydra Max : Padrão",
-   "quantidade": 3,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Lorenzetti Acqua Duo : Padrão",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Caixa sifonada Tigre 150 : Padrão",
+   "descricao": "Spot Stella 7W 3000K",
    "quantidade": 4,
    "unidade": "un",
-   "categoria": null
+   "categoria": "Iluminação"
   },
   {
-   "descricao": "Bacia sanitária com caixa acoplada : Padrão",
-   "quantidade": 1,
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
    "unidade": "un",
-   "categoria": null
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Caixa sifonada Tigre 150 : Padrão",
-   "quantidade": 4,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Caixa d'água Fortlev 1000 : Padrão",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Joelho Tigre 25 : Padrão",
+   "descricao": "Argamassa Quartzolit AC-III cinza 20kg",
    "quantidade": 40,
-   "unidade": "un",
-   "categoria": null
+   "unidade": "kg",
+   "categoria": "Revestimentos"
   },
   {
-   "descricao": "Celite Azalea : Padrão",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": null
+   "descricao": "Tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 18,
+   "unidade": "l",
+   "categoria": "Pintura"
   }
  ],
  "teste_2.txt": [
   {
-   "descricao": "PAREDE - Metalatex verde oliva",
-   "quantidade": 140,
+   "descricao": "Porcelanato Portobello 60x60cm polido",
+   "quantidade": 18,
    "unidade": "m2",
-   "categoria": null
+   "categoria": "Revestimentos"
   },
   {
-   "descricao": "PAREDE - Massa acrílica Coral",
-   "quantidade": 140,
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 4,
    "unidade": "m2",
-   "categoria": null
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "PAREDE - Selador Coral",
-   "quantidade": 520,
+   "descricao": "Tinta acrílica fosca branca",
+   "quantidade": 30,
    "unidade": "m2",
-   "categoria": null
+   "categoria": "Pintura"
   },
   {
-   "descricao": "PAREDE - Coral Rende Muito branco",
-   "quantidade": 260,
-   "unidade": "m2",
-   "categoria": null
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "PAREDE - Massa corrida Suvinil",
-   "quantidade": 380,
-   "unidade": "m2",
-   "categoria": null
-  },
-  {
-   "descricao": "PAREDE - Massa corrida Suvinil",
-   "quantidade": 380,
-   "unidade": "m2",
-   "categoria": null
-  },
-  {
-   "descricao": "PAREDE - Tinta acrílica branca fosca",
-   "quantidade": 45,
-   "unidade": "m2",
-   "categoria": null
-  },
-  {
-   "descricao": "TETO - Coral Rende Muito branco",
-   "quantidade": 120,
-   "unidade": "m2",
-   "categoria": null
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Iluminação"
   }
  ],
  "teste_1.pdf": [
   {
-   "descricao": "Fundo preparador Suvinil",
-   "quantidade": 1450,
-   "unidade": "m2",
-   "categoria": "Parede"
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Metalatex verde oliva",
-   "quantidade": 900,
-   "unidade": "m2",
-   "categoria": "Parede"
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Iluminação"
   },
   {
-   "descricao": "Massa acrílica Coral",
-   "quantidade": 220,
-   "unidade": "m2",
-   "categoria": "Parede"
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
+   "unidade": "un",
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Decor Colors vermelho cardinal",
-   "quantidade": 180,
-   "unidade": "m2",
-   "categoria": "Parede"
+   "descricao": "Argamassa Quartzolit AC-III cinza 20kg",
+   "quantidade": 40,
+   "unidade": "kg",
+   "categoria": "Revestimentos"
   },
   {
-   "descricao": "Esmalte Suvinil preto",
-   "quantidade": 120,
-   "unidade": "m2",
-   "categoria": "Parede"
-  },
-  {
-   "descricao": "Castelatto concreto 40x80",
-   "quantidade": 38,
-   "unidade": "m2",
-   "categoria": "Parede"
+   "descricao": "Tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 18,
+   "unidade": "l",
+   "categoria": "Pintura"
   }
  ],
  "teste_2.pdf": [
   {
-   "descricao": "Portinari cotto 60x60",
-   "quantidade": 110,
+   "descricao": "Porcelanato Portobello 60x60cm polido",
+   "quantidade": 18,
    "unidade": "m2",
-   "categoria": "Piso"
+   "categoria": "Revestimentos"
   },
   {
-   "descricao": "Textura Coral palha",
-   "quantidade": 60,
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 4,
    "unidade": "m2",
-   "categoria": "Parede"
+   "categoria": "Elétrica"
   },
   {
-   "descricao": "Metalatex verde oliva",
-   "quantidade": 80,
+   "descricao": "Tinta acrílica fosca branca",
+   "quantidade": 30,
    "unidade": "m2",
-   "categoria": "Parede"
+   "categoria": "Pintura"
   },
   {
-   "descricao": "Portinari cotto 60x60",
-   "quantidade": 40,
-   "unidade": "m2",
-   "categoria": "Piso"
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Hidráulica"
   },
   {
-   "descricao": "Portinari metrô branco",
-   "quantidade": 46,
-   "unidade": "m2",
-   "categoria": "Parede"
-  },
-  {
-   "descricao": "Esmalte Suvinil preto",
-   "quantidade": 25,
-   "unidade": "m2",
-   "categoria": "Parede"
-  },
-  {
-   "descricao": "PROJETO: Restaurante — Recife Antigo",
-   "quantidade": 150,
-   "unidade": "m2",
-   "categoria": "Piso"
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Iluminação"
   }
  ],
  "teste_1.dxf": [
   {
-   "descricao": "Porta",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Janela",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Piso (área)",
-   "quantidade": 20,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Parede (comprimento)",
-   "quantidade": 9,
-   "unidade": "m",
-   "categoria": "Alvenaria"
-  },
-  {
-   "descricao": "LAYER_X (área)",
-   "quantidade": 0.5,
-   "unidade": "m2",
-   "categoria": null
-  },
-  {
-   "descricao": "Porta (área)",
-   "quantidade": 1.68,
-   "unidade": "m2",
-   "categoria": "Esquadrias"
-  }
- ],
- "teste_2.dxf": [
-  {
-   "descricao": "Porta",
-   "quantidade": 6,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Piso (área)",
-   "quantidade": 12,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Parede (comprimento)",
-   "quantidade": 24.5,
-   "unidade": "m",
-   "categoria": "Alvenaria"
-  },
-  {
-   "descricao": "Porta (área)",
-   "quantidade": 1.68,
-   "unidade": "m2",
-   "categoria": "Esquadrias"
-  }
- ],
- "teste_1.ifc": [
-  {
-   "descricao": "Piso Sala (área)",
-   "quantidade": 20,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Piso Banheiro (área)",
-   "quantidade": 5,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Porta 80",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Porta 70",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Janela 120x100",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Vaso Sanitario",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Louças e metais"
-  },
-  {
-   "descricao": "Lavatorio",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Louças e metais"
-  },
-  {
-   "descricao": "Parede 15cm (área)",
-   "quantidade": 30,
-   "unidade": "m2",
-   "categoria": "Alvenaria"
-  },
-  {
-   "descricao": "Laje de concreto (área)",
-   "quantidade": 25,
-   "unidade": "m2",
-   "categoria": "Estrutura"
-  }
- ],
- "teste_2.ifc": [
-  {
-   "descricao": "Piso Cozinha (área)",
-   "quantidade": 12.5,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Revestimento cerâmico (área) — Porcelanato 60x60",
-   "quantidade": 16,
-   "unidade": "m2",
-   "categoria": "Revestimentos"
-  },
-  {
-   "descricao": "Contrapiso (área)",
-   "quantidade": 12.5,
-   "unidade": "m2",
-   "categoria": "Estrutura"
-  },
-  {
-   "descricao": "Guarda-corpo vidro (comprimento)",
-   "quantidade": 4.2,
-   "unidade": "m",
-   "categoria": "Serralheria"
-  },
-  {
-   "descricao": "Janela 120x100",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Janela 120x100",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Esquadrias"
-  },
-  {
-   "descricao": "Spot LED d'Embutir",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Elétrica"
-  }
- ],
- "teste_1.skp": [
-  {
-   "descricao": "Bacia sanitária Deca Vogue Plus",
-   "quantidade": 2,
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
    "unidade": "un",
    "categoria": null
   },
   {
-   "descricao": "Lavatório de louça branca",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Torneira de mesa Docol",
-   "quantidade": 2,
-   "unidade": "un",
-   "categoria": null
-  },
-  {
-   "descricao": "Chuveiro elétrico Lorenzetti",
-   "quantidade": 1,
-   "unidade": "un",
-   "categoria": "Elétrica"
-  }
- ],
- "teste_2.skp": [
-  {
-   "descricao": "Luminária LED de embutir 60x60",
+   "descricao": "Joelho Tigre soldavel 25mm",
    "quantidade": 8,
    "unidade": "un",
    "categoria": null
   },
   {
-   "descricao": "Porta de madeira 80x210",
-   "quantidade": 4,
+   "descricao": "Lata de tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": null
+  }
+ ],
+ "teste_2.dxf": [
+  {
+   "descricao": "Piso (área)",
+   "quantidade": 18,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Rodapé (comprimento)",
+   "quantidade": 18,
+   "unidade": "m",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Porta",
+   "quantidade": 2,
    "unidade": "un",
    "categoria": "Esquadrias"
   },
   {
-   "descricao": "Cadeira de escritório giratória",
+   "descricao": "Ponto elétrico",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  }
+ ],
+ "teste_1.ifc": [
+  {
+   "descricao": "Tomada Tramontina Liz branca 20A",
    "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Saco de argamassa Quartzolit AC-III cinza 20kg",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Lata de tinta Suvinil Toque de Seda Branco Neve 18L",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  }
+ ],
+ "teste_2.ifc": [
+  {
+   "descricao": "Porcelanato Portobello 60x60cm polido (área)",
+   "quantidade": 18,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Tinta acrílica fosca branca (área)",
+   "quantidade": 30,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  },
+  {
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Elementos genéricos"
+  }
+ ],
+ "teste_1.skp": [
+  {
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  },
+  {
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
    "unidade": "un",
    "categoria": null
   },
   {
-   "descricao": "Mesa de trabalho 120x60",
-   "quantidade": 6,
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
    "unidade": "un",
    "categoria": null
   },
   {
-   "descricao": "Vaso sanitário com caixa acoplada",
+   "descricao": "Saco de argamassa Quartzolit AC-III cinza 20kg",
    "quantidade": 2,
    "unidade": "un",
    "categoria": null
   },
   {
-   "descricao": "Porta de madeira 80x210",
+   "descricao": "Lata de tinta Suvinil Toque de Seda Branco Neve 18L",
    "quantidade": 1,
    "unidade": "un",
-   "categoria": "Esquadrias"
+   "categoria": null
+  }
+ ],
+ "teste_2.skp": [
+  {
+   "descricao": "Piso de porcelanato Portobello 60x60cm polido",
+   "quantidade": null,
+   "unidade": null,
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Tomada Tramontina Liz branca 20A",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  },
+  {
+   "descricao": "Spot Stella 7W 3000K",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Joelho Tigre soldável 25mm",
+   "quantidade": 8,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Torneira cromada",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": null
   }
  ]
 }

@@ -1,6 +1,6 @@
-﻿Categoria;Descrição;Unidade;Quantidade;Ambiente
-Revestimentos;Porcelanato acetinado 60x60 cm;m²;45;Sala
-Argamassas;Argamassa colante AC-III 20 kg;un;12;Sala
-Pintura;Tinta acrílica fosca branca 18 L;un;3;Quartos
-Louças e metais;Bacia sanitária com caixa acoplada;un;1;Banheiro
-Elétrica;Cabo flexível 2,5 mm² (rolo 100 m);un;2;Geral
+﻿Descrição;Quantidade;Unidade;Categoria
+Porcelanato;18;m2;Revestimentos
+Tinta acrílica branca;30;m2;Pintura
+Tomada;4;un;Elétrica
+Joelho soldável 25mm;4;un;Hidráulica
+Spot LED;2;un;Iluminação
