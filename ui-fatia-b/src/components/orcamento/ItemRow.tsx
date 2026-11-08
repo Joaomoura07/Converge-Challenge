@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { CONFIANCA, OBJETIVOS, embalagens, quantidade, reais } from "./formato";
+import { CONFIANCA, OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import type { ItemOrcamento, Objetivo } from "./tipos";
@@ -196,7 +196,12 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
           {lojas.map((f) => (
             <li key={f.url}>
               <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
-              {f.perto_da_obra && <span className="orc-item__perto">perto da obra</span>}
+              {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
+                <span className="orc-item__perto" title={f.endereco ?? undefined}>
+                  perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
+                </span>
+              )}
+              {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
               {/* o preço do anúncio (o mesmo que aparece ao clicar), com a embalagem quando ela é outra */}
               <span>
                 {reais(f.preco_anunciado ?? f.preco_embalagem)}

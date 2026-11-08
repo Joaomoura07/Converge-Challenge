@@ -28,6 +28,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
 
   const { titulo, destaque } = tituloEditorial(orcamento.nome);
   const excel = urlExportar(orcamento.id);
+  const pdf = urlExportar(orcamento.id, undefined, "pdf");
   const raciocinio = linkRaciocinio(orcamento.trace_url);
   const cep = orcamento.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
 
@@ -67,6 +68,11 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
             {excel ? (
               <a className="sh-link" href={excel} download="plano-de-compra.xlsx" style={{ display: "block", marginTop: 8 }}>
                 Baixar plano em Excel ↓
+              </a>
+            ) : null}
+            {pdf ? (
+              <a className="sh-link" href={pdf} download="plano-de-compra.pdf" style={{ display: "block", marginTop: 8 }}>
+                Baixar plano em PDF ↓
               </a>
             ) : null}
           </div>

@@ -167,3 +167,5 @@
   .orc-cota--chegou .orc-cota__medio strong { animation: none; }
   .orc-progresso__feito { transition: none; }
 }
+.orc-item__lojas .orc-item__endereco { flex-basis: 100%; font-size: 0.75rem; color: var(--cor-texto-2); }
+.orc-item__lojas li:has(.orc-item__endereco) { flex-wrap: wrap; }

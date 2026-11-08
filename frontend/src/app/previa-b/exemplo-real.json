@@ -24,7 +24,10 @@
     "dominio": "telhanorte.com.br",
     "url": "https://www.telhanorte.com.br/tinta-acrilica-premium-toque-seda-18l-branco-neve-suvinil-2533111/p",
     "preco_embalagem": 739.9,
-    "embalagem": "lata 18 L"
+    "embalagem": "lata 18 L",
+    "perto_da_obra": true,
+    "distancia_km": 4.2,
+    "endereco": "Av. Domingos Ferreira, 2160 - Boa Viagem, Recife - PE (exemplo fictício)"
    },
    {
     "loja": "Magazine Luiza",

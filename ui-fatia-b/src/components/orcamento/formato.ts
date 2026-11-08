@@ -43,3 +43,9 @@ export const OBJETIVOS: { objetivo: Objetivo; rotulo: string; dica: string }[] =
   { objetivo: "preco", rotulo: "Menor preço", dica: "Opção mais econômica para a mesma aplicação" },
   { objetivo: "semelhante", rotulo: "Semelhante de outra marca", dica: "Produto equivalente de outra marca" },
 ];
+
+/** Texto curto da loja da região para a linha do item: "a 4,2 km de carro (aprox.)" ou null sem distância. */
+export function distanciaDaLoja(km: number | null | undefined): string | null {
+  if (km == null || !Number.isFinite(km) || km <= 0) return null;
+  return `a ${km.toFixed(1).replace(".", ",")} km de carro (aprox.)`;
+}
