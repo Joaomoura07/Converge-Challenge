@@ -29,8 +29,8 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "excel", rotulo: "Excel", etapa: null },
   { id: "revit", rotulo: "TXT do Revit", etapa: null },
   { id: "pdf", rotulo: "PDF com texto", etapa: null },
-  // Demo: abas de modelos ficam escondidas até NEXT_PUBLIC_MODELOS=1.
-  ...(process.env.NEXT_PUBLIC_MODELOS === "1" ? [{ id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null }] : []),
+  // Planta em DXF ligada por padrão (decisão de 07/11, noite). Para esconder a aba: NEXT_PUBLIC_MODELOS=0.
+  ...(process.env.NEXT_PUBLIC_MODELOS !== "0" ? [{ id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null }] : []),
 ];
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });

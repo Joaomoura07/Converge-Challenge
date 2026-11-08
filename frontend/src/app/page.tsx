@@ -119,7 +119,7 @@ export default function Inicio() {
               Ver um exemplo
             </Link>
           </div>
-          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit e PDF com texto.</p>
+          <p className="in-formatos">Funciona com Excel, CSV, TXT do Revit, PDF com texto e planta em DXF.</p>
         </div>
       </section>
 
@@ -138,7 +138,7 @@ export default function Inicio() {
             <span className="n">1</span>
             <h3>Envie a lista da obra</h3>
             <p>
-              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit ou PDF)
+              Informe o nome da obra, o CEP e o orçamento do cliente. Depois envie a lista (Excel, CSV, TXT do Revit, PDF ou planta em DXF)
               ou use um exemplo. O CEP define a cidade da busca e põe primeiro as lojas com unidade na região.
             </p>
           </li>
