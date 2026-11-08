@@ -45,6 +45,19 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
               Subtotal estimado
             </p>
             <span className="valor">{reais(subtotal(linhas))}</span>
+            {/* Junto do valor que a IA calculou: é o registro das buscas e fontes por trás desse número. */}
+            {raciocinio ? (
+              <a
+                className="sh-link"
+                href={raciocinio}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
+                style={{ display: "block", marginTop: 4 }}
+              >
+                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
             <p className="sh-apoio" style={{ fontSize: 10, marginBottom: 8 }}>
               {contagem(linhas.length, "material", "materiais").replace(/^0/, "")}
             </p>
@@ -54,18 +67,6 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
             {excel ? (
               <a className="sh-link" href={excel} download="plano-de-compra.xlsx" style={{ display: "block", marginTop: 8 }}>
                 Baixar plano em Excel ↓
-              </a>
-            ) : null}
-            {raciocinio ? (
-              <a
-                className="sh-link"
-                href={raciocinio}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Abre em nova aba o registro de cada busca, conferência e fonte que o agente usou"
-                style={{ display: "block", marginTop: 6 }}
-              >
-                Ver o raciocínio da IA <span aria-hidden="true">↗</span>
               </a>
             ) : null}
           </div>

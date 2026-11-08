@@ -71,17 +71,33 @@ export interface Veredito {
   tom: Tom;
   icone: string;
   titulo: string;
+  /** Ressalva curta sob o título quando há itens sem preço fora da conta. */
+  nota?: string;
 }
 
-/** Nunca afirma "cabe" sem avisar quando há itens sem preço (`completo === false`). */
+/**
+ * Com itens sem preço (`completo === false`) o total é só um piso: item sem preço só pode AUMENTAR a conta.
+ * Então, se já cabe, é "Dentro do orçamento" (verde) com a ressalva "até agora"; se nem o menor preço cabe, já
+ * não cabe; só o resto (cabe apenas no menor preço, ou sem esses dados) continua "Ainda não dá para afirmar".
+ */
 export function veredito(v: Viabilidade): Veredito {
-  if (v.completo === false) return { tom: "talvez", icone: "⚠", titulo: "Ainda não dá para afirmar" };
-  if (v.cabe) return { tom: "sim", icone: "✓", titulo: "Cabe no orçamento" };
+  if (v.completo === false) {
+    const n = v.itens_sem_preco?.length ?? 0;
+    const fora = n === 0 ? "há itens sem preço fora da conta"
+      : n === 1 ? "1 item sem preço ficou fora da conta" : `${n} itens sem preço ficaram fora da conta`;
+    if (v.cabe === true) return { tom: "sim", icone: "✓", titulo: "Dentro do orçamento", nota: `Até agora: ${fora}.` };
+    if (v.cabe === false && v.cabe_no_minimo === false) {
+      return { tom: "nao", icone: "✕", titulo: "Não cabe no orçamento", nota: `${fora.charAt(0).toUpperCase()}${fora.slice(1)}; a diferença tende a ser maior.` };
+    }
+    return { tom: "talvez", icone: "⚠", titulo: "Ainda não dá para afirmar" };
+  }
+  if (v.cabe) return { tom: "sim", icone: "✓", titulo: "Dentro do orçamento" };
   if (v.cabe_no_minimo) return { tom: "talvez", icone: "⚠", titulo: "Cabe só no menor preço" };
   return { tom: "nao", icone: "✕", titulo: "Não cabe no orçamento" };
 }
 
-/** O título do veredito já diz "Ainda não dá para afirmar": tira essa frase do início do resumo para não repetir. */
+/** O resumo do servidor começa com "Ainda não dá para afirmar: ..." quando faltam preços; a tela já mostra o veredito
+ *  e a ressalva em outro lugar, então tira essa frase do início para não repetir. */
 export function resumoParaTela(v: Viabilidade): string {
   const r = v.resumo ?? "";
   const prefixo = "Ainda não dá para afirmar: ";

@@ -454,6 +454,19 @@ html .obra-resumo__veredito {
 html .obra-resumo [data-tom="sim"] .obra-resumo__veredito span { color: var(--cor-definido); }
 html .obra-resumo [data-tom="talvez"] .obra-resumo__veredito span { color: var(--cor-pendente); }
 html .obra-resumo [data-tom="nao"] .obra-resumo__veredito span { color: var(--cor-erro); }
+/* Retorno visual do veredito: o bloco inteiro ganha o tom (verde = dentro, âmbar = incerto, vermelho = não cabe).
+   A cor nunca é a única pista: o ícone e o título dizem o mesmo. */
+html .obra-resumo [data-tom="sim"] { --tom: var(--cor-definido); }
+html .obra-resumo [data-tom="talvez"] { --tom: var(--cor-pendente); }
+html .obra-resumo [data-tom="nao"] { --tom: var(--cor-erro); }
+html .obra-resumo [data-tom] {
+  background:
+    radial-gradient(90% 80% at 0% 0%, color-mix(in srgb, var(--tom) 16%, transparent), transparent 60%),
+    var(--obsidiana);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tom) 40%, transparent);
+}
+html .obra-resumo [data-tom] .obra-resumo__veredito { color: var(--tom); }
+html .rs-sim span:last-child { color: var(--cor-definido); }
 html .obra-resumo__nota { margin: 8px 0 0; font-size: var(--text-body-sm); line-height: 1.5; color: var(--tinta-suave); }
 html .obra-bloco .sh-botao { min-height: 48px; padding: 0 26px; }
 
