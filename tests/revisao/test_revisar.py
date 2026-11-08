@@ -229,3 +229,17 @@ def test_listas_normais_nao_tem_colunas_trocadas(carregar):
 
 def test_linha_sem_quantidade_e_unidade_valida_nao_e_troca():
     assert not por_regra(revisar_itens([item("Selador Coral", "", "m2")]), "colunas_trocadas")
+
+
+@pytest.mark.parametrize("descricao", [
+    "Porcelanato Portobello Cimento 90x90 acetinado",   # "Cimento" é o nome da linha, não o produto
+    "Revestimento cerâmico Portinari Cimento Urbano 30x60",
+])
+def test_nome_de_linha_cimento_nao_vira_cimento(descricao):
+    """Achado em 08/11: o revisor propunha trocar m2 por un no porcelanato da linha 'Cimento'."""
+    assert revisar_itens([item(descricao, "120", "m2")]) == []
+
+
+def test_cimento_de_verdade_continua_apontado():
+    erros = revisar_itens([item("Cimento CP-II Votoran 50 kg", "20", "m2")])
+    assert [e.regra for e in erros] == ["unidade"] and erros[0].correcao is not None

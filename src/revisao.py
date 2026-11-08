@@ -178,6 +178,10 @@ FAMILIAS: tuple[Familia, ...] = (
        r"torneira|ducha|monocomando|chuveiro|acqua duo|hydra|docol", "un", {"un": (1, 500)}),
     _f("tubo", "tubo/conexão", r"\btubo\b|\bjoelho\b", "m un", {"m": (1, 20000)}),
     _f("ferro", "ferro/arame/tela", r"\bferro\b|vergalhao|\barame\b|tela q", "kg un m"),
+    # O TIPO do produto vence o nome da linha: "Porcelanato Portobello Cimento 90x90" é piso, não cimento (a linha
+    # "Cimento" é só o nome comercial). Antes, o revisor propunha trocar m2 por un no porcelanato (achado em 08/11).
+    _f("revestimento", "piso/revestimento", r"porcelanato|azulejo|pastilha|\bceramic[oa]s?\b|\brevestimento\b", "m2 un",
+       {"m2": (0.1, 20000)}),
     _f("cimento", "cimento/cal", r"cimento|\bcal\b|qualical|votoran", "un kg"),
     _f("agregado", "areia/brita", r"\bareia\b|\bbrita\b|pedrisco", "m3 kg", {"m3": (0.1, 2000)}),
     _f("concreto", "concreto", r"concreto|supermix", "m3", {"m3": (0.1, 2000)}),
@@ -505,7 +509,8 @@ def _regra_duplicados(ls: list[_L]) -> list[ErroRevisao]:
     cand: dict[int, dict[int, _L]] = {}  # pos da linha a remover -> {pos da mantida: linha}
     for i, a in enumerate(ls):
         for b in ls[i + 1:]:
-            if a.pos in usados or b.pos in usados or not a.fam or a.fam is not b.fam:
+            # pela chave, não pela identidade: "revestimento" tem 2 entradas em FAMILIAS (tipo do produto e nome da linha)
+            if a.pos in usados or b.pos in usados or not a.fam or not b.fam or a.fam.chave != b.fam.chave:
                 continue
             if a.norm == b.norm or a.qtd is None or b.qtd is None or a.qtd != b.qtd or a.qtd <= 0:
                 continue
