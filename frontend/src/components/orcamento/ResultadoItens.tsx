@@ -33,6 +33,9 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
 
   const visiveis = itens.map((i) => locais[i.id] ?? i);
   const p = progresso(visiveis);
+  const medidos = visiveis.filter((i) => i.pesquisa_detalhes && i.status !== "buscando");
+  const tokens = medidos.reduce((n, i) => n + i.pesquisa_detalhes!.tokens_entrada + i.pesquisa_detalhes!.tokens_saida, 0);
+  const custo = medidos.reduce((n, i) => n + i.pesquisa_detalhes!.custo_usd, 0);
 
   async function pesquisar(item: ItemOrcamento, pedido?: PedidoRepesquisa) {
     setErros(({ [item.id]: _, ...resto }) => resto);
@@ -55,6 +58,10 @@ export function ResultadoItens({ itens, demo, repesquisar = repesquisarItem }: P
         <h2 id="orc-resultado-titulo" className="orc-resultado__titulo">Preços pesquisados</h2>
         <p className="orc-resultado__progresso" role="status" aria-live="polite">{fraseProgresso(p)}</p>
       </div>
+      {medidos.length > 0 && <p className="orc-item__consumo" aria-live="polite">
+        Última pesquisa de {medidos.length} itens: {tokens.toLocaleString("pt-BR")} tokens · US$ {custo.toFixed(6)} informados.
+        {medidos.some((i) => i.pesquisa_detalhes?.consumo_incompleto) && " Há consumo ainda não informado pelo provedor."}
+      </p>}
       {p.total > 0 && (
         <div className="orc-progresso" aria-hidden="true">
           <span className="orc-progresso__feito" style={{ width: `${(p.prontos / p.total) * 100}%` }} />

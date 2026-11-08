@@ -28,7 +28,19 @@ export interface Validacao {
   n?: number;
 }
 
+export interface PesquisaDetalhes {
+    tokens_entrada: number;
+    tokens_saida: number;
+    chamadas: number;
+    custo_usd: number;
+    consumo_incompleto: boolean;
+    limite_atingido: boolean;
+    paginas_lidas: number;
+    orientacao?: string;
+}
+
 export interface ItemOrcamento {
+  pesquisa_detalhes?: PesquisaDetalhes | null;
   id: string;
   descricao: string;
   quantidade?: number | null;

@@ -170,3 +170,7 @@
 }
 .orc-item__lojas .orc-item__endereco { flex-basis: 100%; font-size: 0.75rem; color: var(--cor-texto-2); }
 .orc-item__lojas li:has(.orc-item__endereco) { flex-wrap: wrap; }
+.orc-item__resposta textarea { flex: 1 1 100%; min-width: 0; width: 100%; box-sizing: border-box; font: inherit; color: var(--cor-texto); background: var(--cor-superficie); border: 1px solid var(--cor-linha); padding: 8px; resize: vertical; }
+.orc-item__resposta textarea:focus-visible, .orc-item__consumo summary:focus-visible { outline: 2px solid var(--cor-acao); outline-offset: 2px; }
+.orc-item__consumo { font-size: 14px; color: var(--cor-texto-2); margin-bottom: 12px; overflow-wrap: anywhere; }
+.orc-item__consumo summary { cursor: pointer; }

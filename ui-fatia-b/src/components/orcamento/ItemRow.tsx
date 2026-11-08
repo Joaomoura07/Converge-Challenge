@@ -3,9 +3,10 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { CONFIANCA, OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDiretoProduto } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
+import { ImagemProduto } from "../imagens/ImagemProduto";
 import type { ItemOrcamento, Objetivo } from "./tipos";
 
 interface Props {
@@ -112,8 +113,8 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
   return (
     <article className={`orc-item orc-item--${item.status}${chegou ? " orc-item--chegou" : ""}`} aria-busy={carregando}>
-      <div className={`orc-item__imagem${item.imagem_url && !carregando ? "" : " orc-item__imagem--hachura"}`}>
-        {item.imagem_url && !carregando && <img src={item.imagem_url} alt={nome} loading="lazy" width={56} height={56} />}
+      <div className="orc-item__imagem">
+        <ImagemProduto src={item.imagem_url} nome={nome} carregando={carregando} />
       </div>
 
       <div className="orc-item__corpo">
@@ -133,13 +134,13 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         </p>
         {item.premissa && !carregando && <p className="orc-item__premissa">Conta: {item.premissa}</p>}
 
-        {item.status === "pendente_especificacao" && item.pergunta && (
+        {!carregando && onResponder && (
           <div className="orc-item__pergunta">
-            <p>{item.pergunta}</p>
+            <p>{item.pergunta || item.pesquisa_detalhes?.orientacao || "Complete marca, modelo/código, medidas, cor, acabamento e embalagem para pesquisar o produto específico."}</p>
             {respondendo ? (
               <form onSubmit={enviar} className="orc-item__resposta">
                 <label className="orc-visivel-so-leitor" htmlFor={`resp-${item.id}`}>Especificação do item</label>
-                <input id={`resp-${item.id}`} autoFocus required minLength={3} value={resposta}
+                <textarea id={`resp-${item.id}`} autoFocus required minLength={3} maxLength={2000} rows={3} value={resposta}
                        onChange={(e) => setResposta(e.target.value)}
                        placeholder="Ex.: Suvinil Fosco Completo, Vermelho Cardinal, 3,6 L" />
                 <button type="submit" className="orc-botao orc-botao--principal">Enviar resposta</button>
@@ -147,8 +148,10 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
               </form>
             ) : (
               <div className="orc-item__acoes">
-                <button type="button" className="orc-botao orc-botao--principal" onClick={() => setRespondendo(true)}>Responder</button>
-                {onAceitarMedia && item.preco_emb_med != null && (
+                <button type="button" className="orc-botao orc-botao--principal" onClick={() => { setResposta((atual) => atual || item.descricao); setRespondendo(true); }}>
+                  {item.status === "pendente_especificacao" ? "Responder" : "Completar especificação"}
+                </button>
+                {item.status === "pendente_especificacao" && onAceitarMedia && item.preco_emb_med != null && (
                   <button type="button" className="orc-botao" onClick={() => onAceitarMedia(item)}
                           title="Não especifica marca e modelo: o item fica com a média de produtos parecidos, como estimativa">
                     Usar a média mesmo assim
@@ -170,6 +173,17 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
       </div>
 
       <div className="orc-item__preco">
+        {!carregando && item.pesquisa_detalhes && (
+          <details className="orc-item__consumo">
+            <summary>Consumo da pesquisa: {(item.pesquisa_detalhes.tokens_entrada + item.pesquisa_detalhes.tokens_saida).toLocaleString("pt-BR")} tokens</summary>
+            <p>{item.pesquisa_detalhes.tokens_entrada.toLocaleString("pt-BR")} de entrada · {item.pesquisa_detalhes.tokens_saida.toLocaleString("pt-BR")} de saída</p>
+            <p>{item.pesquisa_detalhes.chamadas} chamadas · {item.pesquisa_detalhes.paginas_lidas} páginas lidas</p>
+            <p>Custo informado: US$ {item.pesquisa_detalhes.custo_usd.toFixed(6)}</p>
+            {item.pesquisa_detalhes.consumo_incompleto && <p>Consumo parcial: houve chamada sem medição completa. Confira a cobrança na Featherless.</p>}
+            {item.pesquisa_detalhes.limite_atingido && <p>Limite de consumo atingido. Mantivemos as fontes já encontradas.</p>}
+            <p>Valores desta pesquisa do item. Nova pesquisa tem novo consumo.</p>
+          </details>
+        )}
         {item.status === "nao_encontrado" || item.status === "erro" ? null : (
           <PriceDimension min={item.preco_emb_min} med={item.preco_emb_med} max={item.preco_emb_max}
                           carregando={carregando} chegou={chegou}
@@ -178,12 +192,14 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         {!carregando && item.preco_emb_med != null && (
           <p className="orc-item__confianca">
             {item.estimativa && <span className="orc-item__estimativa">Estimativa</span>}
-            {item.confianca && <span>{CONFIANCA[item.confianca]}</span>}
             <span>{lojas.length === 1 ? "1 loja" : `${lojas.length} lojas`}</span>
             {item.preco_un_med != null && item.unidade_preco && (
               <span>{reais(item.preco_un_med)}/{item.unidade_preco === "m2" ? "m²" : item.unidade_preco}</span>
             )}
           </p>
+        )}
+        {!carregando && item.preco_emb_med != null && (
+          <p className="orc-item__dica">Média dos preços encontrados para o que você pediu. Quanto mais especificações (marca, modelo, medida), melhor a pesquisa.</p>
         )}
         {!carregando && item.status === "definido" && item.motivo && <p className="orc-item__aviso">{item.motivo}</p>}
         {!carregando && (item.iteracoes ?? 0) > 0 && (
@@ -195,7 +211,9 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
           {lojas.map((f) => (
             <li key={f.url}>
-              <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              {linkDiretoProduto(f.url)
+                ? <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja} · Ver produto</a>
+                : <span>{f.loja} · Link direto indisponível. Use Pesquisar de novo.</span>}
               {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
                 <span className="orc-item__perto" title={f.endereco ?? undefined}>
                   perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
