@@ -602,8 +602,8 @@ html .demo-passos small { font-size: 12px; line-height: 1.35; color: var(--tinta
 html .demo-exemplos { margin: 0 0 20px; display: grid; gap: 14px; }
 html .demo-exemplos__cabeca h3 { margin: 0; font-size: var(--text-body); font-weight: 480; }
 html .demo-exemplos__cabeca p { margin: 4px 0 0; font-size: var(--text-body-sm); color: var(--tinta-suave); }
-html .demo-exemplos__grupos { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
-html .demo-exemplos__grupo { display: grid; gap: 8px; }
+html .demo-exemplos__grupos { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+html .demo-exemplos__grupo { display: flex; align-items: center; gap: 10px; }
 /* cada formato é uma pílula que abre e fecha (details/summary); os arquivos só aparecem ao clicar */
 html .demo-exemplos__formato {
   display: inline-flex; align-items: center; gap: 8px; width: fit-content;
@@ -615,7 +615,7 @@ html .demo-exemplos__formato {
 html .demo-exemplos__formato::-webkit-details-marker { display: none; }
 html .demo-exemplos__formato:hover, html .demo-exemplos__grupo[open] > .demo-exemplos__formato { background: var(--obsidiana); color: var(--tinta); }
 html .demo-exemplos__grupo:not([open]) > ul { display: none; }
-html .demo-exemplos__grupo[open] { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html .demo-exemplos__grupo[open] { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 html .demo-exemplos__seta { transition: transform 200ms ease; }
 html .demo-exemplos__grupo[open] .demo-exemplos__seta { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { html .demo-exemplos__seta { transition: none; } }
