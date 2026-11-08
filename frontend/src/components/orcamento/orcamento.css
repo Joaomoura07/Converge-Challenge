@@ -170,3 +170,4 @@
 }
 .orc-item__lojas .orc-item__endereco { flex-basis: 100%; font-size: 0.75rem; color: var(--cor-texto-2); }
 .orc-item__lojas li:has(.orc-item__endereco) { flex-wrap: wrap; }
+.orc-item__lojas .orc-item__google { font-size: 0.6875rem; padding: 1px 6px; border: 1px dashed currentColor; border-radius: 999px; font-variant-numeric: normal; opacity: 0.8; }

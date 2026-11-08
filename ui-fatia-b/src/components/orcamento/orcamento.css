@@ -85,6 +85,7 @@
 .orc-item__preco { grid-area: preco; display: grid; align-content: start; gap: 6px; }
 .orc-item__confianca { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--cor-texto-2); }
 .orc-item__estimativa { color: var(--cor-texto); border: 1px dashed var(--cor-linha); padding: 0 6px; border-radius: 2px; }
+.orc-item__dica { margin: 0; font-size: 0.75rem; color: var(--cor-texto-2); }
 .orc-item__aviso, .orc-item__agente { margin: 0; font-size: 0.8125rem; color: var(--cor-texto-2); }
 .orc-item__agente::before { content: "↻ "; color: var(--cor-acao); }
 
@@ -169,3 +170,4 @@
 }
 .orc-item__lojas .orc-item__endereco { flex-basis: 100%; font-size: 0.75rem; color: var(--cor-texto-2); }
 .orc-item__lojas li:has(.orc-item__endereco) { flex-wrap: wrap; }
+.orc-item__lojas .orc-item__google { font-size: 0.6875rem; padding: 1px 6px; border: 1px dashed currentColor; border-radius: 999px; font-variant-numeric: normal; opacity: 0.8; }

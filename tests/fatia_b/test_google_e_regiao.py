@@ -220,3 +220,83 @@ def test_kit_grande_com_desconto_nao_puxa_o_preco_do_kit_pequeno():
     r = calcular(ItemEntrada(id="1", descricao="Espaçador nivelador Cortag", quantidade=50, unidade="un"),
                  ResultadoExtracao(ofertas=ofertas), generico=False)
     assert r.tem_preco and 18 <= r.preco_emb_med <= 20.5 and r.embalagem == "kit 50 unidades"
+
+
+# ---------------------------------------------------------------- medido em 08/11 no site: 6 de 7 itens sem foto e
+# "1 item sem preço" (Caixa d'água Fortlev 1000, 1 un, embalagem "1000 L" sem total)
+def test_anuncio_do_shopping_traz_a_foto():
+    an = [{"title": "Caixa d'água Fortlev 1000L Polietileno", "price": "R$ 654,00", "source": "Casas da Água",
+           "link": "https://x/1", "imageUrl": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:AAA"},
+          {"title": "Caixa d'água Fortlev 1000L Polietileno", "price": "R$ 700,00", "source": "Outra", "link": "https://x/2"}]
+    of = g.ler_anuncios("Caixa d'água Fortlev 1000L", "un", an, False)
+    assert of[0].imagem and of[0].imagem.startswith("https://encrypted-tbn0") and of[1].imagem is None
+
+
+def test_imagem_das_ofertas_prefere_a_de_uma_fonte_usada():
+    from src.pesquisa import imagem_das_ofertas
+    def of(url, img, igual="sim"):
+        return Oferta(loja="l", dominio="d.com", url=url, titulo="t", preco=1.0, embalagem="unidade",
+                      mesmo_produto=igual, imagem=img)
+    ofertas = [of("https://a", "https://img/a"), of("https://b", "https://img/b")]
+    assert imagem_das_ofertas(ofertas, {"https://b"}) == "https://img/b"
+    assert imagem_das_ofertas(ofertas, set()) == "https://img/a"
+    assert imagem_das_ofertas([of("https://c", None)], None) is None
+    assert imagem_das_ofertas([of("https://d", "https://img/d", "parecido")], None) is None
+
+
+def test_item_em_unidades_com_embalagem_de_capacidade_tem_total():
+    def of(loja, preco):
+        return Oferta(loja=loja, dominio=f"{loja}.com.br", url=f"https://{loja}.com.br/p", titulo="Caixa d'água Fortlev 1000 L",
+                      preco=preco, embalagem="1000 L", mesmo_produto="sim")
+    r = calcular(ItemEntrada(id="1", descricao="Caixa d'água Fortlev 1000", quantidade=2, unidade="un"),
+                 ResultadoExtracao(ofertas=[of("a", 450.0), of("b", 480.0), of("c", 500.0)]), generico=False)
+    assert r.tem_preco and r.embalagem == "1000 L" and r.qtd_embalagens == 2
+
+
+# ---------------------------------------------------------------- link da loja no lugar do link do Google (08/11)
+@pytest.mark.parametrize("loja,dominio", [
+    ("Leroy Merlin", "leroymerlin.com.br"), ("Amazon.com.br - Retail", "amazon.com.br"),
+    ("mercadolivre.com.br", "mercadolivre.com.br"), ("Mercado Livre", "mercadolivre.com.br"),
+    ("Obramax - Atacado Da Construção", "obramax.com.br"), ("Loja Desconhecida XYZ", None)])
+def test_dominio_da_loja(loja, dominio):
+    assert g.dominio_da_loja(loja) == dominio
+
+
+def test_troca_o_link_do_google_pelo_da_loja_quando_acha_a_pagina_do_produto():
+    def of(loja, url, titulo="Joelho Tigre 25 mm soldável 90 graus"):
+        return Oferta(loja=loja, dominio=g.DOMINIO_SHOPPING, url=url, titulo=titulo, preco=10.0, embalagem="unidade",
+                      mesmo_produto="sim")
+    ofertas = [of("Leroy Merlin", "https://www.google.com/search?ibp=oshop&x=1"),
+               of("Telhanorte", "https://www.google.com/search?ibp=oshop&x=2"),
+               of("Loja Desconhecida XYZ", "https://www.google.com/search?ibp=oshop&x=3")]
+    organicos = [
+        {"title": "Joelho Tigre 25 mm | Leroy Merlin", "link": "https://www.leroymerlin.com.br/joelho-tigre-25mm_123456",
+         "snippet": "Joelho Tigre 25 mm soldável 90 graus"},
+        {"title": "Joelho Tigre 25 mm", "link": "https://www.telhanorte.com.br/busca?q=joelho", "snippet": ""},   # busca, não produto
+        {"title": "Cimento CP II", "link": "https://www.leroymerlin.com.br/cimento_999", "snippet": ""}]           # outro produto
+    r = g.trocar_links_do_google("Joelho Tigre 25 mm", ofertas, organicos)
+    assert r[0].url == "https://www.leroymerlin.com.br/joelho-tigre-25mm_123456" and r[0].dominio == "leroymerlin.com.br"
+    assert r[1].url.startswith("https://www.google.com/") and r[1].dominio == g.DOMINIO_SHOPPING   # não achou: continua do Google
+    assert r[2].url.startswith("https://www.google.com/")
+
+
+def test_sem_chave_nao_mexe_nos_links(monkeypatch):
+    monkeypatch.setattr(g, "get_settings", lambda: type("S", (), {"serper_keys": []})())
+    o = Oferta(loja="Leroy Merlin", dominio=g.DOMINIO_SHOPPING, url="https://www.google.com/x", titulo="t", preco=1.0,
+               embalagem="unidade", mesmo_produto="sim")
+    assert asyncio.run(g.resolver_links_das_lojas("Joelho Tigre 25 mm", [o])) == [o]
+
+
+def test_nao_liga_ao_produto_errado_so_porque_o_nome_curto_combina():
+    """Medido em 08/11: "Deca Vogue Plus" (bacia) levava à página do assento "Vogue Plus"."""
+    o = Oferta(loja="Telhanorte", dominio=g.DOMINIO_SHOPPING, url="https://www.google.com/search?ibp=oshop&x=1",
+               titulo="Bacia Convencional Vogue Plus Branco Deca", preco=500.0, embalagem="unidade", mesmo_produto="sim")
+    org = [{"title": "Assento Termofixo Vogue Plus Branco Deca", "link": "https://www.tupan.com.br/assento-vogue-plus-123",
+            "snippet": ""}]
+    # o item "Deca Vogue Plus" combina com os dois, mas a página não é a do produto do anúncio
+    monkey = g.trocar_links_do_google("Deca Vogue Plus", [o], [{"title": "Assento Termofixo Vogue Plus Branco Deca",
+                                                                 "link": "https://www.telhanorte.com.br/assento", "snippet": ""}])
+    assert monkey[0].url.startswith("https://www.google.com/")
+    ok = g.trocar_links_do_google("Deca Vogue Plus", [o], [{"title": "Bacia Convencional Vogue Plus Branco Deca",
+                                                            "link": "https://www.telhanorte.com.br/bacia", "snippet": ""}])
+    assert ok[0].url == "https://www.telhanorte.com.br/bacia"

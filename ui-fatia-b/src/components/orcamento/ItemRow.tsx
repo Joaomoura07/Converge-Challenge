@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { CONFIANCA, OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import type { ItemOrcamento, Objetivo } from "./tipos";
@@ -96,6 +96,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
   const lojas = item.fontes ?? [];
+  const linkGoogle = lojas.find((f) => f.dominio === "google.com" && f.url.startsWith("http"))?.url ?? null;
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
@@ -178,12 +179,14 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         {!carregando && item.preco_emb_med != null && (
           <p className="orc-item__confianca">
             {item.estimativa && <span className="orc-item__estimativa">Estimativa</span>}
-            {item.confianca && <span>{CONFIANCA[item.confianca]}</span>}
             <span>{lojas.length === 1 ? "1 loja" : `${lojas.length} lojas`}</span>
             {item.preco_un_med != null && item.unidade_preco && (
               <span>{reais(item.preco_un_med)}/{item.unidade_preco === "m2" ? "m²" : item.unidade_preco}</span>
             )}
           </p>
+        )}
+        {!carregando && item.preco_emb_med != null && (
+          <p className="orc-item__dica">Média dos preços encontrados para o que você pediu. Quanto mais especificações (marca, modelo, medida), melhor a pesquisa.</p>
         )}
         {!carregando && item.status === "definido" && item.motivo && <p className="orc-item__aviso">{item.motivo}</p>}
         {!carregando && (item.iteracoes ?? 0) > 0 && (
@@ -195,7 +198,18 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
           {lojas.map((f) => (
             <li key={f.url}>
-              <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              {f.dominio === "google.com" ? (
+                // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
+                // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
+                <>
+                  <span>{f.loja}</span>
+                  <span className="orc-item__google" title="Preço do Google Shopping. O link da loja não está disponível">
+                    preço do Google
+                  </span>
+                </>
+              ) : (
+                <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              )}
               {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
                 <span className="orc-item__perto" title={f.endereco ?? undefined}>
                   perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
@@ -211,6 +225,11 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
               </span>
             </li>
           ))}
+          {linkGoogle && (
+            <li>
+              <a href={linkGoogle} target="_blank" rel="noopener noreferrer">Comparar no Google Shopping ↗</a>
+            </li>
+          )}
         </ul>
       )}
     </article>

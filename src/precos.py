@@ -47,6 +47,7 @@ class Oferta(BaseModel):
     preco: float | None
     embalagem: str | None
     mesmo_produto: Literal["sim", "parecido", "nao"]
+    imagem: str | None = None   # foto do anúncio (o Google Shopping devolve `imageUrl` em todos os anúncios)
 
     def para_fonte(self) -> Fonte:
         assert self.preco, "oferta sem preço não vira fonte"

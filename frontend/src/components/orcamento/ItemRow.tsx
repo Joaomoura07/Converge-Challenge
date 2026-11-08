@@ -96,6 +96,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
   const lojas = item.fontes ?? [];
+  const linkGoogle = lojas.find((f) => f.dominio === "google.com" && f.url.startsWith("http"))?.url ?? null;
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
@@ -197,7 +198,18 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
           {lojas.map((f) => (
             <li key={f.url}>
-              <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              {f.dominio === "google.com" ? (
+                // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
+                // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
+                <>
+                  <span>{f.loja}</span>
+                  <span className="orc-item__google" title="Preço do Google Shopping. O link da loja não está disponível">
+                    preço do Google
+                  </span>
+                </>
+              ) : (
+                <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
+              )}
               {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
                 <span className="orc-item__perto" title={f.endereco ?? undefined}>
                   perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
@@ -213,6 +225,11 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
               </span>
             </li>
           ))}
+          {linkGoogle && (
+            <li>
+              <a href={linkGoogle} target="_blank" rel="noopener noreferrer">Comparar no Google Shopping ↗</a>
+            </li>
+          )}
         </ul>
       )}
     </article>

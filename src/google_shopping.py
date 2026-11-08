@@ -141,6 +141,12 @@ def _embalagem(titulo: str, unidade_item: str | None, descricao: str = "") -> st
     return None
 
 
+def _imagem(anuncio: dict) -> str | None:
+    """`imageUrl` do anúncio do Shopping (miniatura do Google, abre em qualquer navegador). Só http(s)."""
+    url = str(anuncio.get("imageUrl") or "").strip()
+    return url if url.startswith("http") else None
+
+
 def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict], generico: bool) -> list[Oferta]:
     """Núcleo puro: anúncios do Shopping -> ofertas (1 por loja, as mais parecidas primeiro)."""
     candidatos = []
@@ -160,7 +166,8 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         regional = regional_por_nome(loja)
         candidatos.append((s, Oferta(loja=regional.nome if regional else loja,
                                      dominio=regional.dominio if regional and regional.dominio else DOMINIO_SHOPPING,
-                                     url=link, titulo=titulo, preco=preco, embalagem=emb, mesmo_produto=igual)))
+                                     url=link, titulo=titulo, preco=preco, embalagem=emb, mesmo_produto=igual,
+                                     imagem=_imagem(a))))
     candidatos.sort(key=lambda c: -c[0])
     saida, lojas = [], set()
     for _, o in candidatos:
@@ -245,3 +252,92 @@ async def ofertas_google(descricao: str, unidade_item: str | None, generico: boo
         logger.warning("Google Shopping falhou para '%s' (%s)", descricao, type(exc).__name__)
         return []
     return ler_anuncios(descricao, unidade_item, anuncios, generico)
+
+
+# ------------------------------------------------------------------ link da LOJA no lugar do link do Google
+# Medido em 08/11: 76 de 120 anúncios do Shopping traziam `google.com/search?ibp=oshop...` (a página do produto no Google,
+# com várias lojas), que o usuário abria achando que era a loja. Aqui cada loja de domínio conhecido é procurada pelo
+# Google (busca com site:) e, achando a página do produto nela, o link passa a ser o da loja. Sem achar, continua o
+# link do Google e a tela avisa que é do Google.
+LOJAS_CONHECIDAS = {   # nome como o Shopping escreve (sem acento, minúsculo) -> domínio da loja
+    "mercado livre": "mercadolivre.com.br", "mercadolivre": "mercadolivre.com.br", "amazon": "amazon.com.br",
+    "magazine luiza": "magazineluiza.com.br", "magalu": "magazineluiza.com.br", "casas bahia": "casasbahia.com.br",
+    "americanas": "americanas.com.br", "madeiramadeira": "madeiramadeira.com.br", "madeira madeira": "madeiramadeira.com.br",
+    "leroy merlin": "leroymerlin.com.br", "telhanorte": "telhanorte.com.br", "c&c": "cec.com.br", "obramax": "obramax.com.br",
+    "sodimac": "sodimac.com.br", "ferreira costa": "ferreiracosta.com", "tumelero": "tumelero.com.br", "sertao": "sertao.com.br",
+    "padovani": "padovani.com.br", "dicico": "dicico.com.br", "leo madeiras": "leomadeiras.com.br",
+    "casa do construtor": "casadoconstrutor.com.br", "mmartan": "mmartan.com.br", "kabum": "kabum.com.br",
+}
+MAX_DOMINIOS_RESOLVER = 12
+
+
+def dominio_da_loja(loja: str) -> str | None:
+    """'Leroy Merlin' / 'Amazon.com.br - Retail' / 'mercadolivre.com.br' -> domínio da loja, ou None se não conhecida."""
+    nome = _sem_acento(loja).strip()
+    if re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)+", nome):
+        return nome[4:] if nome.startswith("www.") else nome
+    for chave in sorted(LOJAS_CONHECIDAS, key=len, reverse=True):
+        if re.search(rf"(?<![a-z0-9]){re.escape(chave)}(?![a-z0-9])", nome):
+            return LOJAS_CONHECIDAS[chave]
+    regional = regional_por_nome(loja)
+    return regional.dominio if regional and regional.dominio else None
+
+
+MIN_TITULO_IGUAL = 0.75     # a página da loja precisa ter o título parecido com o do ANÚNCIO do Shopping, não só com o item
+
+
+def _mesmo_titulo(a: str, b: str) -> float:
+    ta, tb = _tokens(a) - FRACAS, _tokens(b) - FRACAS
+    return len(ta & tb) / min(len(ta), len(tb)) if ta and tb else 0.0
+
+
+def trocar_links_do_google(descricao: str, ofertas: list[Oferta], organicos: list[dict]) -> list[Oferta]:
+    """Núcleo puro: para cada oferta com link do Google, usa o resultado orgânico da MESMA loja que seja a página do
+    MESMO produto do anúncio. Medido em 08/11: só comparar com o nome do item ligava "Deca Vogue Plus" (bacia) à página
+    do assento "Vogue Plus" e "Hydra Max" a uma máscara de cabelo. Por isso o título da página também precisa
+    combinar com o título do anúncio do Shopping. Na dúvida, o link continua o do Google (a tela avisa)."""
+    from .busca import dominio_de, eh_pagina_de_busca
+    paginas: list[tuple[str, str, str]] = []   # (domínio, link, título+trecho)
+    for o in organicos:
+        link, titulo = str(o.get("link") or ""), str(o.get("title") or "")
+        dom = dominio_de(link)
+        if dom and not eh_pagina_de_busca(link) and semelhanca(descricao, f"{titulo} {o.get('snippet') or ''}"[:300]) >= MIN_MESMO:
+            paginas.append((dom, link, f"{titulo} {o.get('snippet') or ''}"[:300]))
+    saida = []
+    for o in ofertas:
+        dom = dominio_da_loja(o.loja) if o.dominio == DOMINIO_SHOPPING else None
+        melhor, nota = None, 0.0
+        for d, link, texto in paginas:
+            if dom and (d == dom or d.endswith("." + dom) or dom.endswith("." + d)):
+                n = _mesmo_titulo(o.titulo, texto)
+                if n > nota:
+                    melhor, nota = link, n
+        saida.append(o.model_copy(update={"url": melhor, "dominio": dom}) if melhor and nota >= MIN_TITULO_IGUAL and dom else o)
+    return saida
+
+
+@observe(name="busca.links_das_lojas")
+async def resolver_links_das_lojas(descricao: str, ofertas: list[Oferta]) -> list[Oferta]:
+    """Troca o link do Google pelo da loja nas ofertas do Shopping. Falha, sem chave ou sem achar: devolve como veio."""
+    import asyncio
+
+    import httpx
+    chaves = get_settings().serper_keys
+    pendentes = [o for o in ofertas if o.dominio == DOMINIO_SHOPPING]
+    dominios = list(dict.fromkeys(d for d in (dominio_da_loja(o.loja) for o in pendentes) if d))[:MAX_DOMINIOS_RESOLVER]
+    if not chaves or not dominios:
+        return ofertas
+    grupos = [dominios[i:i + SITES_POR_CONSULTA] for i in range(0, len(dominios), SITES_POR_CONSULTA)]
+
+    async def uma(cli: httpx.AsyncClient, grupo: list[str]) -> list[dict]:
+        q = f"{descricao} " + " OR ".join(f"site:{d}" for d in grupo)
+        j = await serper.post(cli, URL_BUSCA, {"q": q, "gl": "br", "hl": "pt-br", "num": 10}, chaves)
+        return [o for o in ((j or {}).get("organic") or []) if isinstance(o, dict)]
+
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as cli:
+            respostas = await asyncio.gather(*(uma(cli, g) for g in grupos))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Não deu para achar o link das lojas de '%s' (%s)", descricao, type(exc).__name__)
+        return ofertas
+    return trocar_links_do_google(descricao, ofertas, [o for r in respostas for o in r])
