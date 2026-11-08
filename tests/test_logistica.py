@@ -293,3 +293,13 @@ def test_enriquecer_rotas_lojas_so_preenche_loja_fisica_vencedora_e_zera_amazon(
     # Leroy Merlin ganhou no item 1 e tem filial física: recebe km, minutos e endereço
     assert lojas[1].distancia_km == 6.2 and lojas[1].tempo_min == 14
     assert lojas[1].endereco == "Av. Antônio Falcão, 1000"
+
+
+def test_dominio_desconhecido_e_tratado_como_online_sem_rede(monkeypatch):
+    from src import logistica as lg
+    chamadas = []
+    monkeypatch.setattr(lg, "_post_json", lambda *a, **k: chamadas.append(1) or {"places": []})
+    assert lg.buscar_filial_serper("Loja X", "lojaxqualquer.com.br", "Recife", "PE", -8.0, -34.9, chaves_serper=["k"]) is None
+    assert chamadas == []
+    assert lg._somente_online("lojaxqualquer.com.br") and lg._somente_online("amazon.com.br")
+    assert not lg._somente_online("www.leroymerlin.com.br") and not lg._somente_online("loja.cec.com.br")

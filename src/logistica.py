@@ -42,6 +42,28 @@ SOMENTE_ONLINE: frozenset[str] = frozenset({
     "aliexpress.com",
 })
 
+# Redes com loja física (material de construção). SÓ elas consultam Serper Maps/ORS. Qualquer outro domínio que a
+# busca (Tavily/Google) traga é tratado como online: sem chamada de rede e sem distância/tempo.
+LOJAS_FISICAS: frozenset[str] = frozenset({
+    "leroymerlin.com.br",
+    "cec.com.br",
+    "telhanorte.com.br",
+    "obramax.com.br",
+    "ferreiracosta.com",
+    "dicico.com.br",
+    "sertao.com.br",
+    "padovani.com.br",
+    "tumelero.com.br",
+})
+
+
+def _somente_online(dominio: str | None) -> bool:
+    """True para tudo que não é rede física conhecida (inclui a lista SOMENTE_ONLINE e domínios desconhecidos)."""
+    d = _dominio(dominio)
+    if not d or d in SOMENTE_ONLINE:
+        return True
+    return not any(d == f or d.endswith("." + f) for f in LOJAS_FISICAS)
+
 
 class Fornecedor(BaseModel):
     """Linha da tabela ``fornecedores`` (loja física/entrega cadastrada)."""
@@ -411,7 +433,7 @@ def buscar_filial_serper(
     se a loja for somente online, se não houver chave Serper ou se não existir filial na região.
     """
     dom = _dominio(dominio)
-    if not dom or dom in SOMENTE_ONLINE or not cidade or not uf:
+    if _somente_online(dom) or not cidade or not uf:
         return None
     chaves = chaves_serper if chaves_serper is not None else get_settings().serper_keys
     if not chaves:
@@ -529,12 +551,12 @@ def enriquecer_rotas_lojas(
         return
 
     for loja in lojas:
-        if _dominio(loja.id) in SOMENTE_ONLINE:
+        if _somente_online(loja.id):
             loja.distancia_km = None
             loja.tempo_min = None
             loja.endereco = None
 
-    fisicas = [l for l in lojas if _dominio(l.id) not in SOMENTE_ONLINE]
+    fisicas = [l for l in lojas if not _somente_online(l.id)]
     if not fisicas:
         return
 
