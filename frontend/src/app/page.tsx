@@ -95,9 +95,7 @@ export default function Inicio() {
             Mais tempo projetando.
           </h1>
           <p className="in-sub">
-            A OrçaAI é um <strong>AI Agent</strong> que trabalha por você: lê a lista de
-            materiais da obra, pesquisa os preços em lojas reais, aponta o que ficou faltando e entrega o plano de compra
-            pronto para o cliente.
+            A OrçaAI é um <strong>AI Agent</strong> que pesquisa os preços da sua obra e entrega o plano de compra pronto.
           </p>
           <div className="in-acoes">
             <Link href="/nova" className="oa-botao oa-botao--principal" data-planta-foco>
