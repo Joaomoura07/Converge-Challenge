@@ -1,6 +1,7 @@
 // Regras puras da lista de resultado (fatia B): ordem dos itens, progresso e a chamada de repesquisa.
 // Sem React aqui: é o que os testes (resultado.test.ts) exercitam.
 
+import { normalizarApiUrl } from "@/lib/apiUrl";
 import type { ItemOrcamento, Objetivo, StatusItem } from "./tipos";
 
 // Pendentes juntos no fim, com a pergunta do agente (skills/04-ui-design.md, seção 3.3).
@@ -75,7 +76,8 @@ export async function repesquisarItem(
   apiUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL,
   buscar: typeof fetch = fetch,
 ): Promise<ResultadoApi> {
-  if (!apiUrl) throw new ErroRepesquisa("Endereço da API não configurado (NEXT_PUBLIC_API_URL).");
+  const base = normalizarApiUrl(apiUrl);
+  if (!base) throw new ErroRepesquisa("Endereço da API não configurado (NEXT_PUBLIC_API_URL).");
   const texto = typeof pedido === "string" ? pedido.trim() : undefined;
   if (texto !== undefined && texto.length < MIN_ESPECIFICACAO) {
     throw new ErroRepesquisa("Escreva a especificação com pelo menos 3 letras (marca, linha ou medida).");
@@ -83,7 +85,7 @@ export async function repesquisarItem(
   const corpo = texto ? { nova_descricao: texto } : typeof pedido === "object" ? { objetivo: pedido.objetivo } : null;
   let resposta: Response;
   try {
-    resposta = await buscar(`${apiUrl.replace(/\/$/, "")}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {
+    resposta = await buscar(`${base}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {
       method: "POST",
       headers: corpo ? { "Content-Type": "application/json" } : undefined,
       body: corpo ? JSON.stringify(corpo) : undefined,
