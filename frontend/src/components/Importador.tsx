@@ -320,7 +320,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar, semExemp
         {situacao.tipo === "livre" &&
           (mostrarArquivo
             ? unificado
-              ? "Aceita CSV, Excel, TXT do Revit, PDF com texto, DXF, IFC e SketchUp, de até 20 MB cada. Pode mandar vários de uma vez: os itens são somados na lista. O formato é reconhecido pela extensão."
+              ? "CSV, Excel, TXT, PDF, DXF, IFC e SKP · até 20 MB cada"
               : modo === "skp"
               ? "Aceita arquivos .skp de até 20 MB. O modelo é lido neste navegador. Confira os componentes e as medidas na revisão."
               : modo === "ifc"

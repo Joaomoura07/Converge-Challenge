@@ -230,11 +230,7 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
             </div>}
 
             <div id="painel-modo" role={demo ? undefined : "tabpanel"} aria-labelledby={demo ? undefined : `modo-${lista.modo}`} className="painel-modo">
-              {demo ? (
-                <p className="apoio">
-                  Envie a lista do jeito que ela estiver: planilha, CSV, TXT do Revit, PDF, planta DXF, modelo IFC ou SketchUp. Pode mandar vários arquivos de uma vez. Depois, confira e edite os itens na tabela abaixo.
-                </p>
-              ) : modoAtual.etapa ? (
+              {demo ? null : modoAtual.etapa ? (
                 <p className="apoio">
                   A importação de <strong>{modoAtual.rotulo}</strong> chega na etapa {modoAtual.etapa}. Os materiais já digitados
                   continuam na lista abaixo e serão a mesma lista quando a importação existir.
