@@ -9,7 +9,7 @@ import { ehErro, LIMITE_BYTES, LIMITE_ITENS_ORCAMENTO, type Importacao } from "@
 
 type Props = {
   /** Qual aba de entrada está ativa: CSV e Excel mostram o seletor de arquivo; as demais só os exemplos. */
-  modo: "manual" | "csv" | "excel" | "revit" | "pdf" | "dxf";
+  modo: "manual" | "csv" | "excel" | "revit" | "pdf" | "dxf" | "ifc";
   /** quantas linhas já existem na lista (para perguntar acrescentar ou substituir) */
   linhasExistentes: number;
   novoId: () => string;
@@ -27,8 +27,8 @@ type Situacao =
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
 export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props) {
-  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit" || modo === "pdf" || modo === "dxf";
-  const aceita = modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
+  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit" || modo === "pdf" || modo === "dxf" || modo === "ifc";
+  const aceita = modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
@@ -148,7 +148,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
               aria-describedby={idAviso}
             />
             <button type="button" className="botao-primario" onClick={() => entrada.current?.click()}>
-              {modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
+              {modo === "ifc" ? "Escolher modelo IFC" : modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
             </button>
           </>
         )}
@@ -179,7 +179,11 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       <p id={idAviso} className="nota" role="status" aria-live="polite">
         {situacao.tipo === "livre" &&
           (mostrarArquivo
-            ? modo === "pdf"
+            ? modo === "ifc"
+              ? "Aceita o modelo exportado como .ifc (IFC2x3 ou IFC4) de até 20 MB. Exporte com as quantidades base ligadas para trazer as áreas. A lista só muda depois da leitura."
+              : modo === "dxf"
+              ? "Aceita planta .dxf de até 20 MB. DWG não é lido: salve como DXF no AutoCAD. A lista só muda depois da leitura."
+              : modo === "pdf"
               ? "Aceita PDF com texto selecionável (pedido de cotação ou quadro de acabamentos) de até 20 MB e 30 páginas. PDF escaneado não tem texto para ler. A lista só muda depois da leitura."
               : modo === "revit"
               ? "Aceita a tabela exportada do Revit em .txt (colunas separadas por tabulação), de até 20 MB. A lista só muda depois da leitura."
@@ -270,6 +274,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
 }
 
 function montarResumo(r: Importacao): string {
+  if (r.origem.formato === "ifc") {
+    return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · modelo IFC (medidas do modelo; descreva os materiais)`;
+  }
   if (r.origem.formato === "dxf") {
     return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · planta DXF (medidas do desenho; descreva os materiais)`;
   }

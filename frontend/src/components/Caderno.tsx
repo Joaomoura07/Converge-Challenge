@@ -30,7 +30,10 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "revit", rotulo: "TXT do Revit", etapa: null },
   { id: "pdf", rotulo: "PDF com texto", etapa: null },
   // Planta em DXF ligada por padrão (decisão de 07/11, noite). Para esconder a aba: NEXT_PUBLIC_MODELOS=0.
-  ...(process.env.NEXT_PUBLIC_MODELOS !== "0" ? [{ id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null }] : []),
+  ...(process.env.NEXT_PUBLIC_MODELOS !== "0" ? [
+        { id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null },
+        { id: "ifc" as ModoEntrada, rotulo: "Modelo (IFC)", etapa: null },
+      ] : []),
 ];
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -197,6 +200,10 @@ export function Caderno() {
               ) : lista.modo === "pdf" ? (
                 <p className="apoio">
                   Envie um PDF com texto (pedido de cotação ou quadro de acabamentos). A leitura reconstrói a tabela pela posição do texto: confira cada linha antes de enviar, principalmente quando a quantidade vier em embalagens. PDF escaneado não funciona; use CSV, Excel ou digite os materiais.
+                </p>
+              ) : lista.modo === "ifc" ? (
+                <p className="apoio">
+                  Envie o modelo BIM exportado como IFC (Revit: Arquivo › Exportar › IFC, com &quot;Exportar quantidades base&quot; ligado). Cada ambiente vira a área de piso; paredes e revestimentos, a área declarada; portas, janelas e louças, contagens por pavimento. O modelo não diz marca nem modelo do produto: você descreve depois. Áreas não declaradas entram sem quantidade.
                 </p>
               ) : lista.modo === "dxf" ? (
                 <p className="apoio">
