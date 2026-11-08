@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { Linha } from "../lista";
 import { estadoDoEnvio, iniciarEnvio, reenviar, reiniciarEnvios } from "./armazem";
 import { conteudoDoEnvio, montarCorpo, type CorpoEnvio } from "./corpo";
@@ -197,36 +197,5 @@ describe("rascunho (Voltar e corrigir)", () => {
     expect(lerRascunho(ID, null)).toBeNull();
     expect(salvarRascunho(r, null)).toBe(false);
     expect(salvarRascunho(r, { setItem: () => { throw new Error("cheio"); } })).toBe(false);
-  });
-});
-
-describe("modo gravação de vídeo", () => {
-  it("com ?simular=1 o envio vai para /simulacao/orcamentos; ?simular=0 volta ao normal", async () => {
-    const urls: string[] = [];
-    const ok = (async (url: string) => {
-      urls.push(url);
-      return new Response(JSON.stringify({ orcamento_id: "x", resultado: "criado" }), { status: 200 });
-    }) as unknown as typeof fetch;
-    const memoria = new Map<string, string>();
-    const janela = {
-      location: { search: "?simular=1" },
-      localStorage: {
-        getItem: (k: string) => memoria.get(k) ?? null,
-        setItem: (k: string, v: string) => void memoria.set(k, v),
-        removeItem: (k: string) => void memoria.delete(k),
-      },
-    };
-    vi.stubGlobal("window", janela);
-    try {
-      const corpo = { orcamento_id: "x" } as unknown as Parameters<typeof enviarOrcamento>[0];
-      await enviarOrcamento(corpo, { fetchImpl: ok, apiUrl: "http://api" });
-      janela.location.search = "";   // navegou: o modo continua lembrado
-      await enviarOrcamento(corpo, { fetchImpl: ok, apiUrl: "http://api" });
-      janela.location.search = "?simular=0";
-      await enviarOrcamento(corpo, { fetchImpl: ok, apiUrl: "http://api" });
-    } finally {
-      vi.unstubAllGlobals();
-    }
-    expect(urls).toEqual(["http://api/simulacao/orcamentos", "http://api/simulacao/orcamentos", "http://api/orcamentos"]);
   });
 });

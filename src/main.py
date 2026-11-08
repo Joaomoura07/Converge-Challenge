@@ -126,20 +126,6 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
     return corpo
 
 
-@app.post("/simulacao/orcamento-itens/{item_id}/repesquisar")
-async def repesquisar_simulado(item_id: str, req: RepesquisarRequest | None = None) -> dict:
-    """Modo gravação de vídeo: "Responder" e "Pesquisar de novo" reproduzem uma pesquisa real já feita do mesmo
-    item (src/simulacao.py). Alternativas, "Usar a média" e item nunca pesquisado seguem a rota real."""
-    if not settings.supabase_configured:
-        raise HTTPException(status_code=503, detail="Supabase não configurado")
-    if req is None or not (req.objetivo or req.aceitar_media or req.voltar_para):
-        from .simulacao import simular_repesquisa
-        resultado = await simular_repesquisa(item_id, req.nova_descricao if req else None)
-        if resultado is not None:
-            return resultado.model_dump(mode="json")
-    return await repesquisar(item_id, req)
-
-
 @app.post("/agent/run", response_model=RunResponse)
 def run_agent(req: RunRequest) -> RunResponse:
     # Endpoint síncrono: o FastAPI executa em threadpool, sem bloquear o event loop.
