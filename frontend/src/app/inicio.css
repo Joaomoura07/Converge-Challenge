@@ -586,3 +586,27 @@
 .in-previa[data-visivel="true"] .foto img { opacity: 1; }
 .in-previa .foto::after { display: none; }
 .in-previa__itens .pergunta strong { color: var(--tinta); font-weight: 600; }
+
+/* ---------- Sobre o projeto (âncora do botão "Conhecer projeto") ---------- */
+html { scroll-behavior: smooth; }
+#sobre { scroll-margin-top: 72px; }
+.in-sobre__grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.in-sobre__grade > div { padding-top: 20px; border-top: 1px solid var(--linha); }
+.in-sobre__grade h3, .in-sobre__sub {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-weight: 480;
+  font-size: var(--text-subheading);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.in-sobre__grade p { margin: 0; font-size: 16px; line-height: 1.55; color: var(--tinta-suave); }
+.in-sobre__sub { margin: 64px 0 20px; }
+.in-agente li { padding: 28px; }
+.in-agente h3 { margin-top: 20px; }
+.in-sobre__tec { max-width: 720px; margin: 28px 0 0; font-size: 15px; line-height: 1.55; color: var(--tinta-suave); }
+@media (max-width: 900px) {
+  .in-sobre__grade { grid-template-columns: 1fr; gap: 20px; }
+  .in-sobre__sub { margin-top: 48px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

@@ -1,0 +1,51 @@
+// Chips pequenos de download (2 por formato) acima da área de envio da /demo. O jurado baixa e arrasta o arquivo para
+// dentro, como um arquiteto faria com a exportação do Revit, do SketchUp ou da planilha.
+
+import { EXEMPLOS_DEMO, FORMATOS_DEMO, PASTA_DEMO } from "@/lib/demo/exemplos";
+
+function IconeArquivo() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+      <path d="M4 1.75h5.25L12.5 5v9.25H4z" strokeLinejoin="round" />
+      <path d="M9 1.75V5.25h3.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconeBaixar() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path d="M7 1.5v8M3.5 6.5 7 10l3.5-3.5M2 12.5h10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ExemplosDownload() {
+  return (
+    <section className="demo-exemplos" aria-labelledby="demo-exemplos-titulo">
+      <div className="demo-exemplos__cabeca">
+        <h3 id="demo-exemplos-titulo">Não tem uma lista à mão? Baixe um exemplo</h3>
+        <p>Obras fictícias de Recife, exportadas como um escritório exportaria. Baixe e arraste para a área abaixo.</p>
+      </div>
+      <div className="demo-exemplos__grupos">
+        {FORMATOS_DEMO.map((f) => (
+          <div key={f.modo} className="demo-exemplos__grupo">
+            <span className="demo-exemplos__formato">{f.rotulo}</span>
+            <ul>
+              {EXEMPLOS_DEMO.filter((e) => e.modo === f.modo).map((e) => (
+                <li key={e.arquivo}>
+                  <a className="demo-chip" href={`${PASTA_DEMO}/${e.arquivo}`} download={e.arquivo} title={e.obra}
+                     aria-label={`Baixar ${e.arquivo}: ${e.obra}`}>
+                    <IconeArquivo />
+                    <span className="demo-chip__nome">{e.arquivo}</span>
+                    <IconeBaixar />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

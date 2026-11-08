@@ -1,0 +1,21 @@
+Tabela de dispositivos elétricos e luminárias
+Família e tipo	Ambiente	Contagem
+
+Ambiente: Cozinha
+Tomada Liz 20A : Padrão	Cozinha	8
+		8
+
+Ambiente: Geral
+Tomada Liz 10A : Padrão	Geral	30
+Interruptor Pial Plus+ : Padrão	Geral	22
+Caixinha 4x2 Tigre : Padrão	Geral	60
+Lâmpada Philips 9W : Padrão	Geral	20
+		132
+
+Ambiente: Quadro
+Disjuntor Easy9 1P 20A : Padrão	Quadro	14
+Disjuntor Easy9 2P 40A : Padrão	Quadro	2
+DR Steck 40A : Padrão	Quadro	1
+Quadro Steck 24 : Padrão	Quadro	1
+		18
+Total geral: 158
