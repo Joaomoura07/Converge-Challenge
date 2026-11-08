@@ -73,20 +73,28 @@ class ResultadoExtracao:
 
 
 # ------------------------------------------------------------------ trava anti-alucinação
-def _variantes_preco(p: float) -> set[str]:
-    """739.9 -> {'739,90', '739.90', '739,9'}; 1599.0 -> {'1.599,00', '1599,00', '1.599', '1599'}."""
+def _variantes_preco(p: float) -> tuple[set[str], set[str]]:
+    """(com centavos, sem centavos). 739.9 -> ({'739,90', '739.90', '739,9'}, {});
+    1599.0 -> ({'1.599,00', '1599,00', ...}, {'1.599', '1599'})."""
     br = f"{p:,.2f}".replace(",", "#").replace(".", ",").replace("#", ".")
-    v = {br, br.replace(".", ""), f"{p:.2f}", f"{p:.2f}".replace(".", ","), f"{p:,.2f}"}
+    com = {br, br.replace(".", ""), f"{p:.2f}", f"{p:.2f}".replace(".", ","), f"{p:,.2f}"}
+    sem = set()
     if br.endswith(",00"):
-        v |= {br[:-3], br[:-3].replace(".", "")}
+        sem = {br[:-3], br[:-3].replace(".", "")}
     if br.endswith("0"):
-        v.add(br[:-1])
-    return v
+        com.add(br[:-1])
+    return com, sem
 
 
 def preco_no_texto(preco: float, texto: str) -> bool:
+    """O preço precisa estar escrito no anúncio. Com centavos ('1.470,00') vale em qualquer lugar; um número
+    redondo SEM centavos só vale depois de 'R$'. Medido no site em 07/11: o LLM leu o código do produto no título
+    ('Selador Acrílico 3,6L 1470 - Coral') como preço de R$ 1.470, e a trava aceitava porque '1470' estava escrito."""
     t = re.sub(r"(?<=R\$)\s+", "", texto)
-    return any(re.search(rf"(?<![\d.,]){re.escape(x)}(?![\d])", t) for x in _variantes_preco(preco))
+    com, sem = _variantes_preco(preco)
+    if any(re.search(rf"(?<![\d.,]){re.escape(x)}(?![\d])", t) for x in com):
+        return True
+    return any(re.search(rf"R\${re.escape(x)}(?![\d]|[.,]\d)", t) for x in sem)
 
 
 # ------------------------------------------------------------------ montagem e leitura

@@ -1,6 +1,7 @@
 // Ponto único de leitura de arquivos: escolhe o leitor pela extensão. Uploads e exemplos passam por aqui.
 
 import { importarCsv } from "./csv";
+import { importarDxf } from "./dxf";
 import { importarExcel, type AbaInfo } from "./excel";
 import { importarPdf, type PdfjsMinimo } from "./pdf";
 import { importarTxt } from "./txt";
@@ -26,6 +27,8 @@ export async function lerArquivo({
   if (ext === "csv") return importarCsv({ nome, bytes });
   if (["xlsx", "xls", "xlsm", "ods"].includes(ext)) return importarExcel({ nome, bytes, aba });
   if (ext === "txt") return importarTxt({ nome, bytes }); // tabela tabulada do Revit
+  if (ext === "dxf") return importarDxf({ nome, bytes });
+  if (ext === "dwg") return erro("FORMATO_NAO_SUPORTADO", "DWG é um formato fechado. No AutoCAD use Salvar como e escolha DXF; depois envie o .dxf.");
   if (ext === "pdf") {
     const motor = pdfjs ?? (await (await import("./pdfNavegador")).carregarPdfjs());
     return importarPdf({ nome, bytes, pdfjs: motor });

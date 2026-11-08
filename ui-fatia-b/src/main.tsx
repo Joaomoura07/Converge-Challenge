@@ -41,7 +41,8 @@ function Previa() {
         {ordenados.map((item) => (
           <ItemRow key={item.id} item={item}
                    onResponder={(i, texto) => alert(`repesquisar_item(${i.id}, "${texto}")`)}
-                   onPesquisarDeNovo={(i) => alert(`repesquisar_item(${i.id})`)} />
+                   onPesquisarDeNovo={(i) => alert(`repesquisar_item(${i.id})`)}
+                   onPesquisarAlternativa={(i, objetivo) => alert(`repesquisar_item(${i.id}, objetivo="${objetivo}")`)} />
         ))}
       </section>
     </main>

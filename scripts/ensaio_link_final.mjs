@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Ensaio do LINK FINAL (etapa 14). Node 18+, sem dependências.
 //
-//   node scripts/ensaio_link_final.mjs --api https://converge-challenge.vercel.app --site https://SEU-SITE.vercel.app \
+//   node scripts/ensaio_link_final.mjs --api https://orca-api-x7k2.vercel.app --site https://SEU-SITE.vercel.app \
 //        --supabase-url https://XXXX.supabase.co --anon-key eyJ...            # só leitura
 //   ...  --enviar                                                              # + UM orçamento real (grava no Supabase, usa LLM/Tavily)
 //

@@ -1,11 +1,12 @@
 // Chamada ao backend da revisão. O caminho da URL fica numa constante só: quando o João remover o handler dele de
 // POST /revisao/sugestoes e a A assumir esse caminho (PROPOSTA), basta trocar CAMINHO_SUGESTOES.
 
+import { normalizarApiUrl } from "../apiUrl";
 import type { DadosRevisao, ItemParaRevisao } from "./tipos";
 
 export const CAMINHO_SUGESTOES = "/revisao/sugestoes/completo";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_URL = normalizarApiUrl(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:8000";
 
 const PRAZO_MS = 20_000;
 

@@ -53,7 +53,7 @@ export type AvisoImportacao = {
 
 export type OrigemImportacao = {
   arquivo: string;
-  formato: "csv" | "xlsx" | "xls" | "xlsm" | "txt" | "pdf";
+  formato: "csv" | "xlsx" | "xls" | "xlsm" | "txt" | "pdf" | "dxf";
   software: "revit" | "sketchup" | "desconhecido";
   aba: string | null;
   delimitador: string | null;

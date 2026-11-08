@@ -108,9 +108,10 @@ def test_segundos_invalidos_nao_quebram():
 
 
 def test_resultado_nao_grava_colunas_que_nao_existem(api):
-    """Só grava logistica/viabilidade/ganho: uma coluna inexistente no SQL faria o update falhar (502)."""
+    """Só grava colunas do SQL único: uma coluna inexistente faria o update falhar (502). Os totais
+    (orcamentos.total_min/med/max) existem no SQL e passaram a ser gravados com a viabilidade."""
     api.post("/orcamentos/o1/resultado")
-    assert set(api.gravado["dados"]) == {"logistica", "viabilidade", "ganho"}
+    assert set(api.gravado["dados"]) == {"logistica", "viabilidade", "ganho", "total_min", "total_med", "total_max"}
 
 
 # --- frete em pausa (padrão): sempre R$ 0, sem CEP/API/fornecedores ------------------------------------------
@@ -194,3 +195,23 @@ def test_so_fornecedores_ativos(monkeypatch):
             {"id": "2", "nome": "Inativa", "dominio": "b.com", "cep": "50000000", "ativo": False}]
     monkeypatch.setattr(rr, "get_supabase", lambda: _SB({"fornecedores": forn}))
     assert [f.nome for f in rr._carregar_fornecedores()] == ["Ativa"]
+
+
+def test_reaproveitados_conta_precos_anteriores_ao_inicio_da_pesquisa():
+    inicio = "2026-11-07T22:09:32+00:00"
+    itens = [{"preco_data": "2026-11-07T21:38:17+00:00"},   # do cache (pesquisa de meia hora antes)
+             {"preco_data": "2026-11-07T22:09:33+00:00"},   # pesquisado agora
+             {"preco_data": "2026-11-07T22:09:32.5+00:00"}, # dentro da folga de 1 s: conta como agora
+             {"preco_data": None}, {}]                       # sem preço
+    assert rr._reaproveitados(itens, inicio) == 1
+    assert rr._reaproveitados(itens, None) == 0
+
+
+def test_resultado_avisa_quando_precos_vieram_do_cache():
+    orc = {"id": "o1", "orcamento_cliente": None, "custo_usd": 0,
+           "pesquisa_iniciada_em": "2026-11-07T22:09:32+00:00", "pesquisa_concluida_em": "2026-11-07T22:09:34+00:00"}
+    itens = [dict(_item(1, "Tinta", 100, 120), preco_data="2026-11-07T21:38:17+00:00"),
+             dict(_item(2, "Massa", 50, 60), preco_data="2026-11-07T22:09:33+00:00")]
+    r = rr.calcular_resultado(orc, itens, [])
+    assert r["ganho"]["resumo"] == ("À mão: ~36 min. Aqui: 2 s, com 1 de 2 preços reaproveitados de pesquisa recente. "
+                                    "Custo de IA: R$ 0,00")

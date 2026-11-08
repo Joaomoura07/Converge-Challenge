@@ -1,7 +1,8 @@
 // Regras puras da lista de resultado (fatia B): ordem dos itens, progresso e a chamada de repesquisa.
 // Sem React aqui: é o que os testes (resultado.test.ts) exercitam.
 
-import type { ItemOrcamento, StatusItem } from "./tipos";
+import { normalizarApiUrl } from "@/lib/apiUrl";
+import type { ItemOrcamento, Objetivo, StatusItem } from "./tipos";
 
 // Pendentes juntos no fim, com a pergunta do agente (skills/04-ui-design.md, seção 3.3).
 // Não encontrados logo antes deles: também pedem uma ação do arquiteto ("Pesquisar de novo").
@@ -54,35 +55,52 @@ export type ResultadoApi = Omit<ItemOrcamento, "id" | "descricao" | "quantidade"
 
 export class ErroRepesquisa extends Error {}
 
+// "Pesquisar de novo" escolhendo outro produto: o backend pede a sugestão à IA e confere o preço nas lojas.
+// Tipo e rótulos ficam nos arquivos compartilhados com a prévia (tipos.ts, formato.ts).
+export { OBJETIVOS } from "./formato";
+export type { Objetivo } from "./tipos";
+
+/** Segundo argumento de repesquisarItem: texto = resposta à pergunta; objeto = alternativa. */
+export type PedidoRepesquisa = string | { objetivo: Objetivo };
+
 /**
- * POST {API}/orcamento-itens/{id}/repesquisar. Sem `especificacao` = "Pesquisar de novo"; com ela = "Responder".
+ * POST {API}/orcamento-itens/{id}/repesquisar. Sem `pedido` = "Pesquisar de novo" (o mesmo produto); com texto =
+ * "Responder"; com `{objetivo}` = pesquisar uma alternativa (o item só troca se ela for achada à venda e, no
+ * "menor preço", sair mais barata; senão volta como estava, com o motivo).
  * O backend grava o item no Supabase (o Realtime atualiza a tela) e também devolve o resultado.
  * Pode levar até ~1 min: o agente refaz a busca quando faltam lojas.
  */
 export async function repesquisarItem(
   itemId: string,
-  especificacao?: string,
+  pedido?: PedidoRepesquisa,
   apiUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL,
   buscar: typeof fetch = fetch,
 ): Promise<ResultadoApi> {
-  if (!apiUrl) throw new ErroRepesquisa("Endereço da API não configurado (NEXT_PUBLIC_API_URL).");
-  const texto = especificacao?.trim();
+  const base = normalizarApiUrl(apiUrl);
+  if (!base) throw new ErroRepesquisa("Endereço da API não configurado (NEXT_PUBLIC_API_URL).");
+  const texto = typeof pedido === "string" ? pedido.trim() : undefined;
   if (texto !== undefined && texto.length < MIN_ESPECIFICACAO) {
     throw new ErroRepesquisa("Escreva a especificação com pelo menos 3 letras (marca, linha ou medida).");
   }
+  const corpo = texto ? { nova_descricao: texto } : typeof pedido === "object" ? { objetivo: pedido.objetivo } : null;
   let resposta: Response;
   try {
-    resposta = await buscar(`${apiUrl.replace(/\/$/, "")}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {
+    resposta = await buscar(`${base}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {
       method: "POST",
-      headers: texto ? { "Content-Type": "application/json" } : undefined,
-      body: texto ? JSON.stringify({ nova_descricao: texto }) : undefined,
+      headers: corpo ? { "Content-Type": "application/json" } : undefined,
+      body: corpo ? JSON.stringify(corpo) : undefined,
       signal: AbortSignal.timeout(120_000),
     });
   } catch {
     throw new ErroRepesquisa("Não consegui falar com o servidor. Confira a conexão e tente de novo.");
   }
   if (resposta.status === 404) throw new ErroRepesquisa("Este item não existe mais no orçamento. Recarregue a página.");
-  if (!resposta.ok) throw new ErroRepesquisa(`A pesquisa falhou (erro ${resposta.status}). Tente de novo em instantes.`);
+  if (!resposta.ok) {
+    // 503 da alternativa já vem com a frase para o arquiteto ("O item ficou como estava…").
+    const detalhe = await resposta.json().then((j) => j?.detail, () => undefined);
+    if (resposta.status === 503 && typeof detalhe === "string" && detalhe) throw new ErroRepesquisa(detalhe);
+    throw new ErroRepesquisa(`A pesquisa falhou (erro ${resposta.status}). Tente de novo em instantes.`);
+  }
   return (await resposta.json()) as ResultadoApi;
 }
 

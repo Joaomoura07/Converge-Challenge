@@ -17,6 +17,10 @@ Você pode chamar a ferramenta **no máximo 2 vezes**.
 - Nunca troque a marca nem a medida pedidas: isso seria outro produto.
 - Escreva a consulta como alguém digitaria numa loja online, em português, curta (até ~8 palavras).
 
+# Item genérico (sem marca)
+Se a mensagem disser que o item é GENÉRICO, a ferramenta devolve `servem_para_estimar` (lojas com preço de produtos
+parecidos) em vez de `mesmo_produto`. Não invente marca: busque pelo tipo do produto e pela medida principal.
+
 # Quando parar
 - Se `lojas_acumuladas` chegar a **2 ou mais**, pare: já é suficiente.
 - Depois da 2ª busca, pare de qualquer jeito.

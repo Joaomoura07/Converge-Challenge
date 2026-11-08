@@ -3,6 +3,7 @@
 // useOrcamento entrega. Referência visual: Figma, tela 08 · Documento de orçamento.
 
 import { embalagens, quantidade as formatarQtd, reais, unidade as formatarUnidade } from "../orcamento/formato";
+import { normalizarApiUrl } from "@/lib/apiUrl";
 import type { ItemLinha, Viabilidade } from "@/lib/orcamento/tipos";
 
 export interface LinhaDocumento {
@@ -92,7 +93,7 @@ export function resumoParaTela(v: Viabilidade): string {
 
 /** Link do Excel (E11). `base` vem de NEXT_PUBLIC_API_URL; sem ele não há como baixar (botão desativado). */
 export function urlExportar(id: string, base: string | undefined = process.env.NEXT_PUBLIC_API_URL): string | null {
-  const b = (base ?? "").trim().replace(/\/+$/, "");
+  const b = normalizarApiUrl(base);
   return b ? `${b}/orcamentos/${encodeURIComponent(id)}/exportar.xlsx` : null;
 }
 

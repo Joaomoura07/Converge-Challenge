@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60
     llm_max_retries: int = 3
     agent_max_steps: int = 8
+    # POST /agent/run (agente genérico do template, sem uso no site): desligado por padrão para ninguém gastar os
+    # créditos da Featherless pelo link público. AGENT_RUN_ATIVO=true no .env local para usar nos testes manuais.
+    agent_run_ativo: bool = False
 
     # Supabase
     supabase_url: str = ""
@@ -52,6 +55,9 @@ class Settings(BaseSettings):
     pesquisa_prazo_aberta_s: float = 5      # passou disso, o item segue só com a lista fixa (a aberta chegou a 10 s)
     pesquisa_cache_dias: int = 7
     pesquisa_modelo_extracao: str = "Qwen/Qwen3-32B"  # rápido; o GLM-5.2 fica para o agente que refaz
+    # "Pesquisar de novo" com alternativa. Medido em 07/11 (3 casos): Gemma 4–10 s e US$ 0,00007, mantendo cor e
+    # acabamento; Qwen3-32B 12–24 s; GLM-5.2 48–125 s (com a busca depois, estourava os 120 s da tela).
+    pesquisa_modelo_alternativa: str = "google/gemma-4-31B-it"
     pesquisa_modelo_agente: str = ""        # vazio = FEATHERLESS_MODEL (GLM-5.2)
     pesquisa_hedge_s: float = 8             # extração sem resposta nesse tempo → reserva em paralelo (outra chave)
     pesquisa_min_lojas: int = 2             # menos que isso → o agente refaz a busca
@@ -62,6 +68,9 @@ class Settings(BaseSettings):
     pesquisa_concorrencia_agente: int = 1   # cota PRÓPRIA de chamadas simultâneas ao GLM do agente
     pesquisa_agentes_simultaneos: int = 2   # itens com agente ao mesmo tempo (um pensa enquanto o outro busca)
     pesquisa_prazo_agentes_s: float = 90    # prazo total da fase 2 (era 60: muitos itens ficavam "sem tempo"; a função tem 300 s)
+    # Prazo do orçamento inteiro (fases 1 e 2), abaixo dos 300 s da função: sobra tempo para gravar, concluir e
+    # chamar a Fatia C. Item que não termina a tempo vira "erro" com "Pesquisar de novo" (não fica "buscando").
+    pesquisa_prazo_total_s: float = 240
 
     @property
     def langfuse_url(self) -> str:

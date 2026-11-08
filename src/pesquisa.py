@@ -33,7 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .busca import buscar, montar_consulta
+from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
@@ -84,13 +84,26 @@ class Coleta:
     def extracao(self) -> ResultadoExtracao:
         return ResultadoExtracao(ofertas=list(self.ofertas), modelo=self.modelo)
 
-    def lojas_conferidas(self) -> int:
-        return len({o.loja for o in self.ofertas if o.mesmo_produto == "sim" and o.preco})
+    def lojas_conferidas(self, generico: bool = False) -> int:
+        """Lojas que contam para parar: o mesmo produto; no item genérico (estimativa), também os parecidos."""
+        if generico:
+            return len({o.loja for o in self.ofertas if o.mesmo_produto in ("sim", "parecido") and o.preco})
+        # página de listagem não confirma o produto exato (src/calculo.py): não conta para o agente parar
+        return len({o.loja for o in self.ofertas if o.mesmo_produto == "sim" and o.preco
+                    and not eh_pagina_de_listagem(o.dominio, o.url)})
 
 
-def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta) -> dict:
+def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta, generico: bool = False) -> dict:
     """Observação enxuta: só o que ajuda a reformular (sem texto de anúncio inteiro)."""
     def titulo(o): return o.titulo[:90]
+    if generico:   # item sem marca: o parecido com preço também serve para a faixa estimada
+        return {
+            "servem_para_estimar": [f"{o.loja}: R$ {o.preco:.2f} ({o.embalagem or '?'})" for o in ofertas
+                                    if o.mesmo_produto in ("sim", "parecido") and o.preco],
+            "outros": [titulo(o) for o in ofertas if o.mesmo_produto == "nao" or not o.preco][:5],
+            "lojas_acumuladas": coleta.lojas_conferidas(generico=True),
+            "buscas_restantes": max(0, get_settings().pesquisa_max_refazer - coleta.buscas_agente),
+        }
     return {
         "mesmo_produto": [f"{o.loja}: R$ {o.preco:.2f} ({o.embalagem or '?'})" for o in ofertas
                           if o.mesmo_produto == "sim" and o.preco],
@@ -151,7 +164,18 @@ async def _executar_busca(item: ItemEntrada, coleta: Coleta, argumentos: str) ->
     b, ext = await buscar_e_extrair(args.consulta, item.descricao)
     coleta.juntar(ext.ofertas)
     coleta.imagem = coleta.imagem or b.imagem
-    return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta)}
+    return {"ok": True, "result": resumo_para_agente(ext.ofertas, coleta, _generico(item))}
+
+
+def _generico(item: ItemEntrada) -> bool:
+    return item.classificacao == "pendente_especificacao"
+
+
+# Item sem marca: o agente melhora a FAIXA ESTIMADA (a pergunta ao arquiteto continua). Medido em 07/11: numa lista
+# sem marcas o agente nunca rodava e o "pesquisa → avalia → refaz" do pitch não aparecia.
+INSTRUCAO_GENERICO = ("Item GENÉRICO (sem marca/modelo): não escolha marca. Produtos parecidos da mesma categoria, "
+                      "medida e unidade servem para estimar a faixa de preço; reformule para achar mais lojas com "
+                      "preço (ex.: tipo do produto + medida principal).")
 
 
 def criar_agente(cliente=None) -> Agent:
@@ -188,10 +212,12 @@ async def _loop_react(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente
     Quem decide PARAR é o código, não o LLM: com lojas suficientes ou sem buscas restantes, encerra
     sem gastar mais uma chamada só para ouvir "FIM" (medido: ~10 s a menos por item difícil)."""
     s = get_settings()
+    generico = _generico(item)
     agente = criar_agente(cliente)
     mensagens = [{"role": "system", "content": agente.system_prompt},
                  {"role": "user", "content": (f"Produto pedido: {item.descricao}\n"
-                                              f"Primeira consulta: {coleta.consultas[0] if coleta.consultas else item.descricao}\n"
+                                              + (f"{INSTRUCAO_GENERICO}\n" if generico else "")
+                                              + f"Primeira consulta: {coleta.consultas[0] if coleta.consultas else item.descricao}\n"
                                               f"Resultado da primeira busca: {json.dumps(primeira, ensure_ascii=False)}")}]
     for _ in range(s.pesquisa_max_refazer + 1):
         resposta = await _chamar_agente(agente, mensagens)
@@ -203,8 +229,8 @@ async def _loop_react(item: ItemEntrada, coleta: Coleta, primeira: dict, cliente
             obs = (await _executar_busca(item, coleta, call.function.arguments) if call.function.name == "buscar_preco"
                    else {"ok": False, "error": f"Ferramenta desconhecida: {call.function.name}"})
             mensagens.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(obs, ensure_ascii=False)})
-        if coleta.lojas_conferidas() >= s.pesquisa_min_lojas:
-            return f"parou: {coleta.lojas_conferidas()} lojas com o mesmo produto"
+        if coleta.lojas_conferidas(generico) >= s.pesquisa_min_lojas:
+            return f"parou: {coleta.lojas_conferidas(generico)} lojas com preço"
         if coleta.buscas_agente >= s.pesquisa_max_refazer:
             return "parou: limite de buscas"
     return "parou: limite de passos"
@@ -236,6 +262,20 @@ def _resultado(item: ItemEntrada, calc: Calculo, status: str, imagem: str | None
         unidade_preco=calc.unidade_preco, confianca=calc.confianca, estimativa=calc.estimativa,
         fontes=calc.fontes, premissa=calc.premissa if calc.tem_preco else None,
         pergunta=pergunta, motivo=motivo, preco_data=preco_data if calc.tem_preco else None, iteracoes=iteracoes)
+
+
+MOTIVO_SEM_TEMPO = "a pesquisa deste item passou do tempo; use Pesquisar de novo"
+MOTIVO_MAIS_PROXIMO ="não achamos à venda exatamente a sua especificação: este é o produto mais próximo; confira nas fontes"
+
+
+def aceitar_mais_proximo(r: ResultadoItem) -> ResultadoItem:
+    """Depois que o arquiteto RESPONDEU a pergunta, não se pergunta de novo. Se só vieram parecidos, o item vira
+    definido com confiança baixa e o aviso, mantendo `estimativa` e as fontes. Medido no site em 07/11: a resposta
+    "Tramontina Liz tomada 2P+T 20A branca" achou preço na loja oficial e voltou pendente com a MESMA pergunta."""
+    if r.status != "pendente_especificacao" or r.preco_emb_med is None:
+        return r
+    return ResultadoItem(**(r.model_dump() | {"status": "definido", "pergunta": None, "confianca": "baixa",
+                                              "estimativa": True, "motivo": MOTIVO_MAIS_PROXIMO}))
 
 
 def _precisa_refazer(calc: Calculo) -> bool:
@@ -285,10 +325,10 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     coleta.juntar(ext.ofertas)
     calc = calcular(item, coleta.extracao(), generico)
 
-    precisa = usar_agente and not generico and _precisa_refazer(calc) and get_settings().llm_configured
+    precisa = usar_agente and _precisa_refazer(calc) and get_settings().llm_configured
     resultado = await _concluir(item, coleta, anterior, b.erro, gravar_cache=not precisa)
     return Rascunho(item, resultado, coleta, anterior, b.erro,
-                    primeira=resumo_para_agente(ext.ofertas, coleta) if precisa else None)
+                    primeira=resumo_para_agente(ext.ofertas, coleta, generico) if precisa else None)
 
 
 async def _concluir(item: ItemEntrada, coleta: Coleta, anterior: cache.EntradaCache | None, erro_busca: str | None,
@@ -369,13 +409,23 @@ async def pesquisar_itens(itens: list[ItemEntrada], ao_terminar: Callable[[Resul
              Os sem preço vão primeiro. Item que não coube no prazo fica com o resultado da fase 1.
     """
     s = get_settings()
+    loop = asyncio.get_running_loop()
+    fim_total = loop.time() + s.pesquisa_prazo_total_s
 
     async def avisar(r: ResultadoItem) -> None:
-        if ao_terminar:
+        if not ao_terminar:
+            return
+        try:
+            await ao_terminar(r)
+        except Exception:  # noqa: BLE001 — falha ao gravar um item não derruba os outros
+            logger.exception("ao_terminar falhou para o item %s", r.item_id)
+            # Sem isto o item ficava "buscando" para sempre na tela. Uma linha mínima (sem preço) quase sempre
+            # grava; com "erro", a tela oferece "Pesquisar de novo".
             try:
-                await ao_terminar(r)
-            except Exception:  # noqa: BLE001 — falha ao gravar um item não derruba os outros
-                logger.exception("ao_terminar falhou para o item %s", r.item_id)
+                await ao_terminar(ResultadoItem(item_id=r.item_id, status="erro",
+                                                motivo="não consegui salvar o resultado; use Pesquisar de novo"))
+            except Exception:  # noqa: BLE001
+                logger.exception("Nem o erro do item %s foi gravado", r.item_id)
 
     async def fase1(item: ItemEntrada) -> Rascunho:
         try:
@@ -386,13 +436,29 @@ async def pesquisar_itens(itens: list[ItemEntrada], ao_terminar: Callable[[Resul
             await avisar(r.resultado)
         return r
 
-    rascunhos = list(await asyncio.gather(*(fase1(i) for i in itens)))
+    # Fase 1 com prazo: a função da Vercel morre no limite e o orçamento ficaria "pesquisando" (reenvio recusado por
+    # minutos) com itens "buscando" para sempre. Item que não terminou a tempo vira "erro" com "Pesquisar de novo".
+    tarefas = {asyncio.create_task(fase1(i)): i for i in itens}
+    if tarefas:
+        await asyncio.wait(tarefas, timeout=max(0.0, fim_total - loop.time()))
+    rascunhos = []
+    for tarefa, item in tarefas.items():
+        if tarefa.done() and not tarefa.cancelled() and tarefa.exception() is None:
+            rascunhos.append(tarefa.result())
+            continue
+        tarefa.cancel()
+        logger.warning("Item %s passou do prazo total da pesquisa (%.0f s)", item.id, s.pesquisa_prazo_total_s)
+        r = ResultadoItem(item_id=item.id, status="erro", motivo=MOTIVO_SEM_TEMPO)
+        await avisar(r)
+        rascunhos.append(Rascunho(item, r))
+    pendurados = [t for t in tarefas if not t.done()]
+    if pendurados:
+        await asyncio.gather(*pendurados, return_exceptions=True)
     finais = {r.item.id: r.resultado for r in rascunhos}
 
     pendentes = sorted((r for r in rascunhos if r.precisa_agente), key=lambda r: r.resultado.preco_emb_med is not None)
     if pendentes:
-        loop = asyncio.get_running_loop()
-        prazo = loop.time() + s.pesquisa_prazo_agentes_s
+        prazo = min(loop.time() + s.pesquisa_prazo_agentes_s, fim_total)
         vagas = asyncio.Semaphore(max(1, s.pesquisa_agentes_simultaneos))
 
         async def fase2(r: Rascunho) -> None:

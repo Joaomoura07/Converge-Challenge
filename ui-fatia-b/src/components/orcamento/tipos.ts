@@ -38,3 +38,6 @@ export interface ItemOrcamento {
   preco_data?: string | null;
   iteracoes?: number;
 }
+
+/** "Pesquisar de novo" buscando outro produto (POST /orcamento-itens/{id}/repesquisar com {objetivo}). */
+export type Objetivo = "qualidade" | "preco" | "semelhante";

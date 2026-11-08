@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langfuse import get_client
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .agent import Agent, AgentResult
 from .config import get_settings
@@ -71,18 +72,33 @@ def health() -> dict:
 
 
 class RepesquisarRequest(BaseModel):
-    """Corpo opcional: vazio = "Pesquisar de novo"; com texto = resposta do arquiteto à pergunta do item."""
+    """Corpo opcional: vazio = "Pesquisar de novo"; com texto = resposta do arquiteto à pergunta do item;
+    com `objetivo` = pesquisar uma alternativa (maior qualidade, menor preço ou semelhante de outra marca)."""
     nova_descricao: str | None = Field(default=None, min_length=3, max_length=300)
+    objetivo: Literal["qualidade", "preco", "semelhante"] | None = None
+
+    @model_validator(mode="after")
+    def _um_so(self) -> "RepesquisarRequest":
+        if self.nova_descricao and self.objetivo:
+            raise ValueError("envie a especificação OU o objetivo da alternativa, não os dois")
+        return self
 
 
 @app.post("/orcamento-itens/{item_id}/repesquisar")
 async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> dict:
-    """Fatia B: botões "Pesquisar de novo" e "Responder" do ItemRow. Roda na mesma requisição (a Vercel encerra
-    o que roda depois da resposta) e grava o item em orcamento_itens: o Realtime atualiza a tela sozinho."""
+    """Fatia B: botões "Pesquisar de novo" (com ou sem objetivo) e "Responder" do ItemRow. Roda na mesma
+    requisição (a Vercel encerra o que roda depois da resposta) e grava o item em orcamento_itens: o Realtime
+    atualiza a tela sozinho."""
     if not settings.supabase_configured:
         raise HTTPException(status_code=503, detail="Supabase não configurado")
+    from .alternativas import AlternativaIndisponivel
     from .orcamento import repesquisar_item   # import tardio: /health não depende da pesquisa
-    resultado = await repesquisar_item(item_id, req.nova_descricao if req else None)
+    kw = {"objetivo": req.objetivo} if req and req.objetivo else {}
+    try:
+        resultado = await repesquisar_item(item_id, req.nova_descricao if req else None, **kw)
+    except AlternativaIndisponivel:
+        raise HTTPException(status_code=503, detail="Não consegui sugerir uma alternativa para este item agora. "
+                                                    "O item ficou como estava; tente de novo em instantes.")
     if resultado is None:
         raise HTTPException(status_code=404, detail="item não encontrado")
     return resultado.model_dump(mode="json")
@@ -91,6 +107,8 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
 @app.post("/agent/run", response_model=RunResponse)
 def run_agent(req: RunRequest) -> RunResponse:
     # Endpoint síncrono: o FastAPI executa em threadpool, sem bloquear o event loop.
+    if not settings.agent_run_ativo:   # o site não usa; aberto, gastaria crédito da Featherless pelo link público
+        raise HTTPException(status_code=404, detail="Not Found")
     result = Agent().run(req.task, req.context, session_id=req.session_id, tags=req.tags)
     run_id = save_agent_run(req.task, result) if req.persist and settings.supabase_configured else None
     return RunResponse(**result.model_dump(), run_id=run_id)

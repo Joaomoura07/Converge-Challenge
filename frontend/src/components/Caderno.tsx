@@ -29,6 +29,8 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   { id: "excel", rotulo: "Excel", etapa: null },
   { id: "revit", rotulo: "TXT do Revit", etapa: null },
   { id: "pdf", rotulo: "PDF com texto", etapa: null },
+  // Demo: abas de modelos ficam escondidas até NEXT_PUBLIC_MODELOS=1.
+  ...(process.env.NEXT_PUBLIC_MODELOS === "1" ? [{ id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null }] : []),
 ];
 
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -195,6 +197,10 @@ export function Caderno() {
               ) : lista.modo === "pdf" ? (
                 <p className="apoio">
                   Envie um PDF com texto (pedido de cotação ou quadro de acabamentos). A leitura reconstrói a tabela pela posição do texto: confira cada linha antes de enviar, principalmente quando a quantidade vier em embalagens. PDF escaneado não funciona; use CSV, Excel ou digite os materiais.
+                </p>
+              ) : lista.modo === "dxf" ? (
+                <p className="apoio">
+                  Envie a planta em DXF (no AutoCAD: Salvar como DXF; DWG não é lido). O arquivo traz medidas, não o produto: blocos viram contagens, polilinhas fechadas viram área e abertas viram comprimento. Você descreve o material depois.
                 </p>
               ) : lista.modo === "revit" ? (
                 <p className="apoio">

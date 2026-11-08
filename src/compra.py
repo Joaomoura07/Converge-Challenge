@@ -89,7 +89,7 @@ def conteudo_embalagem(embalagem: str | None) -> Conteudo | None:
 # ficavam sem nº de embalagens ("não sei converter m2 em l") e fora do subtotal. O apelido acrescenta a palavra do
 # material; as tabelas acima continuam decidindo pela ordem (ex.: "Selador Coral" segue sendo selador).
 APELIDOS = [
-    (r"\bac[- ]?(i{1,3}|[123])\b|argamassa", "argamassa"),
+    (r"\bac[- ]?(i{1,3}|[123])\b|argamassa|votomassa|quartzolit (ac|cola|colante)", "argamassa"),
     (r"suvinil|\bcoral\b|sherwin|lukscolor|eucatex|renner|iquine|hidracor|toque de seda|t\. ?seda|decora|"
      r"fosco completo|acrilic|latex", "tinta"),
     (r"portinari|portobello|eliane|ceusa|biancogres|incepa|ceramica|ceramico", "porcelanato revestimento"),
@@ -100,6 +100,11 @@ def _com_apelidos(produto: str) -> str:
     p = _norm(produto)
     extras = [palavra for padrao, palavra in APELIDOS if re.search(padrao, p)]
     return " ".join([p, *extras])
+
+
+def com_apelidos(produto: str) -> str:
+    """Descrição normalizada + a palavra do material quando ela vem só pela marca/linha (usada também em E2)."""
+    return _com_apelidos(produto)
 
 
 def perda_para(produto: str) -> float:

@@ -34,17 +34,32 @@ def _brl(v: float) -> str:
     return "R$ " + f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def _custo_texto(custo_brl_exato: float) -> str:
+    """Frações de centavo não viram "R$ 0,00": a tela diria que foi de graça quando não foi."""
+    if 0 < custo_brl_exato < 0.005:
+        return "menos de R$ 0,01"
+    return _brl(round(custo_brl_exato, 2))
+
+
 def calcular_ganho(n_itens: int, segundos_reais: float, custo_usd: float = 0.0,
                    minutos_por_item: float = MINUTOS_POR_ITEM_A_MAO,
-                   cambio: float = CAMBIO_BRL) -> Ganho:
+                   cambio: float = CAMBIO_BRL, reaproveitados: int = 0) -> Ganho:
+    """``reaproveitados``: itens cujo preço veio de pesquisa anterior (cache de 7 dias da Fatia B).
+    Sem esse aviso, "Aqui: 2 s" numa obra já pesquisada parece número inventado."""
     n = max(0, int(n_itens))
     real = max(0.0, float(segundos_reais))
     min_mao = round(n * minutos_por_item, 1)
-    custo = round(max(0.0, float(custo_usd)) * cambio, 2)
+    custo_exato = max(0.0, float(custo_usd)) * cambio
+    custo = round(custo_exato, 2)
     a_mao_s = min_mao * 60
     reducao = round(max(0.0, 1 - real / a_mao_s) * 100, 1) if a_mao_s > 0 else 0.0
     ta = "~" + _duracao(a_mao_s)
-    tr, tc = _duracao(real), _brl(custo)
+    tr, tc = _duracao(real), _custo_texto(custo_exato)
+    k = min(max(0, int(reaproveitados)), n)
+    aqui = tr
+    if k:
+        palavra = "preço reaproveitado" if n == 1 else "preços reaproveitados"   # "1 de 3 preços"
+        aqui = f"{tr}, com {k} de {n} {palavra} de pesquisa recente"
     return Ganho(minutos_a_mao=min_mao, segundos_reais=round(real, 1), custo_ia_brl=custo,
                  reducao_pct=reducao, texto_a_mao=ta, texto_real=tr, texto_custo=tc,
-                 resumo=f"À mão: {ta}. Aqui: {tr}. Custo de IA: {tc}")
+                 resumo=f"À mão: {ta}. Aqui: {aqui}. Custo de IA: {tc}")

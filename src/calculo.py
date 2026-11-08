@@ -10,10 +10,13 @@ Python puro, sem IA (conta não se pede para LLM). Passos:
 
 from __future__ import annotations
 
+import re
 import statistics
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 
+from .busca import eh_pagina_de_listagem, fonte_nao_e_loja
 from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normalizar_unidade, qtd_embalagens
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
@@ -113,13 +116,89 @@ def _corrigir_embalagens(mesma: list[_Normalizada]) -> tuple[list[_Normalizada],
     return saida, corrigidas
 
 
+# ------------------------------------------------------------------ conferências da oferta (sem IA)
+# Todas usam só o que a oferta guarda (título, url, preço, embalagem), então valem também para as ofertas que já
+# estavam no cache antes delas: o cache guarda ofertas, e a conta é refeita a cada orçamento.
+def _norm(s: str) -> str:
+    return unicodedata.normalize("NFKD", (s or "").lower()).encode("ascii", "ignore").decode()
+
+
+def preco_e_codigo_do_titulo(o: Oferta) -> bool:
+    """Preço redondo que aparece no título como número solto, sem 'R$' antes: é código ou medida, não preço.
+    Medido no site em 07/11: 'Selador Acrílico Interno e Externo 3,6L 1470 - Coral' virou galão de R$ 1.470 e
+    '10 Metros Fita Led ...' virou fita de R$ 10. Medidas contam de propósito: um preço igual a uma medida do
+    título é leitura errada quase sempre."""
+    if not o.preco or o.preco != int(o.preco):
+        return False
+    titulo = re.sub(r"R\$\s*", "R$", o.titulo or "")
+    n = f"{int(o.preco)}"
+    variantes = {n, f"{int(o.preco):,}".replace(",", ".")}
+    solto = any(re.search(rf"(?<![\d.,$]){re.escape(x)}(?![\d]|[.,]\d)", titulo) for x in variantes)
+    com_rs = any(re.search(rf"R\${re.escape(x)}(?![\d])", titulo) for x in variantes)
+    return solto and not com_rs
+
+
+_POR_AREA = {"m2", "m", "m3"}   # preço por m²/m: a caixa do título é outra informação, não conflito
+
+
+def embalagem_confere_com_titulo(o: Oferta) -> bool:
+    """A embalagem que o LLM leu precisa bater com a escrita no título do anúncio, quando o título diz uma.
+    Medido no site em 07/11: 'Tinta ... Decor Colors 21,5kg' rotulada 'lata 18 L'; página de 3,6 L com preço
+    rotulado 'latão 18 L'. Na dúvida, o anúncio sai da conta (preço errado é pior que um preço a menos)."""
+    do_llm, do_titulo = conteudo_embalagem(o.embalagem), conteudo_embalagem(o.titulo)
+    if not do_llm or not do_titulo or do_titulo.quantidade <= 0:
+        return True                                   # um dos dois não diz embalagem: nada a comparar
+    if do_llm.quantidade == 1.0 and do_llm.unidade in _POR_AREA:
+        return True                                   # preço por m² de um piso vendido em caixa de 2,16 m²
+    if do_llm.unidade != do_titulo.unidade:
+        # "un" × litros/kg não se compara (caixa d'água 1000 L vendida por unidade); litros × kg é conflito
+        return "un" in (do_llm.unidade, do_titulo.unidade)
+    return 0.9 <= do_llm.quantidade / do_titulo.quantidade <= 1.1
+
+
+# Ferramentas e acessórios que aparecem na busca do material (medido em 07/11: "Nivelador Cortag" casou com o
+# "Alicate Nivelador de Piso Cortag"). Só descarta se a palavra NÃO está no próprio pedido. Ficam de fora palavras
+# que aparecem no título do produto certo ("cuba com suporte", "registro acionamento manual", "adaptador", "refil").
+OUTRO_TIPO = re.compile(r"\b(alicate|ferramenta|aplicador|pincel|trincha|espatula|desempenadeira|broca|"
+                        r"amostra|mostruario|gabarito|catalogo)\b")
+
+
+def e_outro_tipo_de_produto(o: Oferta, pedido: str) -> bool:
+    p = set(OUTRO_TIPO.findall(_norm(pedido)))
+    return any(w not in p for w in OUTRO_TIPO.findall(_norm(o.titulo)))
+
+
+def motivo_descarte(o: Oferta, pedido: str) -> str | None:
+    if fonte_nao_e_loja(o.dominio, o.url):
+        return "fonte não é loja (órgão público ou arquivo)"
+    if preco_e_codigo_do_titulo(o):
+        return "preço é código do título"
+    if not embalagem_confere_com_titulo(o):
+        return "embalagem não confere com o título"
+    if e_outro_tipo_de_produto(o, pedido):
+        return "outro tipo de produto (ferramenta/acessório)"
+    return None
+
+
 def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | None = None) -> Calculo:
     generico = item.classificacao == "pendente_especificacao" if generico is None else generico
     descartadas: Counter = Counter()
 
     # 1. candidatas: produto exato; para genérico (estimativa), aceita também "parecido"
     aceitas = ("sim", "parecido") if generico else ("sim",)
-    candidatas = [o for o in extracao.ofertas if o.preco and o.mesmo_produto in aceitas]
+    candidatas = []
+    for o in extracao.ofertas:
+        if o.mesmo_produto == "sim" and eh_pagina_de_listagem(o.dominio, o.url):
+            # listagem serve para estimar (item genérico), nunca para afirmar o preço do produto exato
+            o = o.model_copy(update={"mesmo_produto": "parecido"})
+            if not generico:
+                descartadas["página de listagem (vale só para estimativa)"] += 1
+        if not (o.preco and o.mesmo_produto in aceitas):
+            continue
+        if motivo := motivo_descarte(o, item.descricao):
+            descartadas[motivo] += 1
+            continue
+        candidatas.append(o)
     normalizadas: list[_Normalizada] = []
     for o in candidatas:
         c = conteudo_embalagem(o.embalagem)

@@ -69,6 +69,18 @@
   border: 1px solid var(--cor-linha); border-radius: 2px; background: var(--cor-fundo); color: var(--cor-texto);
 }
 
+/* "Pesquisar de novo" com as opções: mesmo produto, maior qualidade, menor preço, semelhante de outra marca */
+.orc-repesquisa { margin-top: 10px; display: grid; gap: 8px; justify-items: start; }
+.orc-item__falha .orc-repesquisa { margin-top: 0; }
+.orc-repesquisa > .orc-botao { font-size: 0.8125rem; padding: 4px 10px; }
+.orc-repesquisa > .orc-botao[aria-expanded="true"] { border-color: var(--cor-acao); color: var(--cor-acao); }
+.orc-repesquisa__opcoes {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px; border: 1px dashed var(--cor-linha); border-radius: 2px;
+}
+.orc-repesquisa__opcoes .orc-botao { font-size: 0.8125rem; padding: 4px 10px; }
+.orc-botao--discreto { border-color: transparent; background: transparent; color: var(--cor-texto-2); }
+
 .orc-item__preco { grid-area: preco; display: grid; align-content: start; gap: 6px; }
 .orc-item__confianca { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--cor-texto-2); }
 .orc-item__estimativa { color: var(--cor-texto); border: 1px dashed var(--cor-linha); padding: 0 6px; border-radius: 2px; }
