@@ -29,8 +29,13 @@ export function ExemplosDownload() {
       </div>
       <div className="demo-exemplos__grupos">
         {FORMATOS_DEMO.map((f) => (
-          <div key={f.modo} className="demo-exemplos__grupo">
-            <span className="demo-exemplos__formato">{f.rotulo}</span>
+          <details key={f.modo} className="demo-exemplos__grupo">
+            <summary className="demo-exemplos__formato">
+              <svg className="demo-exemplos__seta" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {f.rotulo}
+            </summary>
             <ul>
               {EXEMPLOS_DEMO.filter((e) => e.modo === f.modo).map((e) => (
                 <li key={e.arquivo}>
@@ -43,7 +48,7 @@ export function ExemplosDownload() {
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         ))}
       </div>
     </section>
