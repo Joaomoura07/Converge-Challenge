@@ -33,6 +33,7 @@ const MODOS: { id: ModoEntrada; rotulo: string; etapa: string | null }[] = [
   ...(process.env.NEXT_PUBLIC_MODELOS !== "0" ? [
         { id: "dxf" as ModoEntrada, rotulo: "Planta (DXF)", etapa: null },
         { id: "ifc" as ModoEntrada, rotulo: "Modelo (IFC)", etapa: null },
+        { id: "skp" as ModoEntrada, rotulo: "SketchUp (SKP)", etapa: null },
       ] : []),
 ];
 
@@ -200,6 +201,10 @@ export function Caderno() {
               ) : lista.modo === "pdf" ? (
                 <p className="apoio">
                   Envie um PDF com texto (pedido de cotação ou quadro de acabamentos). A leitura reconstrói a tabela pela posição do texto: confira cada linha antes de enviar, principalmente quando a quantidade vier em embalagens. PDF escaneado não funciona; use CSV, Excel ou digite os materiais.
+                </p>
+              ) : lista.modo === "skp" ? (
+                <p className="apoio">
+                  Importe um modelo .skp do SketchUp. Revise a contagem dos componentes e preencha as medidas pendentes na lista.
                 </p>
               ) : lista.modo === "ifc" ? (
                 <p className="apoio">

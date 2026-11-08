@@ -1,15 +1,14 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import type { Linha } from "@/lib/lista";
+import type { Linha, ModoEntrada } from "@/lib/lista";
 import { abasEscolhaveis, lerArquivo } from "@/lib/importar/arquivo";
 import { EXEMPLOS, type Exemplo } from "@/lib/importar/exemplos";
 import { importacaoParaLinhas, resumoAvisos } from "@/lib/importar/paraLinhas";
 import { ehErro, LIMITE_BYTES, LIMITE_ITENS_ORCAMENTO, type Importacao } from "@/lib/importar/tipos";
 
 type Props = {
-  /** Qual aba de entrada está ativa: CSV e Excel mostram o seletor de arquivo; as demais só os exemplos. */
-  modo: "manual" | "csv" | "excel" | "revit" | "pdf" | "dxf" | "ifc";
+  modo: ModoEntrada;
   /** quantas linhas já existem na lista (para perguntar acrescentar ou substituir) */
   linhasExistentes: number;
   novoId: () => string;
@@ -27,13 +26,15 @@ type Situacao =
 const ROTULO_CODIFICACAO: Record<string, string> = { "utf-8": "UTF-8", "windows-1252": "Windows-1252", "utf-16le": "UTF-16", "utf-16be": "UTF-16" };
 
 export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props) {
-  const mostrarArquivo = modo === "csv" || modo === "excel" || modo === "revit" || modo === "pdf" || modo === "dxf" || modo === "ifc";
-  const aceita = modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
+  const mostrarArquivo = modo !== "manual";
+  const aceita = modo === "skp" ? ".skp" : modo === "ifc" ? ".ifc,.ifczip" : modo === "dxf" ? ".dxf,.dwg" : modo === "excel" ? ".xlsx,.xls,.xlsm" : modo === "revit" ? ".txt,text/plain" : modo === "pdf" ? ".pdf,application/pdf" : ".csv,text/csv";
   const [situacao, setSituacao] = useState<Situacao>({ tipo: "livre" });
   const [pendente, setPendente] = useState<Pendente | null>(null);
   const [escolhaAba, setEscolhaAba] = useState<EscolhaAba | null>(null);
   const [exemplosAbertos, setExemplosAbertos] = useState(false);
   const entrada = useRef<HTMLInputElement>(null);
+  const linhasAtuais = useRef(linhasExistentes);
+  linhasAtuais.current = linhasExistentes;
   const idAviso = useId();
 
   /** Ponto único: arquivo enviado e exemplos passam por aqui, pelo mesmo leitor. */
@@ -57,7 +58,13 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
 
   /** Lê os bytes com o leitor da extensão. Planilha com várias abas pede a escolha antes de mexer na lista. */
   async function avaliar(nome: string, bytes: Uint8Array, aba: string | null) {
-    const resultado = await lerArquivo({ nome, bytes, aba });
+    let resultado;
+    try {
+      resultado = await lerArquivo({ nome, bytes, aba });
+    } catch {
+      setSituacao({ tipo: "erro", nome, mensagem: "Não consegui carregar o leitor deste arquivo. Tente de novo. A lista atual foi mantida." });
+      return;
+    }
     if (!aba && !ehErro(resultado)) {
       const abas = abasEscolhaveis(resultado);
       if (abas.length > 1) {
@@ -77,7 +84,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       return;
     }
     if (resultado.itens.length === 0) {
-      setSituacao({ tipo: "erro", nome, mensagem: "O arquivo tem cabeçalho, mas nenhuma linha de dados. A lista atual foi mantida." });
+      setSituacao({ tipo: "erro", nome, mensagem: `${resultado.avisos[0]?.mensagem ?? "O arquivo não tem itens para importar."} A lista atual foi mantida.` });
       return;
     }
     if (resultado.itens.length > LIMITE_ITENS_ORCAMENTO) {
@@ -91,7 +98,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
     const linhas = importacaoParaLinhas(resultado, novoId);
     const resumo = montarResumo(resultado);
     const avisos = resumoAvisos(resultado).linhas;
-    if (linhasExistentes > 0) {
+    if (linhasAtuais.current > 0) {
       setPendente({ importacao: resultado, linhas, nome });
       setSituacao({ tipo: "pronto", resumo, avisos });
     } else {
@@ -144,11 +151,12 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
               className="somente-leitor"
               type="file"
               accept={aceita}
+              disabled={situacao.tipo === "lendo"}
               onChange={aoEscolherArquivo}
               aria-describedby={idAviso}
             />
-            <button type="button" className="botao-primario" onClick={() => entrada.current?.click()}>
-              {modo === "ifc" ? "Escolher modelo IFC" : modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
+            <button type="button" className="botao-primario" disabled={situacao.tipo === "lendo"} onClick={() => entrada.current?.click()}>
+              {modo === "skp" ? "Escolher modelo SketchUp" : modo === "ifc" ? "Escolher modelo IFC" : modo === "dxf" ? "Escolher planta DXF" : modo === "excel" ? "Escolher planilha Excel" : modo === "revit" ? "Escolher TXT do Revit" : modo === "pdf" ? "Escolher PDF com texto" : "Escolher arquivo CSV"}
             </button>
           </>
         )}
@@ -167,7 +175,7 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
         <ul id="lista-exemplos" className="exemplos">
           {EXEMPLOS.map((ex) => (
             <li key={ex.id}>
-              <button type="button" className="exemplo" onClick={() => usarExemplo(ex)}>
+              <button type="button" className="exemplo" disabled={situacao.tipo === "lendo"} onClick={() => usarExemplo(ex)}>
                 <span className="exemplo-nome">{ex.rotulo}</span>
                 <span className="nota">{ex.descricao}</span>
               </button>
@@ -179,7 +187,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
       <p id={idAviso} className="nota" role="status" aria-live="polite">
         {situacao.tipo === "livre" &&
           (mostrarArquivo
-            ? modo === "ifc"
+            ? modo === "skp"
+              ? "Aceita arquivos .skp de até 20 MB. O modelo é lido neste navegador. Confira os componentes e as medidas na revisão."
+              : modo === "ifc"
               ? "Aceita o modelo exportado como .ifc (IFC2x3 ou IFC4) de até 20 MB. Exporte com as quantidades base ligadas para trazer as áreas. A lista só muda depois da leitura."
               : modo === "dxf"
               ? "Aceita planta .dxf de até 20 MB. DWG não é lido: salve como DXF no AutoCAD. A lista só muda depois da leitura."
@@ -274,6 +284,9 @@ export function Importador({ modo, linhasExistentes, novoId, onAplicar }: Props)
 }
 
 function montarResumo(r: Importacao): string {
+  if (r.origem.formato === "skp") {
+    return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · modelo SketchUp`;
+  }
   if (r.origem.formato === "ifc") {
     return `${r.itens.length} ${r.itens.length === 1 ? "item lido" : "itens lidos"} de ${r.origem.arquivo} · modelo IFC (medidas do modelo; descreva os materiais)`;
   }

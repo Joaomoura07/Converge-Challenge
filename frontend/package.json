@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "2.119.0",
     "dxf-parser": "1.1.2",
     "next": "15.5.29",
+    "openskp": "1.5.0",
     "papaparse": "5.4.1",
     "pdfjs-dist": "6.5.438",
     "react": "19.1.10",
