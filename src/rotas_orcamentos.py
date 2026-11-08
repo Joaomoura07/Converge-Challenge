@@ -184,9 +184,26 @@ def _erro_do_banco(exc: Exception) -> HTTPException:
 # --------------------------------------------------------------------------- rota
 
 
+async def _simular(orcamento_id: str) -> dict:
+    from .simulacao import simular_orcamento   # modo gravação de vídeo: reproduz pesquisas reais já feitas
+
+    return await simular_orcamento(orcamento_id)
+
+
 @router.post("/orcamentos")
 async def criar_orcamento(req: OrcamentoIn) -> dict[str, Any]:
     """"Enviar para a IA": grava, pesquisa na mesma requisição e devolve o estado."""
+    return await _criar_e_pesquisar(req, _pesquisar)
+
+
+@router.post("/simulacao/orcamentos")
+async def criar_orcamento_simulado(req: OrcamentoIn) -> dict[str, Any]:
+    """Modo gravação de vídeo: mesma validação e gravação; os preços vêm de pesquisas reais já feitas dos mesmos
+    itens (src/simulacao.py), em segundos. Item nunca pesquisado é pesquisado de verdade."""
+    return await _criar_e_pesquisar(req, _simular)
+
+
+async def _criar_e_pesquisar(req: OrcamentoIn, pesquisar) -> dict[str, Any]:
     if not _supabase_ok():
         raise HTTPException(status_code=503, detail="Supabase não configurado")
 
@@ -227,7 +244,7 @@ async def criar_orcamento(req: OrcamentoIn) -> dict[str, Any]:
     # 'criado' ou 'existente' (reenvio equivalente, por exemplo depois de perder a resposta): chama a pesquisa
     # nos dois casos. A reserva da B garante que ela não roda duas vezes ao mesmo tempo nem repete orçamento concluído.
     try:
-        pesquisa = await _pesquisar(orcamento_id)
+        pesquisa = await pesquisar(orcamento_id)
     except Exception as exc:  # noqa: BLE001
         logger.exception("A pesquisa do orçamento %s falhou", orcamento_id)
         raise HTTPException(status_code=502, detail={

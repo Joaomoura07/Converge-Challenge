@@ -1,6 +1,7 @@
 // Regras puras da lista de resultado (fatia B): ordem dos itens, progresso e a chamada de repesquisa.
 // Sem React aqui: é o que os testes (resultado.test.ts) exercitam.
 
+import { caminhoSimulavel } from "@/lib/simulacao";
 import { normalizarApiUrl } from "@/lib/apiUrl";
 import type { ItemOrcamento, Objetivo, StatusItem } from "./tipos";
 
@@ -104,7 +105,7 @@ export async function repesquisarItem(
     : null;
   let resposta: Response;
   try {
-    resposta = await buscar(`${base}/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`, {
+    resposta = await buscar(`${base}${caminhoSimulavel(`/orcamento-itens/${encodeURIComponent(itemId)}/repesquisar`)}`, {
       method: "POST",
       headers: corpo ? { "Content-Type": "application/json" } : undefined,
       body: corpo ? JSON.stringify(corpo) : undefined,

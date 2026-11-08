@@ -2,6 +2,7 @@
 // que a tela sabe explicar e dizer o que fazer: reenviar o mesmo pedido, voltar e corrigir, ou configurar.
 
 import { API_URL } from "../revisao/api";
+import { caminhoSimulavel } from "../simulacao";
 import type { CorpoEnvio } from "./corpo";
 
 export const CAMINHO_ORCAMENTOS = "/orcamentos";
@@ -38,7 +39,7 @@ export async function enviarOrcamento(corpo: CorpoEnvio, opcoes: Opcoes = {}): P
   const { fetchImpl = fetch, apiUrl = API_URL, signal } = opcoes;
   let resposta: Response;
   try {
-    resposta = await fetchImpl(`${apiUrl}${CAMINHO_ORCAMENTOS}`, {
+    resposta = await fetchImpl(`${apiUrl}${caminhoSimulavel(CAMINHO_ORCAMENTOS)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(corpo),

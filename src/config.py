@@ -95,6 +95,9 @@ class Settings(BaseSettings):
     # Itens por envio. Medido em 08/11: 53 itens em ~110 s; 321 itens estouraram o prazo (94 em "erro" por tempo,
     # total R$ 0). Com 80 a conta fica perto de 200 s. A tela usa o mesmo número (LIMITE_ITENS_PESQUISA em tipos.ts).
     pesquisa_max_itens: int = 80
+    # Modo gravação de vídeo (rotas /simulacao/...): multiplica as pausas entre os itens reproduzidos. 1 = ~1,5 s
+    # entre um item e o próximo; 0 = sem pausa (testes).
+    simulacao_ritmo: float = 1.0
 
     @property
     def langfuse_url(self) -> str:
