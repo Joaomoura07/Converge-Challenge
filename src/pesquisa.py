@@ -33,7 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .google_shopping import ofertas_google
+from .google_shopping import ofertas_google, ofertas_regionais
 from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
@@ -340,9 +340,12 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     consulta = montar_consulta(item)
     # Google Shopping em paralelo: dezenas de lojas com preço estruturado (medido em 07/11: com só a busca, 33 de 113
     # itens dos exemplos ficavam a mais de 50% da mediana do Google)
-    (b, ext), google = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
-                                            ofertas_google(item.descricao, item.unidade, generico))
+    # e as lojas PERTO DA OBRA (Google Maps pelo CEP -> busca do Google nos sites delas): o diferencial do Orça
+    (b, ext), google, regionais = await asyncio.gather(buscar_e_extrair(consulta, item.descricao),
+                                                       ofertas_google(item.descricao, item.unidade, generico),
+                                                       ofertas_regionais(item.descricao, item.unidade))
     coleta = Coleta(imagem=b.imagem, provedor=b.provedor, modelo=ext.modelo, consultas=[consulta])
+    coleta.juntar(regionais)
     coleta.juntar(ext.ofertas)
     coleta.juntar(google)
     calc = calcular(item, coleta.extracao(), generico)

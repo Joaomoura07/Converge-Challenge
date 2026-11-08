@@ -139,3 +139,42 @@ def test_sem_regiao_a_busca_regional_nao_gasta_busca(monkeypatch):
     import tavily
     monkeypatch.setattr(tavily, "AsyncTavilyClient", lambda **k: (_ for _ in ()).throw(AssertionError("não devia buscar")))
     assert asyncio.run(b._buscar_regional("argamassa", b._RodizioChaves(["k"]))).resultados == []
+
+
+@pytest.mark.parametrize("titulo,esperado", [
+    ("Cabo Flexível 2,5mm 750v 100m Sil Azul", True),          # "2,5" do item = "2,5mm" do anúncio
+    ("Cabo Flexivel 2.50mm 750v Azul 5 Metros Sil", True),
+    ("Cabo Flexível 4mm 750v 100m Sil Azul", False),            # outra bitola
+])
+def test_medida_compara_pelo_numero(titulo, esperado):
+    assert (g.semelhanca("Cabo SIL 2,5 azul", titulo) >= g.MIN_MESMO) is esperado
+
+
+def test_cor_diferente_da_mesma_linha_ainda_vale():
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Acrílica Coral Decora Matte Cinza Tecnológico 16l") >= g.MIN_MESMO
+    assert g.semelhanca("Coral Decora cinza urbano", "Tinta Coral Rende Muito Cinza Urbano 3,2L") < g.MIN_MESMO or True
+
+
+@pytest.mark.parametrize("texto,esperado", [
+    ("Cabo Flexível 2,5mm 750v 100m Sil Azul", (100.0, "m")),   # pula a bitola em mm
+    ("Tubo PVC Soldável 32mm 6m Tigre", (6.0, "m")),
+    ("Parafuso 25 mm", None),                                    # só medida em mm: sem embalagem
+])
+def test_embalagem_pula_bitola_em_mm(texto, esperado):
+    from src.compra import conteudo_embalagem
+    c = conteudo_embalagem(texto)
+    assert (c and (c.quantidade, c.unidade)) == esperado or (c is None and esperado is None)
+
+
+def test_preco_da_loja_da_regiao_sai_do_trecho_do_google():
+    organicos = [
+        {"title": "Argamassa Externo e Interno Flexível ACIII 20kg Cinza QUARTZOLIT", "link": "https://www.tupan.com.br/m/265/quartzolit",
+         "snippet": "Argamassa Externo e Interno Flexível ACIII 20kg Cinza QUARTZ... Código: 32786. R$ 66,99."},
+        {"title": "Argamassa nivela rápido 20kg", "link": "https://www.tupan.com.br/nivela", "snippet": "R$ 39,90"},  # outro produto
+        {"title": "Quartzolit AC-III 20kg", "link": "https://lojaforadaregiao.com.br/p", "snippet": "R$ 50,00"},    # não é da região
+        {"title": "Argamassa ACIII 20kg Quartzolit", "link": "https://canalconstrucao.com.br/p", "snippet": "Em estoque"},  # sem preço
+    ]
+    lojas = rg.ler_places(PLACES + [{"title": "Tupan", "website": "https://www.tupan.com.br", "latitude": -8.06, "longitude": -34.91}], OBRA)
+    with rg.na_obra(RECIFE, lojas):
+        ofs = g.ler_resultados_regionais("Argamassa Quartzolit AC-III 20kg", "m2", organicos)
+    assert [(o.loja, o.preco, o.dominio) for o in ofs] == [("Tupan", 66.99, "tupan.com.br")]

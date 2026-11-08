@@ -26,6 +26,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from . import serper
 from .busca import LOCAL_DA_OBRA, Local, local_do_cep
 from .config import get_settings
 
@@ -129,22 +130,9 @@ async def lojas_da_regiao(local: Local | None, obra: tuple[float, float] | None 
     cli = cliente or httpx.AsyncClient(timeout=TIMEOUT_S)
 
     async def uma(consulta: str) -> list[dict]:
-        for k in chaves:
-            try:
-                r = await cli.post(URL_PLACES, headers={"X-API-KEY": k, "Content-Type": "application/json"},
-                                   json={"q": f"{consulta} {local.cidade} {local.uf}", "gl": "br", "hl": "pt-br"})
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("Google Maps (Serper) falhou (%s)", type(exc).__name__)
-                return []
-            if r.status_code in (401, 403, 429):
-                continue
-            if r.status_code != 200:
-                return []
-            try:
-                return [p for p in (r.json().get("places") or []) if isinstance(p, dict)]
-            except Exception:  # noqa: BLE001
-                return []
-        return []
+        j = await serper.post(cli, URL_PLACES, {"q": f"{consulta} {local.cidade} {local.uf}", "gl": "br", "hl": "pt-br"},
+                             chaves)
+        return [p for p in ((j or {}).get("places") or []) if isinstance(p, dict)]
 
     try:
         respostas = await asyncio.gather(*(uma(c) for c in CONSULTAS))

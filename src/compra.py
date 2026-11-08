@@ -65,15 +65,19 @@ def conteudo_embalagem(embalagem: str | None) -> Conteudo | None:
     if m:
         mult = float(m.group(1))
         resto = texto[m.end():]
-    c = _CONTEUDO.search(resto) or (None if m else _CONTEUDO.search(texto))
-    if c:
+    # A 1ª medida pode ser bitola/espessura ("Cabo 2,5mm 750v 100m", "Tubo 32mm 6m"): mm/cm não são embalagem, então
+    # segue procurando (medido em 08/11: o cabo parava no "2,5mm" e ficava sem embalagem).
+    achados = list(_CONTEUDO.finditer(resto)) or ([] if m else list(_CONTEUDO.finditer(texto)))
+    for c in achados:
         valor = float(c.group(1).replace(",", "."))
         bruto = c.group(2).lower()
         chave = "ml" if bruto == "ml" else "g" if bruto == "g" else bruto
         unidade = normalizar_unidade(chave) or normalizar_unidade(bruto.rstrip("s"))
         if unidade in ("cm", "mm") or unidade is None:
-            return None
+            continue
         return Conteudo(round(mult * valor * _FATOR.get(chave, 1.0), 6), unidade)
+    if achados and not m:
+        return None   # só havia medida em mm/cm: não dá para saber a embalagem
     if m:                                   # "pacote 100" / "kit 6 peças" sem conteúdo por unidade
         return Conteudo(mult, "un")
     sozinho = normalizar_unidade(_norm(texto).replace("²", "2"))

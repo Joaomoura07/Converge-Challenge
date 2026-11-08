@@ -20,6 +20,7 @@ from urllib.parse import quote_plus
 
 from langfuse import observe
 
+from . import serper
 from .cache import chave_cache
 from .compra import conteudo_embalagem, normalizar_unidade
 from .config import get_settings
@@ -29,7 +30,7 @@ from .validacao_serper import _buscar, converter_preco
 
 logger = logging.getLogger(__name__)
 
-MIN_MESMO = 0.75
+MIN_MESMO = 0.66            # 2 de 3 palavras: a cor ("Cinza Urbano" x "Cinza Tecnológico") quase não muda o preço da linha
 MIN_PARECIDO = 0.55
 MAX_OFERTAS = 12
 DOMINIO_SHOPPING = "google.com"   # o link do anúncio abre no Google Shopping
@@ -57,13 +58,21 @@ def _medidas(tokens: set[str]) -> set[str]:
     return {t for t in tokens if re.search(r"\d", t)}
 
 
+def _numeros(tokens: set[str]) -> set[float]:
+    return {float(n) for t in tokens for n in re.findall(r"\d+(?:\.\d+)?", t)}
+
+
 def semelhanca(descricao: str, titulo: str) -> float:
-    """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item."""
+    """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item.
+    Medida compara pelo NÚMERO: "2,5" do item casa com "2,5mm" ou "2.50mm" do anúncio (medido em 08/11: o cabo SIL
+    2,5 ficava sem preço porque "2.5" ≠ "2.5mm")."""
     item = _tokens(descricao) - FRACAS
     anuncio = _tokens(titulo)
-    if len(item) < 2 or not _medidas(item) <= anuncio:
+    if len(item) < 2 or not _numeros(_medidas(item)) <= _numeros(anuncio):
         return 0.0
-    return len(item & anuncio) / len(item)
+    palavras = item - _medidas(item)
+    comuns = len(palavras & anuncio) + len(_medidas(item))
+    return comuns / len(item) if len(palavras & anuncio) >= min(2, len(palavras)) else 0.0
 
 
 def _embalagem(titulo: str, unidade_item: str | None) -> str | None:
@@ -104,6 +113,67 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         if len(saida) >= MAX_OFERTAS:
             break
     return saida
+
+
+# ------------------------------------------------------------------ lojas da região: busca do Google nos sites delas
+URL_BUSCA = "https://google.serper.dev/search"
+SITES_POR_CONSULTA = 4          # medido em 08/11: com 12 "site:" o Serper responde 400
+MAX_LOJAS_REGIONAIS = 8         # as mais perto da obra (2 consultas)
+_PRECO_NO_TRECHO = re.compile(r"R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})")
+
+
+def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos: list[dict]) -> list[Oferta]:
+    """Núcleo puro: resultados da busca do Google nos sites das lojas da região -> ofertas.
+    O preço é o 1º "R$ 00,00" escrito no trecho (sem LLM); o produto precisa casar com o item como no Shopping."""
+    from .busca import dominio_de, eh_pagina_de_busca
+    from .regiao import regional_por_dominio
+    saida, lojas = [], set()
+    for o in organicos:
+        titulo, trecho, link = str(o.get("title") or ""), str(o.get("snippet") or ""), str(o.get("link") or "")
+        loja = regional_por_dominio(dominio_de(link))
+        achou = _PRECO_NO_TRECHO.search(trecho)
+        if loja is None or loja.nome in lojas or not achou or eh_pagina_de_busca(link):
+            continue
+        texto = f"{titulo} {trecho[:achou.start()]}"   # o nome do produto vem antes do preço no trecho
+        if semelhanca(descricao, texto) < MIN_MESMO:
+            continue
+        emb = _embalagem(texto, unidade_item)
+        preco = converter_preco(achou.group(1))
+        if emb is None or preco is None:
+            continue
+        lojas.add(loja.nome)
+        saida.append(Oferta(loja=loja.nome, dominio=loja.dominio, url=link, titulo=texto[:200], preco=preco,
+                            embalagem=emb, mesmo_produto="sim"))
+    return saida
+
+
+@observe(name="busca.lojas_da_regiao")
+async def ofertas_regionais(descricao: str, unidade_item: str | None) -> list[Oferta]:
+    """Preço nas lojas PERTO DA OBRA (Google Maps pelo CEP -> busca do Google dentro dos sites delas).
+    Sem região, sem chave ou com falha: lista vazia."""
+    import asyncio
+
+    import httpx
+
+    from .regiao import LOJAS_DA_REGIAO
+    chaves = get_settings().serper_keys
+    dominios = [l.dominio for l in LOJAS_DA_REGIAO.get() if l.dominio][:MAX_LOJAS_REGIONAIS]
+    if not chaves or not dominios:
+        return []
+    grupos = [dominios[i:i + SITES_POR_CONSULTA] for i in range(0, len(dominios), SITES_POR_CONSULTA)]
+
+    async def uma(cli: httpx.AsyncClient, grupo: list[str]) -> list[dict]:
+        q = f"{descricao} " + " OR ".join(f"site:{d}" for d in grupo)
+        j = await serper.post(cli, URL_BUSCA, {"q": q, "gl": "br", "hl": "pt-br", "num": 10}, chaves)
+        return [o for o in ((j or {}).get("organic") or []) if isinstance(o, dict)]
+
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as cli:
+            respostas = await asyncio.gather(*(uma(cli, g) for g in grupos))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Busca nas lojas da região falhou para '%s' (%s)", descricao, type(exc).__name__)
+        return []
+    return ler_resultados_regionais(descricao, unidade_item, [o for r in respostas for o in r])
 
 
 @observe(name="busca.google_shopping")
