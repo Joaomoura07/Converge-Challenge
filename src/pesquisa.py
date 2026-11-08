@@ -33,7 +33,7 @@ from . import cache
 from . import custo as _custo
 from .agent import Agent, build_llm_client
 from .chaves_llm import chave_agente
-from .busca import buscar, montar_consulta
+from .busca import buscar, eh_pagina_de_listagem, montar_consulta
 from .calculo import Calculo, calcular
 from .config import get_settings, load_prompt
 from .modelos import ItemEntrada, ResultadoItem
@@ -86,8 +86,11 @@ class Coleta:
 
     def lojas_conferidas(self, generico: bool = False) -> int:
         """Lojas que contam para parar: o mesmo produto; no item genérico (estimativa), também os parecidos."""
-        aceitas = ("sim", "parecido") if generico else ("sim",)
-        return len({o.loja for o in self.ofertas if o.mesmo_produto in aceitas and o.preco})
+        if generico:
+            return len({o.loja for o in self.ofertas if o.mesmo_produto in ("sim", "parecido") and o.preco})
+        # página de listagem não confirma o produto exato (src/calculo.py): não conta para o agente parar
+        return len({o.loja for o in self.ofertas if o.mesmo_produto == "sim" and o.preco
+                    and not eh_pagina_de_listagem(o.dominio, o.url)})
 
 
 def resumo_para_agente(ofertas: list[Oferta], coleta: Coleta, generico: bool = False) -> dict:

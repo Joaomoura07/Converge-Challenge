@@ -16,6 +16,7 @@ import asyncio
 import importlib
 import inspect
 import logging
+import random
 import re
 import time
 from datetime import datetime, timedelta, timezone
@@ -38,6 +39,7 @@ COLUNAS_GRAVADAS = [c for c in ResultadoItem.model_fields if c != "item_id"] + [
 # (300 s na Vercel): com 3 min, uma pesquisa viva de 200 s podia ser "reassumida" por outro clique e as duas gravariam.
 TEMPO_MAXIMO_FUNCAO = timedelta(seconds=300)
 JANELA_TRAVADO = timedelta(minutes=6)
+TENTATIVAS_GRAVAR = 2   # novas tentativas de gravar um item depois de uma falha passageira do banco
 # Gancho da fatia C, chamado no fim: (módulo, função). Uma chamada só faz frete + viabilidade + ganho e grava em
 # `orcamentos`. Ausente (branch da C ainda não juntada) = só registra no log.
 GANCHOS_FIM = [("src.rotas_resultado", "resultado")]
@@ -172,14 +174,23 @@ class BancoSupabase:
         """Coluna que o SQL da fatia A ainda não tem (medido em 07/11: `premissa`) sai da linha, com aviso,
         em vez de derrubar a gravação inteira: senão o item ficaria "buscando" para sempre na tela."""
         linha = {k: v for k, v in linha_do_resultado(resultado).items() if k not in self.colunas_ausentes}
-        for _ in range(len(linha)):
+        falhas = 0
+        for _ in range(len(linha) + TENTATIVAS_GRAVAR):
             try:
                 await self._rodar(lambda: self.sb.table(ITENS).update(linha).eq("id", resultado.item_id).execute())
                 return
             except Exception as exc:  # noqa: BLE001
                 coluna = _coluna_ausente(exc)
                 if coluna is None or coluna not in linha:
-                    raise
+                    # Falha passageira: medido no site em 07/11, 4 de 53 itens gravados ao mesmo tempo falharam e
+                    # gravaram normalmente na nova tentativa. Antes, o item ficava "buscando" para sempre.
+                    falhas += 1
+                    if falhas > TENTATIVAS_GRAVAR:
+                        raise
+                    logger.warning("Gravação do item %s falhou (%s): tentando de novo", resultado.item_id,
+                                   type(exc).__name__)
+                    await asyncio.sleep(0.4 * falhas + random.random() / 2)
+                    continue
                 logger.warning("orcamento_itens não tem a coluna '%s' (avise a fatia A): gravando sem ela", coluna)
                 self.colunas_ausentes.add(coluna)
                 linha = {k: v for k, v in linha.items() if k != coluna}

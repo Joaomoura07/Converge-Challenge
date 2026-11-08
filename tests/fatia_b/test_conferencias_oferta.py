@@ -120,3 +120,24 @@ def test_descartes_aparecem_no_calculo_e_sobra_o_que_presta():
     c = calcular(item, ext)
     assert c.descartadas == {"embalagem não confere com o título": 1}
     assert [f.loja for f in c.fontes] == ["Telhanorte"]
+
+
+# ---------------------------------------------------------------- listagem da loja e bases de licitação (07/11 noite)
+def test_listagem_da_leroy_vale_so_para_estimativa():
+    from src.busca import eh_pagina_de_listagem
+    lst = "https://www.leroymerlin.com.br/pedra-britada/peso-do-produto-na-embalagem/1400_Kg_a_1410_Kg"
+    prod = "https://www.leroymerlin.com.br/rodape-de-poliestireno-457-branco-240x10cm-santa-luzia_87635415"
+    assert eh_pagina_de_listagem("leroymerlin.com.br", lst) and not eh_pagina_de_listagem("leroymerlin.com.br", prod)
+    assert not eh_pagina_de_listagem("telhanorte.com.br", "https://www.telhanorte.com.br/qualquer")
+    brita = of("Leroy Merlin", 1450.0, "1 m³", "Pedra Britada | Leroy Merlin", url=lst, dominio="leroymerlin.com.br")
+    exato = calcular(ItemEntrada(id="1", descricao="Brita 1", quantidade=14, unidade="m3"), ResultadoExtracao(ofertas=[brita]))
+    assert not exato.tem_preco and exato.descartadas == {"página de listagem (vale só para estimativa)": 1}
+    estim = calcular(ItemEntrada(id="1", descricao="Brita 1", quantidade=14, unidade="m3"),
+                     ResultadoExtracao(ofertas=[brita]), generico=True)
+    assert estim.tem_preco and estim.estimativa
+
+
+def test_base_de_preco_de_licitacao_nao_e_loja():
+    assert fonte_nao_e_loja("bancodeprecos.com.br", "https://www.bancodeprecos.com.br/CertificadoAutenticidade?to=1")
+    assert fonte_nao_e_loja("buscadorsinapi.com.br", "https://buscadorsinapi.com.br/x")
+    assert fonte_nao_e_loja("static.tre-al.jus.br", "https://static.tre-al.jus.br/cotacao")

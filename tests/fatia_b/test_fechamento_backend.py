@@ -183,3 +183,46 @@ def test_agent_run_desligado_por_padrao():
     from src.main import app
     r = TestClient(app).post("/agent/run", json={"task": "que horas são?"})
     assert r.status_code == 404
+
+
+# ---------------------------------------------------------------- gravação com nova tentativa
+class _SbFalso:
+    """Imita supabase-py: as N primeiras gravações falham (falha passageira do banco)."""
+
+    def __init__(self, falhas):
+        self.falhas, self.gravadas = falhas, []
+
+    def table(self, _):
+        return self
+
+    def update(self, linha):
+        self.linha = linha
+        return self
+
+    def eq(self, *_):
+        return self
+
+    def execute(self):
+        if self.falhas:
+            self.falhas -= 1
+            raise ConnectionError("Server disconnected")
+        self.gravadas.append(self.linha)
+
+
+def _r():
+    return ResultadoItem(item_id="i", status="nao_encontrado", motivo="nada")
+
+
+def test_gravacao_tenta_de_novo_depois_de_falha_passageira(monkeypatch):
+    async def sem_espera(_): return None
+    monkeypatch.setattr(o.asyncio, "sleep", sem_espera)
+    sb = _SbFalso(falhas=2)
+    asyncio.run(o.BancoSupabase(cliente=sb).gravar_item(_r()))
+    assert len(sb.gravadas) == 1
+
+
+def test_gravacao_desiste_depois_das_tentativas(monkeypatch):
+    async def sem_espera(_): return None
+    monkeypatch.setattr(o.asyncio, "sleep", sem_espera)
+    with pytest.raises(ConnectionError):
+        asyncio.run(o.BancoSupabase(cliente=_SbFalso(falhas=9)).gravar_item(_r()))

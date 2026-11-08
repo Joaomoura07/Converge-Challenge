@@ -307,7 +307,9 @@ BLOQUEADOS = ["youtube.com", "facebook.com", "instagram.com", "pinterest.com", "
               "shopee.com.br", "olx.com.br", "gov.br", "jusbrasil.com.br",
               # órgãos públicos, ensino e militares: editais, licitações e leilões não são loja. Medido no site em
               # 07/11: interruptor a R$ 5,50 com fonte num edital de leilão da Justiça Federal (jfpe.jus.br, PDF)
-              "jus.br", "leg.br", "mp.br", "edu.br", "mil.br", "def.br"]
+              "jus.br", "leg.br", "mp.br", "edu.br", "mil.br", "def.br",
+              # bases de preço de licitação/obra pública: preço de referência, não oferta de loja (medido em 07/11)
+              "bancodeprecos.com.br", "buscadorsinapi.com.br"]
 _DOCUMENTO = re.compile(r"\.(pdf|docx?|xlsx?|odt|ods|pptx?)(?:$|[?#])", re.I)
 _TEM_PRECO = re.compile(r"R\$\s?\d")
 _PARTES_DO_DOMINIO = re.compile(r"^(www|loja|lojas|shop|m)\.", re.I)
@@ -335,6 +337,21 @@ def nome_da_loja(dominio: str, titulo: str) -> str:
 
 def _bloqueado(dominio: str) -> bool:
     return any(dominio == b or dominio.endswith("." + b) for b in BLOQUEADOS)
+
+
+# Página de LISTAGEM de uma loja (filtro por marca/medida), não a do produto: o preço lido é de algum item da lista.
+# Medido no cache em 07/11: 43 de 60 ofertas da Leroy Merlin eram listagem ("/pedra-britada/peso-do-produto-na-
+# embalagem/1400_Kg..." virou brita a R$ 1.450/m³). Produto da Leroy termina em "_<código>".
+_PRODUTO_POR_LOJA = {"leroymerlin.com.br": re.compile(r"_\d{5,}/?$")}
+
+
+def eh_pagina_de_listagem(dominio: str, url: str) -> bool:
+    """Decide pelo endereço do LINK (é ele que diz se a página é produto ou lista); `dominio` fica na assinatura
+    para quem chama com os dois campos da oferta."""
+    partes = urlparse(url or "")
+    host = (partes.hostname or "").lower()
+    padrao = next((p for d, p in _PRODUTO_POR_LOJA.items() if host == d or host.endswith("." + d)), None)
+    return padrao is not None and not padrao.search(partes.path)
 
 
 def fonte_nao_e_loja(dominio: str, url: str) -> bool:
