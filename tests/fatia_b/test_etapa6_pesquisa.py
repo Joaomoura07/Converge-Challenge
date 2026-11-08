@@ -80,7 +80,7 @@ class LLMFalso:
     @property
     def chat(self): return NS(completions=NS(create=self._create))
 
-    def _create(self, model, messages, tools=None, temperature=None):
+    def _create(self, model, messages, tools=None, temperature=None, top_p=None):
         acao, valor = self.roteiro[self.chamadas]
         self.chamadas += 1
         if acao == "buscar":

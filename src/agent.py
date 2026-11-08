@@ -80,6 +80,7 @@ class Agent:
         self.fallback_model = s.featherless_model_fallback or None
         self.max_steps = max_steps or s.agent_max_steps
         self.temperature = s.llm_temperature
+        self.top_p = s.llm_top_p
         self.client = client or build_llm_client()
 
     # --- LLM ----------------------------------------------------------------
@@ -88,12 +89,13 @@ class Agent:
     def _complete_once(self, model: str, messages: list[dict]):
         lf = get_client()  # com tracing desligado, os update_* abaixo são no-op
         lf.update_current_generation(model=model, input=messages,
-                                     model_parameters={"temperature": self.temperature})
+                                     model_parameters={"temperature": self.temperature, "top_p": self.top_p})
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
             tools=self.tools.schemas() or None,
             temperature=self.temperature,
+            top_p=self.top_p,
         )
         usage = response.usage
         cost = getattr(usage, "cost", None) if usage else None  # Featherless devolve usage.cost (USD)

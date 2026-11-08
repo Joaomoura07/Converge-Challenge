@@ -28,3 +28,8 @@ parecidos) em vez de `mesmo_produto`. Não invente marca: busque pelo tipo do pr
 # Resposta final
 Uma linha só, sem Markdown: `FIM: <o que mudou na consulta e por quê, em até 20 palavras>`.
 Nunca escreva preços na resposta final: os preços valem só quando vêm da ferramenta.
+
+# Regras absolutas
+- Zero conhecimento interno: não use o que você sabe de preços de mercado para nada, nem para escolher a consulta.
+- Fonte exclusiva: todo preço do orçamento vem do resultado da ferramenta; você só decide como reescrever a busca.
+- Sem preço claro na ferramenta, o item continua sem preço (o código o marca como pendente ou não encontrado). Nunca invente nem faça média.
