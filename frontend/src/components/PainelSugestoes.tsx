@@ -2,7 +2,7 @@
 
 import { useState, type Dispatch } from "react";
 import type { Acao, EstadoLista } from "@/lib/lista";
-import { aplicarCorrecao, complementoParaLinha, quantidadeParaTexto } from "@/lib/revisao/aplicar";
+import { aplicarCorrecao, complementoParaLinha, planejarAceiteTodas, quantidadeParaTexto } from "@/lib/revisao/aplicar";
 import type { EstadoRevisor } from "@/lib/revisao/revisor";
 import type { ComplementoSugerido, ErroRevisao } from "@/lib/revisao/tipos";
 import { idCampo } from "./TabelaMateriais";
@@ -58,6 +58,24 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
     despachar({ tipo: "aceitar_complemento", id: c.id, linha: complementoParaLinha(c, novoId()) });
     setAviso(`Complemento adicionado à lista: ${c.descricao}.`);
   }
+  /** Aceita todas as correções que ainda se aplicam. A lista é simulada em sequência: se duas correções se atropelam,
+   *  a segunda fica de fora (e continua na tela para você decidir) em vez de sobrescrever a primeira. */
+  function aceitarTodasCorrecoes() {
+    const { aplicar, restam } = planejarAceiteTodas(lista.linhas, erros);
+    for (const e of aplicar) despachar({ tipo: "aceitar_correcao", id: e.id, correcao: e.correcao! });
+    setAviso(
+      `${aplicar.length} ${aplicar.length === 1 ? "correção aplicada" : "correções aplicadas"}.` +
+        (restam.length > 0 ? ` ${restam.length} ${restam.length === 1 ? "ficou" : "ficaram"} para você decidir.` : ""),
+    );
+  }
+  function aceitarTodosComplementos() {
+    for (const c of complementos) {
+      despachar({ tipo: "aceitar_complemento", id: c.id, linha: complementoParaLinha(c, novoId()) });
+    }
+    setAviso(`${complementos.length} ${complementos.length === 1 ? "complemento adicionado" : "complementos adicionados"} à lista.`);
+  }
+  const corrigiveis = planejarAceiteTodas(lista.linhas, erros).aplicar.length;
+
   function recusar(id: string, rotulo: string) {
     despachar({ tipo: "recusar_sugestao", id });
     setAviso(`Sugestão descartada: ${rotulo}. A lista não foi alterada.`);
@@ -101,6 +119,14 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
           </p>
         )}
         {estadoVazio(erros.length, "Adicione materiais para a revisão começar.", "Nenhum possível erro encontrado.")}
+        {corrigiveis > 1 && (
+          <div className="sugestoes-todas">
+            <button type="button" className="botao-primario" disabled={travado} onClick={aceitarTodasCorrecoes}>
+              Aceitar todas as correções ({corrigiveis})
+            </button>
+            <span className="nota">Aplica só as que têm proposta automática. Você vê o resultado na tabela.</span>
+          </div>
+        )}
         <ul className="sugestoes" hidden={erros.length === 0}>
           {erros.map((e) => {
             const proposta = descreverProposta(e);
@@ -174,6 +200,14 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
           complementos.length,
           "Adicione materiais para ver o que costuma faltar.",
           dados && !dados.complementos_disponiveis ? "" : "Nenhum complemento sugerido para esta lista.",
+        )}
+        {complementos.length > 1 && (
+          <div className="sugestoes-todas">
+            <button type="button" className="botao-primario" disabled={travado} onClick={aceitarTodosComplementos}>
+              Aceitar todos os complementos ({complementos.length})
+            </button>
+            <span className="nota">Entram na lista como linhas marcadas "Sugerido · aceito por você".</span>
+          </div>
         )}
         <ul className="sugestoes" hidden={complementos.length === 0}>
           {complementos.map((c) => (
