@@ -326,13 +326,16 @@ async def _resultado_atual(banco: Banco, item_id: str) -> ResultadoItem | None:
 @observe(name="repesquisar_item")
 async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banco: Banco | None = None,
                            objetivo: Objetivo | None = None, aceitar_media: bool = False,
+                           voltar_para: str | None = None, troca: dict | None = None,
                            **opcoes) -> ResultadoItem | None:
     """Botão "Pesquisar de novo" ou resposta do arquiteto à pergunta (nova_descricao = item especificado).
     Com `aceitar_media` ("Usar a média mesmo assim"), o arquiteto dispensa a especificação: pesquisa o item como está
     (usando o cache, que já guarda a média dos parecidos) e, se houver preço, ele deixa de ser pendente.
     Com `objetivo` (qualidade | preco | semelhante), pesquisa uma ALTERNATIVA sugerida pelo LLM e só troca se ela
     for achada à venda (e, no "preco", sair mais barata); senão o item volta ao que era, com o motivo.
-    A descrição do arquiteto nunca muda: a alternativa vai para `produto_normalizado`.
+    Quando a alternativa vale, a DESCRIÇÃO do item passa a ser o produto sugerido (pedido de 08/11: senão o próximo
+    "Pesquisar de novo" voltava a pesquisar o original); `troca` (dict) recebe o que havia antes e
+    `voltar_para` restaura o anterior pelo cache, sem pesquisa nova.
     Ignora o cache: o objetivo é um preço novo. Levanta AlternativaIndisponivel se o LLM não sugerir nada
     (o item fica intocado)."""
     banco = banco or BancoSupabase()
@@ -342,12 +345,21 @@ async def repesquisar_item(item_id: str, nova_descricao: str | None = None, banc
     orcamento_id = await banco.orcamento_do_item(item_id)
     # Mesma sessão do orçamento no Langfuse: "Pesquisar de novo"/"Responder" aparecem junto da pesquisa original.
     with propagate_attributes(session_id=str(orcamento_id or item_id), tags=["fatia-b", "repesquisar"]):
-        return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes, aceitar_media)
+        return await _repesquisar(item, item_id, orcamento_id, nova_descricao, banco, objetivo, opcoes, aceitar_media,
+                                  voltar_para, troca)
+
+
+def _classificacao(descricao: str) -> tuple[str, str]:
+    """(como a fatia A grava no banco, como a B usa): a classificação é da A (classificar_item)."""
+    from .revisao import classificar_item
+    da_a = classificar_item(descricao)
+    return da_a, CLASSIFICACAO_DA_A.get(da_a, "definido")
 
 
 async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None, nova_descricao: str | None,
                        banco: Banco, objetivo: Objetivo | None, opcoes: dict,
-                       aceitar_media: bool = False) -> ResultadoItem:
+                       aceitar_media: bool = False, voltar_para: str | None = None,
+                       troca: dict | None = None) -> ResultadoItem:
     with acumular_custo() as custo:
         anterior = alt = None
         busca = item
@@ -363,16 +375,22 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
         if nova_descricao:
             item = busca = item.model_copy(update={"descricao": nova_descricao, "classificacao": "definido"})
             campos |= {"descricao": nova_descricao, "classificacao": "definido"}
+        if voltar_para:
+            # "Voltar para o anterior": o produto de antes volta a ser o título; o preço sai do cache (sem busca nova)
+            no_banco, na_b = _classificacao(voltar_para)
+            item = busca = item.model_copy(update={"descricao": voltar_para, "classificacao": na_b})
+            campos |= {"descricao": voltar_para, "classificacao": no_banco}
         await banco.marcar_item(item_id, campos)   # a tela volta a mostrar "buscando" na hora
         with na_obra(*(await _local_da_obra(banco, orcamento_id))):
             # "Usar a média" quer a média que já foi pesquisada (rápida e sem custo); os demais pedem preço novo.
-            resultado = await pesquisar_item(busca, usar_cache=aceitar_media, **opcoes)
+            resultado = await pesquisar_item(busca, usar_cache=aceitar_media or bool(voltar_para), **opcoes)
         if nova_descricao:
             resultado = aceitar_mais_proximo(resultado)   # respondeu: não repetir a pergunta
         elif aceitar_media:
             resultado = aceitar_media_estimada(resultado)   # dispensou a especificação: fica como estimativa
         if alt is not None:
             resultado, trocou = decidir(resultado, anterior, alt, objetivo, item.descricao)
+            escolhida = alt if trocou else None
             if not trocou and anterior is not None:
                 # saiu fora da faixa ou repetiu: UMA nova sugestão, dizendo o que evitar
                 try:
@@ -383,9 +401,21 @@ async def _repesquisar(item: ItemEntrada, item_id: str, orcamento_id: str | None
                         nova2 = await pesquisar_item(busca2, usar_cache=False, **opcoes)
                     resultado2, trocou2 = decidir(nova2, anterior, alt2, objetivo, item.descricao)
                     if trocou2:
-                        resultado = resultado2
+                        resultado, escolhida = resultado2, alt2
                 except Exception as exc:  # noqa: BLE001 — a 2ª tentativa nunca piora: fica o anterior com o motivo
                     logger.info("Segunda alternativa indisponível (%s)", type(exc).__name__)
+            if escolhida is not None:
+                # o título vira o produto sugerido: o próximo "Pesquisar de novo" parte dele, não do original
+                await banco.marcar_item(item_id, {"descricao": escolhida.produto, "classificacao": "definido"})
+            if troca is not None:
+                troca.update({
+                    "objetivo": objetivo, "trocou": escolhida is not None,
+                    "agora": escolhida.produto if escolhida is not None else None,
+                    "antes": {"descricao": atual, "embalagem": anterior.embalagem if anterior else None,
+                              "preco_emb_med": anterior.preco_emb_med if anterior else None,
+                              "preco_un_med": anterior.preco_un_med if anterior else None,
+                              "unidade_preco": anterior.unidade_preco if anterior else None},
+                })
     await _gravar_e_conferir(banco, resultado)
     # Preço novo: soma o custo ao orçamento e recalcula frete/viabilidade/ganho (idempotente).
     if orcamento_id:

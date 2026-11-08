@@ -70,6 +70,21 @@ describe("repesquisarItem (rota POST /orcamento-itens/{id}/repesquisar)", () => 
     expect(corpos).toEqual([{ aceitar_media: true }]);
   });
 
+  it("'Voltar para o anterior' leva o produto de antes e a troca não vira campo do item", async () => {
+    const corpos: unknown[] = [];
+    const buscar = (async (_url: string, init?: RequestInit) => {
+      corpos.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ item_id: "a", status: "definido",
+        alternativa: { objetivo: "preco", trocou: true, agora: "Tinta Coral 18 L", antes: { descricao: "Tinta Suvinil 18 L" } } }),
+        { status: 200 });
+    }) as typeof fetch;
+    const r = await repesquisarItem("a", { voltarPara: "Tinta Suvinil 18 L" }, "http://api", buscar);
+    expect(corpos).toEqual([{ voltar_para: "Tinta Suvinil 18 L" }]);
+    expect(r.alternativa?.antes.descricao).toBe("Tinta Suvinil 18 L");
+    const item = aplicarResultado({ id: "a", descricao: "x", quantidade: 1, unidade: "un", status: "buscando" }, r);
+    expect("alternativa" in item).toBe(false);
+  });
+
   it("503 da alternativa mostra a frase do servidor; sem frase, o texto padrão", async () => {
     const detalhe = "Não consegui sugerir uma alternativa para este item agora. O item ficou como estava.";
     const com = (async () => new Response(JSON.stringify({ detail: detalhe }), { status: 503 })) as typeof fetch;

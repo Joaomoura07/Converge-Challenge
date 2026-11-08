@@ -51,7 +51,19 @@ export function fraseProgresso(p: Progresso): string {
 export const MIN_ESPECIFICACAO = 3;   // igual ao backend (RepesquisarRequest.nova_descricao, min_length=3)
 
 /** O que a rota devolve: ResultadoItem do backend (src/modelos.py), com `item_id` no lugar de `id`. */
-export type ResultadoApi = Omit<ItemOrcamento, "id" | "descricao" | "quantidade" | "unidade"> & { item_id: string };
+/** O que a alternativa fez (só quando o pedido foi maior qualidade / menor preço / outra marca). */
+export interface TrocaAlternativa {
+  objetivo: string;
+  trocou: boolean;
+  agora: string | null;
+  antes: { descricao: string; embalagem?: string | null; preco_emb_med?: number | null;
+           preco_un_med?: number | null; unidade_preco?: string | null };
+}
+
+export type ResultadoApi = Omit<ItemOrcamento, "id" | "descricao" | "quantidade" | "unidade"> & {
+  item_id: string;
+  alternativa?: TrocaAlternativa;
+};
 
 export class ErroRepesquisa extends Error {}
 
@@ -62,7 +74,7 @@ export type { Objetivo } from "./tipos";
 
 /** Segundo argumento de repesquisarItem: texto = resposta à pergunta; `{objetivo}` = alternativa;
  *  `{ aceitarMedia: true }` = "Usar a média mesmo assim" (o item pendente fica com a média dos parecidos). */
-export type PedidoRepesquisa = string | { objetivo: Objetivo } | { aceitarMedia: true };
+export type PedidoRepesquisa = string | { objetivo: Objetivo } | { aceitarMedia: true } | { voltarPara: string };
 
 /**
  * POST {API}/orcamento-itens/{id}/repesquisar. Sem `pedido` = "Pesquisar de novo" (o mesmo produto); com texto =
@@ -85,7 +97,10 @@ export async function repesquisarItem(
     throw new ErroRepesquisa("Escreva a especificação com pelo menos 3 letras (marca, linha ou medida).");
   }
   const corpo = texto ? { nova_descricao: texto }
-    : typeof pedido === "object" ? ("aceitarMedia" in pedido ? { aceitar_media: true } : { objetivo: pedido.objetivo })
+    : typeof pedido === "object"
+      ? ("aceitarMedia" in pedido ? { aceitar_media: true }
+        : "voltarPara" in pedido ? { voltar_para: pedido.voltarPara }
+        : { objetivo: pedido.objetivo })
     : null;
   let resposta: Response;
   try {
@@ -110,6 +125,6 @@ export async function repesquisarItem(
 
 /** Junta o resultado da rota ao item da tela (o Realtime traz o mesmo dado logo depois). */
 export function aplicarResultado(item: ItemOrcamento, r: ResultadoApi): ItemOrcamento {
-  const { item_id: _ignorado, ...campos } = r;
+  const { item_id: _ignorado, alternativa: _troca, ...campos } = r;
   return { ...item, ...campos };
 }

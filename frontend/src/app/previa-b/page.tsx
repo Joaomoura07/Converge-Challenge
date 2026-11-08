@@ -22,11 +22,19 @@ async function repesquisaSimulada(itemId: string, pedido?: PedidoRepesquisa): Pr
     return { ...dele, item_id: itemId, status: "definido", pergunta: null, estimativa: true,
              motivo: "Sem marca nem modelo: o preço é a média de produtos parecidos, aceita por você (simulação)." };
   }
+  if (typeof pedido === "object" && "voltarPara" in pedido) {   // "Voltar para o anterior": o produto de antes volta
+    return { ...campos, item_id: itemId, produto_normalizado: pedido.voltarPara, motivo: null, iteracoes: 0 };
+  }
   if (typeof pedido === "object") {   // alternativa simulada: no real, a IA sugere e as lojas confirmam o preço
     const rotulo = OBJETIVOS.find((o) => o.objetivo === pedido.objetivo)!.rotulo.toLowerCase();
-    return { ...campos, item_id: itemId, produto_normalizado: `${base.produto_normalizado} (simulação: ${rotulo})`,
+    const agora = `${base.produto_normalizado} (simulação: ${rotulo})`;
+    const atual = reais.find((i) => i.id === itemId) ?? base;
+    return { ...campos, item_id: itemId, produto_normalizado: agora,
              motivo: `Alternativa simulada: ${rotulo}. No resultado real, a IA sugere o produto e as lojas confirmam o preço.`,
-             iteracoes: 1 };
+             iteracoes: 1,
+             alternativa: { objetivo: pedido.objetivo, trocou: true, agora,
+                            antes: { descricao: atual.produto_normalizado || atual.descricao, embalagem: atual.embalagem,
+                                     preco_emb_med: atual.preco_emb_med } } };
   }
   return { ...campos, item_id: itemId, produto_normalizado: pedido ?? base.produto_normalizado, iteracoes: 1 };
 }

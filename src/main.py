@@ -86,10 +86,12 @@ class RepesquisarRequest(BaseModel):
     nova_descricao: str | None = Field(default=None, min_length=3, max_length=300)
     objetivo: Literal["qualidade", "preco", "semelhante"] | None = None
     aceitar_media: bool = False
+    # "Voltar para o anterior" depois de uma alternativa: o produto de antes volta, com o preço do cache
+    voltar_para: str | None = Field(default=None, min_length=3, max_length=300)
 
     @model_validator(mode="after")
     def _um_so(self) -> "RepesquisarRequest":
-        if sum(bool(x) for x in (self.nova_descricao, self.objetivo, self.aceitar_media)) > 1:
+        if sum(bool(x) for x in (self.nova_descricao, self.objetivo, self.aceitar_media, self.voltar_para)) > 1:
             raise ValueError("envie só um pedido: a especificação, o objetivo da alternativa ou aceitar_media")
         return self
 
@@ -106,6 +108,11 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
     kw = {"objetivo": req.objetivo} if req and req.objetivo else {}
     if req and req.aceitar_media:
         kw["aceitar_media"] = True
+    if req and req.voltar_para:
+        kw["voltar_para"] = req.voltar_para
+    troca_feita: dict = {}
+    if req and req.objetivo:
+        kw["troca"] = troca_feita
     try:
         resultado = await repesquisar_item(item_id, req.nova_descricao if req else None, **kw)
     except AlternativaIndisponivel:
@@ -113,7 +120,10 @@ async def repesquisar(item_id: str, req: RepesquisarRequest | None = None) -> di
                                                     "O item ficou como estava; tente de novo em instantes.")
     if resultado is None:
         raise HTTPException(status_code=404, detail="item não encontrado")
-    return resultado.model_dump(mode="json")
+    corpo = resultado.model_dump(mode="json")
+    if troca_feita:
+        corpo["alternativa"] = troca_feita   # a tela mostra "antes × agora" e oferece voltar
+    return corpo
 
 
 @app.post("/agent/run", response_model=RunResponse)

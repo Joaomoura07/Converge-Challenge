@@ -128,7 +128,7 @@ ITEM = ItemEntrada(id="a", descricao="Tinta acrílica branca 18 L", quantidade=1
                    classificacao="pendente_especificacao")
 
 
-def test_repesquisar_pesquisa_a_alternativa_sem_mudar_a_descricao_do_arquiteto(monkeypatch, sem_fatia_c):
+def test_repesquisar_pesquisa_a_alternativa_e_o_titulo_vira_o_produto_sugerido(monkeypatch, sem_fatia_c):
     pedidos, buscas = [], []
     def sugerir(atual, objetivo, categoria=None, **_):
         pedidos.append((atual, objetivo, categoria))
@@ -139,12 +139,17 @@ def test_repesquisar_pesquisa_a_alternativa_sem_mudar_a_descricao_do_arquiteto(m
     monkeypatch.setattr(o, "sugerir_alternativa", sugerir)
     monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
     banco = BancoComResultado([ITEM], tinta())
-    r = asyncio.run(o.repesquisar_item("a", banco=banco, objetivo="preco"))
+    troca_feita: dict = {}
+    r = asyncio.run(o.repesquisar_item("a", banco=banco, objetivo="preco", troca=troca_feita))
     assert pedidos == [("Tinta Suvinil Toque de Seda branco 18 L", "preco", "Pintura")]   # parte do que a tela mostra
     item, kw = buscas[0]
     assert item.descricao == ALT.produto and item.classificacao == "definido" and kw["usar_cache"] is False
-    assert "descricao" not in banco.marcados[0][1]          # a descrição do arquiteto fica no banco como estava
+    assert "descricao" not in banco.marcados[0][1]          # enquanto pesquisa, o título não muda
+    # trocou: a descrição passa a ser o sugerido (o próximo "Pesquisar de novo" parte dele, não do original)
+    assert banco.marcados[-1][1] == {"descricao": ALT.produto, "classificacao": "definido"}
     assert r.produto_normalizado == ALT.produto and banco.gravados == [r] and "menor preço" in r.motivo
+    assert troca_feita["trocou"] and troca_feita["agora"] == ALT.produto
+    assert troca_feita["antes"]["descricao"] == "Tinta Suvinil Toque de Seda branco 18 L"
 
 
 def test_llm_fora_nao_toca_no_item(monkeypatch, sem_fatia_c):
@@ -176,7 +181,7 @@ def test_rota_aceita_objetivo_e_recusa_combinacoes_invalidas(monkeypatch):
     api = _cliente_api(monkeypatch, repesquisar)
     for objetivo in ("qualidade", "preco", "semelhante"):
         assert api.post("/orcamento-itens/a/repesquisar", json={"objetivo": objetivo}).status_code == 200
-        assert chamadas[-1] == ("a", None, {"objetivo": objetivo})
+        assert chamadas[-1][:2] == ("a", None) and chamadas[-1][2]["objetivo"] == objetivo and "troca" in chamadas[-1][2]
     assert api.post("/orcamento-itens/a/repesquisar", json={"objetivo": "barato"}).status_code == 422
     assert api.post("/orcamento-itens/a/repesquisar",
                     json={"objetivo": "preco", "nova_descricao": "Tinta Coral 18 L"}).status_code == 422
@@ -231,3 +236,44 @@ def test_sem_alternativa_razoavel_nao_tenta_outro_modelo():
     with pytest.raises(AlternativaIndisponivel):
         sugerir_alternativa("Argamassa", "preco", client=NS(chat=NS(completions=NS(create=create))))
     assert len(modelos) == 1
+
+
+
+def test_alternativa_que_nao_vale_nao_troca_o_titulo(monkeypatch, sem_fatia_c):
+    monkeypatch.setattr(o, "sugerir_alternativa", lambda atual, objetivo, categoria=None, **_: ALT)
+    async def pesquisar_item(item, **kw): return tinta(item.id, produto=item.descricao, un=9.0, emb=990.0)   # mais cara
+    monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
+    banco = BancoComResultado([ITEM], tinta())
+    troca_feita: dict = {}
+    asyncio.run(o.repesquisar_item("a", banco=banco, objetivo="preco", troca=troca_feita))
+    assert all("descricao" not in campos for _, campos in banco.marcados)
+    assert troca_feita["trocou"] is False
+
+
+def test_voltar_para_o_anterior_usa_o_cache_e_restaura_o_titulo(monkeypatch, sem_fatia_c):
+    buscas = []
+    async def pesquisar_item(item, **kw):
+        buscas.append((item.descricao, kw))
+        return tinta(item.id, produto=item.descricao)
+    monkeypatch.setattr(o, "pesquisar_item", pesquisar_item)
+    banco = BancoComResultado([ITEM], tinta())
+    asyncio.run(o.repesquisar_item("a", banco=banco, voltar_para="Tinta Suvinil Toque de Seda branco 18 L"))
+    assert buscas == [("Tinta Suvinil Toque de Seda branco 18 L", {"usar_cache": True})]
+    assert banco.marcados[0][1]["descricao"] == "Tinta Suvinil Toque de Seda branco 18 L"
+
+
+
+def test_rota_devolve_antes_e_agora_e_aceita_voltar(monkeypatch):
+    chamadas = []
+    async def repesquisar(item_id, nova_descricao=None, troca=None, **kw):
+        chamadas.append(kw)
+        if troca is not None:
+            troca.update({"objetivo": "preco", "trocou": True, "agora": "Tinta Coral 18 L",
+                          "antes": {"descricao": "Tinta Suvinil 18 L", "preco_emb_med": 739.9}})
+        return resultado(item_id)
+    api = _cliente_api(monkeypatch, repesquisar)
+    corpo = api.post("/orcamento-itens/a/repesquisar", json={"objetivo": "preco"}).json()
+    assert corpo["alternativa"]["antes"]["descricao"] == "Tinta Suvinil 18 L" and corpo["alternativa"]["trocou"]
+    corpo = api.post("/orcamento-itens/a/repesquisar", json={"voltar_para": "Tinta Suvinil 18 L"}).json()
+    assert "alternativa" not in corpo and chamadas[-1] == {"voltar_para": "Tinta Suvinil 18 L"}
+    assert api.post("/orcamento-itens/a/repesquisar", json={"voltar_para": "x", "objetivo": "preco"}).status_code == 422
