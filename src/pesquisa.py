@@ -268,14 +268,14 @@ async def refazer_com_agente(item: ItemEntrada, coleta: Coleta, primeira: dict, 
 # ------------------------------------------------------------------ resultado
 def _resultado(item: ItemEntrada, calc: Calculo, status: str, imagem: str | None, preco_data: datetime | None,
                iteracoes: int, pergunta: str | None = None, motivo: str | None = None) -> ResultadoItem:
-    return ResultadoItem(
+    return marcar_sem_confirmacao(ResultadoItem(
         item_id=item.id, status=status, produto_normalizado=item.descricao, imagem_url=imagem,
         embalagem=calc.embalagem, qtd_embalagens=calc.qtd_embalagens,
         preco_emb_min=calc.preco_emb_min, preco_emb_med=calc.preco_emb_med, preco_emb_max=calc.preco_emb_max,
         preco_un_min=calc.preco_un_min, preco_un_med=calc.preco_un_med, preco_un_max=calc.preco_un_max,
         unidade_preco=calc.unidade_preco, confianca=calc.confianca, estimativa=calc.estimativa,
         fontes=calc.fontes, premissa=calc.premissa if calc.tem_preco else None,
-        pergunta=pergunta, motivo=motivo, preco_data=preco_data if calc.tem_preco else None, iteracoes=iteracoes)
+        pergunta=pergunta, motivo=motivo, preco_data=preco_data if calc.tem_preco else None, iteracoes=iteracoes))
 
 
 MOTIVO_SEM_TEMPO = "a pesquisa deste item passou do tempo; use Pesquisar de novo"
@@ -288,8 +288,8 @@ def aceitar_mais_proximo(r: ResultadoItem) -> ResultadoItem:
     "Tramontina Liz tomada 2P+T 20A branca" achou preço na loja oficial e voltou pendente com a MESMA pergunta."""
     if r.status != "pendente_especificacao" or r.preco_emb_med is None:
         return r
-    return ResultadoItem(**(r.model_dump() | {"status": "definido", "pergunta": None, "confianca": "baixa",
-                                              "estimativa": True, "motivo": MOTIVO_MAIS_PROXIMO}))
+    return marcar_sem_confirmacao(ResultadoItem(**(r.model_dump() | {
+        "status": "definido", "pergunta": None, "confianca": "baixa", "estimativa": True, "motivo": MOTIVO_MAIS_PROXIMO})))
 
 
 MOTIVO_MEDIA_ACEITA = "sem marca nem modelo: o preço é a média de produtos parecidos, aceita por você; confira nas fontes"
@@ -301,8 +301,8 @@ def aceitar_media_estimada(r: ResultadoItem) -> ResultadoItem:
     fontes. Sem preço, fica como a pesquisa devolveu: não existe média para aceitar."""
     if r.status != "pendente_especificacao" or r.preco_emb_med is None:
         return r
-    return ResultadoItem(**(r.model_dump() | {"status": "definido", "pergunta": None, "estimativa": True,
-                                              "motivo": MOTIVO_MEDIA_ACEITA}))
+    return marcar_sem_confirmacao(ResultadoItem(**(r.model_dump() | {
+        "status": "definido", "pergunta": None, "estimativa": True, "motivo": MOTIVO_MEDIA_ACEITA})))
 
 
 def _precisa_refazer(calc: Calculo) -> bool:
@@ -346,7 +346,8 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
         calc = calcular(item, anterior.extracao, generico)
         # 1 loja só no cache (medido em 08/11: Spot Stella a R$ 377 de uma loja, contra R$ 55 na busca nova):
         # busca de novo; o cache continua de reserva se a busca falhar
-        if calc.tem_preco and len({f.loja for f in calc.fontes}) >= 2:
+        confirmada = any(f.link_verificado for f in calc.fontes) or not _conferindo()
+        if calc.tem_preco and len({f.loja for f in calc.fontes}) >= 2 and confirmada:
             return Rascunho(item, _resultado(
                 item, calc, "pendente_especificacao" if generico else "definido", anterior.imagem_url,
                 anterior.atualizado_em, anterior.iteracoes, pergunta=pergunta_para(item.descricao) if generico else None))
@@ -384,6 +385,23 @@ async def _fase_rapida(item: ItemEntrada, usar_agente: bool, usar_cache: bool) -
     resultado = await _concluir(item, coleta, anterior, b.erro, gravar_cache=not precisa)
     return Rascunho(item, resultado, coleta, anterior, b.erro,
                     primeira=resumo_para_agente(ext.ofertas, coleta, generico) if precisa else None)
+
+
+def _conferindo() -> bool:
+    from .conferir_links import ATIVO
+    return ATIVO
+
+
+SEM_CONFIRMACAO = "preço não confirmado na página de nenhuma loja: valor aproximado"
+
+
+def marcar_sem_confirmacao(r: ResultadoItem) -> ResultadoItem:
+    """Auditoria dos botões (08/11): preço com 0 lojas confirmadas aparecia como definitivo, com "0 lojas" na tela.
+    Depois de todas as buscas (inclusive em outros sites), se nenhuma loja confirmou o preço, o item diz isso."""
+    if not _conferindo() or r.preco_emb_med is None or any(f.link_verificado for f in r.fontes):
+        return r
+    motivo = f"{r.motivo}; {SEM_CONFIRMACAO}" if r.motivo else SEM_CONFIRMACAO[0].upper() + SEM_CONFIRMACAO[1:]
+    return r.model_copy(update={"estimativa": True, "motivo": motivo, "confianca": "baixa"})
 
 
 def imagem_das_ofertas(ofertas: list[Oferta], usadas: set[str] | None = None) -> str | None:

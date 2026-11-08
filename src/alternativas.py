@@ -236,8 +236,11 @@ def escolher(opcoes: list[tuple[Alternativa, ResultadoItem]], anterior: Resultad
     """Entre as opções JÁ pesquisadas, a que cumpre o objetivo com o preço real das lojas:
     menor preço -> a mais barata; maior qualidade -> a 1ª da ordem da IA (da melhor para a menos boa) que custa
     igual ou mais; outra marca -> a de preço mais perto do atual. Nenhuma serve -> o anterior, com o motivo."""
+    from .conferir_links import ATIVO as conferindo
     aprovadas = []
     for ordem, (alt, nova) in enumerate(opcoes):
+        if conferindo and nova.preco_emb_med is not None and not any(f.link_verificado for f in nova.fontes):
+            continue   # auditoria de 08/11: trocava para um produto cujo preço nenhuma loja confirmou na página
         final, trocou = decidir(nova, anterior, alt, objetivo, original)
         if trocou:
             aprovadas.append((ordem, alt, final, razao_de_preco(nova, anterior)))

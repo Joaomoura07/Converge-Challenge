@@ -113,9 +113,10 @@ def test_conferir_tira_os_errados_e_confirma_os_certos(monkeypatch):
             return await cl.conferir("Tinta Suvinil Toque de Seda Branco Neve 18L", ofertas, cliente=cli)
 
     saida = asyncio.run(rodar())
-    # "Toque Fosco" (outra linha) fica como PARECIDO: sem link e fora da conta do produto exato
+    # "Toque Fosco" (outra linha) fica como PARECIDO, fora da conta do produto exato; a página dele mostra o preço
+    # anunciado, então o link vale para a ESTIMATIVA (valor real, não suposição)
     assert [(o.loja, o.link_verificado, o.mesmo_produto) for o in saida] == [
-        ("A", True, "sim"), ("B", False, "parecido"), ("D", False, "sim")]
+        ("A", True, "sim"), ("B", True, "parecido"), ("D", False, "sim")]
 
 
 def test_falha_geral_nao_derruba_a_pesquisa(monkeypatch):
@@ -156,7 +157,7 @@ def test_oferta_sem_preco_nao_vai_para_a_ia_e_falha_da_ia_nao_traz_errado_de_vol
 
     saida = asyncio.run(rodar())
     assert [(o.loja, o.mesmo_produto) for o in saida] == [("B", "parecido"), ("H", "sim"), ("F", "sim")]
-    assert not any(o.link_verificado for o in saida)
+    assert [o.loja for o in saida if o.link_verificado] == ["B"]   # só o parecido cujo preço a página mostrou
 
 
 
@@ -217,3 +218,18 @@ def test_generico_aceita_a_mesma_peca_em_outra_medida_como_parecido_confirmado()
     assert o and o.mesmo_produto == "parecido" and o.link_verificado and o.preco == 245.0
     # item ESPECIFICADO continua exigindo a medida
     assert oferta_da_pagina("Azulejo português azul 60x60", "m2", url, "taiazulejos.com.br", "T", pg) is None
+
+
+
+def test_preco_sem_nenhuma_loja_confirmada_vira_estimativa_explicada(monkeypatch):
+    """Auditoria dos botões (08/11): 9 de 118 cliques mostravam preço com 0 lojas confirmadas."""
+    from src.modelos import Fonte, ResultadoItem
+    from src.pesquisa import SEM_CONFIRMACAO, marcar_sem_confirmacao
+    monkeypatch.setattr(cl, "ATIVO", True)
+    f = Fonte(loja="L", dominio="l.com.br", url="https://l.com.br/x", preco_embalagem=10.0)
+    r = ResultadoItem(item_id="1", status="definido", embalagem="unidade", qtd_embalagens=1, preco_emb_min=10.0,
+                      preco_emb_med=10.0, preco_emb_max=10.0, confianca="alta", fontes=[f])
+    m = marcar_sem_confirmacao(r)
+    assert m.estimativa and m.confianca == "baixa" and SEM_CONFIRMACAO in m.motivo.lower()
+    ok = r.model_copy(update={"fontes": [f.model_copy(update={"link_verificado": True})]})
+    assert marcar_sem_confirmacao(ok) is ok

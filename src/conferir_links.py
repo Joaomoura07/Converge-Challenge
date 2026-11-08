@@ -295,8 +295,11 @@ async def conferir(pedido: str, ofertas: list[Oferta], cliente: httpx.AsyncClien
             v = julgar(pedido, o, paginas.get(o.url))
             if v.errado and v.parecido:
                 # medido em 08/11: tirar de vez deixava o porcelanato "polido" sem nada (as lojas tinham natural e
-                # acetinado); como "parecido" ele vira estimativa com pergunta, sem link e sem passar por exato
-                saida.append(o.model_copy(update={"mesmo_produto": "parecido", "link_verificado": False}))
+                # acetinado); como "parecido" ele vira estimativa com pergunta e nunca passa por exato. Se a página
+                # mostra o preço anunciado, o link é de um produto real com preço real: vale para a estimativa.
+                pg = paginas.get(o.url)
+                real = bool(pg and pg.http == 200 and preco_confere(o, pg))
+                saida.append(o.model_copy(update={"mesmo_produto": "parecido", "link_verificado": real}))
                 continue
             if v.errado:
                 logger.info("Link removido (%s): %s %s", v.errado, o.loja, o.url[:90])
