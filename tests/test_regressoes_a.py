@@ -233,3 +233,10 @@ def test_limite_de_itens_por_orcamento_e_o_mesmo_no_front_e_no_servidor():
     tipos = (RAIZ / "frontend/src/lib/importar/tipos.ts").read_text("utf-8")
     front = int(re.search(r"export const LIMITE_ITENS_ORCAMENTO = ([\d_]+);", tipos).group(1).replace("_", ""))
     assert front == ro.LIMITE_ITENS
+
+
+def test_teto_de_itens_da_pesquisa_e_o_mesmo_no_front_e_no_servidor():
+    from src.config import Settings
+    tipos = (RAIZ / "frontend/src/lib/importar/tipos.ts").read_text("utf-8")
+    front = int(re.search(r"export const LIMITE_ITENS_PESQUISA = ([\d_]+);", tipos).group(1).replace("_", ""))
+    assert front == Settings.model_fields["pesquisa_max_itens"].default

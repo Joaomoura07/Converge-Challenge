@@ -196,6 +196,16 @@ async def criar_orcamento(req: OrcamentoIn) -> dict[str, Any]:
     mantidos = [i for i in req.itens if not (i.sugerido and i.aceito is False)]
     if not mantidos:
         raise HTTPException(status_code=422, detail="Nenhum item para enviar: todos os complementos foram recusados.")
+    limite = get_settings().pesquisa_max_itens
+    if len(mantidos) > limite:
+        # Recusa antes de gravar: a pesquisa inteira roda dentro dos 300 s da função, e uma lista maior terminaria
+        # com itens em "erro" por tempo e total zerado.
+        raise HTTPException(status_code=422, detail={
+            "mensagem": f"A IA pesquisa até {limite} itens por envio e esta lista tem {len(mantidos)}. "
+                        "Remova linhas ou divida a obra em mais de um orçamento.",
+            "codigo": "LISTA_GRANDE_PARA_PESQUISA",
+            "limite": limite,
+        })
 
     orcamento_id = str(req.orcamento_id)
     itens_db = [_item_para_banco(i) for i in mantidos]

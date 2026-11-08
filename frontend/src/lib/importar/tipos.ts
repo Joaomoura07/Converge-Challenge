@@ -92,8 +92,9 @@ export const LIMITE_ITENS = 100_000;
 /** Itens por ORÇAMENTO enviado (igual a LIMITE_ITENS de src/rotas_orcamentos.py). O leitor aceita até 100.000 (LIMITE_ITENS)
  *  (TC-084, 50 mil linhas), mas a lista da tela e o envio param aqui, para a tela não travar e o servidor não recusar. */
 export const LIMITE_ITENS_ORCAMENTO = 5000;
-/** Itens que a IA pesquisa num envio. A pesquisa roda dentro da requisição (prazo de 240 s na B, função de 300 s na
- *  Vercel); medido em 07/11: 53 itens em 110 s e 50 itens em 115 s, então 100 itens cabem com folga. Acima disso a
- *  tela pede para dividir a obra ou manter só os primeiros (Caderno). PROPOSTA: o João pode ajustar o número. */
-export const LIMITE_ITENS_PESQUISA = 100;
+/** Itens que a IA pesquisa num envio (igual a pesquisa_max_itens de src/config.py; um teste confere). A pesquisa roda
+ *  dentro da requisição (prazo de 240 s na B, função de 300 s na Vercel). Medido: 53 itens em ~110 s; 321 itens em
+ *  285 s, com 94 em "erro" por tempo e total R$ 0. Acima do teto a tela pede para dividir a obra ou manter só os
+ *  primeiros (Caderno). Decisão do João em 08/11: 80 (a versão anterior usava 100). */
+export const LIMITE_ITENS_PESQUISA = 80;
 export const LIMITE_TEXTO = 2000;

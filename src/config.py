@@ -86,6 +86,9 @@ class Settings(BaseSettings):
     # Prazo do orçamento inteiro (fases 1 e 2), abaixo dos 300 s da função: sobra tempo para gravar, concluir e
     # chamar a Fatia C. Item que não termina a tempo vira "erro" com "Pesquisar de novo" (não fica "buscando").
     pesquisa_prazo_total_s: float = 240
+    # Itens por envio. Medido em 08/11: 53 itens em ~110 s; 321 itens estouraram o prazo (94 em "erro" por tempo,
+    # total R$ 0). Com 80 a conta fica perto de 200 s. A tela usa o mesmo número (LIMITE_ITENS_PESQUISA em tipos.ts).
+    pesquisa_max_itens: int = 80
 
     @property
     def langfuse_url(self) -> str:
