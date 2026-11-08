@@ -1,13 +1,6 @@
-Category,Description,Unit,Qty,Rooms
-Pintura,Fundo preparador Suvinil,m²,1450,Fachada
-Pintura,Massa acrílica Coral,m²,220,Fachada (reparos)
-Pintura,Metalatex verde oliva,m²,900,Fachada
-Pintura,Decor Colors vermelho cardinal,m²,180,Detalhes da fachada
-Pintura,Esmalte Suvinil preto,m²,120,Grades e portões
-Pintura,Fita 3M azul 2090,un,40,Geral
-Pintura,Rolo Atlas 23 cm,un,30,Geral
-Pintura,Lixa Norton 150,un,200,Geral
-Revestimentos e argamassas,Castelatto concreto 40x80,m²,38,Hall de entrada
-Revestimentos e argamassas,Quartzolit AC-III,m²,38,Hall de entrada
-Estrutura e alvenaria,Sikatop 107,m²,85,Platibanda
-Estrutura e alvenaria,Vedacit,un,4,Platibanda
+﻿Categoria;Descrição;Unidade;Quantidade;Ambiente
+Revestimentos;Porcelanato acetinado 60x60 cm;m²;45;Sala
+Argamassas;Argamassa colante AC-III 20 kg;un;12;Sala
+Pintura;Tinta acrílica fosca branca 18 L;un;3;Quartos
+Louças e metais;Bacia sanitária com caixa acoplada;un;1;Banheiro
+Elétrica;Cabo flexível 2,5 mm² (rolo 100 m);un;2;Geral

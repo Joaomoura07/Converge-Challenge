@@ -1,17 +1,8 @@
-"Tabela de louças e metais"
-"Família e tipo"	"Ambiente"	"Contagem"
+Tabela de materiais
+Família e tipo	Ambiente	Contagem
 
-"Bacia com caixa acoplada Deca Vogue Plus branca : Padrão"	"Banho social"	"1"
-"Válvula de descarga Deca Hydra Max 1 1/2"" : Padrão"	"Banho social"	"1"
-"Cuba de apoio retangular Deca branca : Padrão"	"Banho social"	"1"
-"Torneira de mesa bica alta Docol cromada : Padrão"	"Banho social"	"1"
-"Ducha eletrônica Lorenzetti Acqua Duo Ultra 220 V : Padrão"	"Banho social"	"1"
-"Bacia com caixa acoplada Deca Vogue Plus branca : Padrão"	"Banho suíte"	"1"
-"Válvula de descarga Deca Hydra Max 1 1/2"" : Padrão"	"Banho suíte"	"1"
-"Cuba de apoio retangular Deca branca : Padrão"	"Banho suíte"	"1"
-"Torneira de mesa bica alta Docol cromada : Padrão"	"Banho suíte"	"1"
-"Ducha eletrônica Lorenzetti Acqua Duo Ultra 220 V : Padrão"	"Banho suíte"	"1"
-"Misturador monocomando de cozinha Deca com ducha extensível : Padrão"	"Cozinha"	"1"
-"Cuba de embutir inox Tramontina Morgana 56x34 cm : Padrão"	"Cozinha"	"1"
-"Registro de gaveta Deca base 3/4"" : Padrão"	"Geral"	"6"
-"Total geral: 18"
+Porcelanato acetinado 60x60 cm : Padrão	Sala	45
+Argamassa colante AC-III 20 kg : Padrão	Sala	12
+Tinta acrílica fosca branca 18 L : Padrão	Quartos	3
+Bacia sanitária com caixa acoplada : Padrão	Banheiro	1
+Cabo flexível 2,5 mm² (rolo 100 m) : Padrão	Geral	2

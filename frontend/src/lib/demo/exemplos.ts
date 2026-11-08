@@ -34,7 +34,7 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
 ];
 
 /** Um MODELO por formato: o arquivo-padrão que mostra ao usuário como montar a lista para enviar ao sistema.
- *  Aparece destacado, antes dos testes. É uma cópia do teste_1 de cada formato. */
+ *  Aparece destacado, antes dos testes. CSV, Excel, TXT e PDF trazem uma lista genérica de 5 materiais; o DXF é a planta simples do teste_1. */
 export const MODELOS_DEMO: ExemploDemo[] = [
   { arquivo: "MODELO.csv", modo: "csv", obra: "Modelo de lista em CSV" },
   { arquivo: "MODELO.xlsx", modo: "excel", obra: "Modelo de lista em Excel" },
