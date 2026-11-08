@@ -367,6 +367,9 @@ def eh_pagina_de_listagem(dominio: str, url: str) -> bool:
     para quem chama com os dois campos da oferta."""
     partes = urlparse(url or "")
     host = (partes.hostname or "").lower()
+    if host == "lojadexco.com.br" or host.endswith(".lojadexco.com.br"):
+        if re.match(r"^/(?:deca|ceusa)/bacias(?:/|$)", partes.path, re.I) and not partes.path.rstrip("/").endswith("/p"):
+            return True
     padrao = next((p for d, p in _PRODUTO_POR_LOJA.items() if host == d or host.endswith("." + d)), None)
     return padrao is not None and not padrao.search(partes.path)
 

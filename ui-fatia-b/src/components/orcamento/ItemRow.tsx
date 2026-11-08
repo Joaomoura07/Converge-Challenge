@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, linkDeCompra, precoDoAnuncio, quantidade, reais } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import type { ItemOrcamento, Objetivo } from "./tipos";
@@ -89,16 +89,6 @@ function useChegou(status: ItemOrcamento["status"]) {
   return chegou;
 }
 
-/** Link que abre no Google (página do Shopping) e não na loja: a tela mostra a loja sem link (08/11). */
-function abreNoGoogle(f: { dominio: string; url: string }): boolean {
-  if (f.dominio === "google.com") return true;
-  try {
-    return /(^|\.)google\./.test(new URL(f.url).hostname);
-  } catch {
-    return true;   // link inválido também não vira link
-  }
-}
-
 export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlternativa, onAceitarMedia }: Props) {
   const carregando = item.status === "buscando";
   const chegou = useChegou(item.status);
@@ -140,7 +130,7 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
           {compra && <> → <strong>{compra}</strong></>}
           {total != null && !carregando && (
             <span className="orc-item__total">
-              {" · "}total {item.estimativa ? "≈ " : ""}<strong>{reais(total)}</strong>
+              {" · "}total estimado <strong>{reais(total)}</strong>
               {item.qtd_embalagens && item.qtd_embalagens > 1 ? ` (${item.qtd_embalagens} × ${reais(item.preco_emb_med as number)})` : ""}
             </span>
           )}
@@ -208,36 +198,26 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
       </div>
 
       {lojas.length > 0 && !carregando && (
-        <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
-          {lojas.map((f) => (
-            <li key={f.url}>
-              {abreNoGoogle(f) ? (
-                // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
-                // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
-                <>
-                  <span>{f.loja}</span>
-                  <span className="orc-item__google" title="Preço do Google Shopping. O link da loja não está disponível">
-                    preço do Google
+        <ul className="orc-item__lojas" aria-label="Referências de preço por loja">
+          {lojas.map((f) => {
+            const link = linkDeCompra(f);
+            return (
+              <li key={f.url}>
+                {link ? (
+                  <a href={link} target="_blank" rel="noopener noreferrer">{f.loja} · Ver produto</a>
+                ) : (
+                  <span>{f.loja} · Link da loja não confirmado</span>
+                )}
+                {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
+                  <span className="orc-item__perto" title={f.endereco ?? undefined}>
+                    perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
                   </span>
-                </>
-              ) : (
-                <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja}</a>
-              )}
-              {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
-                <span className="orc-item__perto" title={f.endereco ?? undefined}>
-                  perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
-                </span>
-              )}
-              {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
-              {/* o preço do anúncio (o mesmo que aparece ao clicar), com a embalagem quando ela é outra */}
-              <span>
-                {reais(f.preco_anunciado ?? f.preco_embalagem)}
-                {f.preco_anunciado != null && f.embalagem_anunciada && f.embalagem_anunciada !== f.embalagem
-                  ? ` · ${f.embalagem_anunciada}`
-                  : ""}
-              </span>
-            </li>
-          ))}
+                )}
+                {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
+                {link && <span>{precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada)}</span>}
+              </li>
+            );
+          })}
         </ul>
       )}
     </article>

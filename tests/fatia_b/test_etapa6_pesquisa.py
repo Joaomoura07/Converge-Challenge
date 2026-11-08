@@ -95,6 +95,48 @@ def rodar(item, **kw):
     return asyncio.run(p.pesquisar_item(item, **kw))
 
 
+@pytest.mark.parametrize(("titulo_pagina", "pagina", "confirmado"), [
+    ("branca", "Por R$ 1.603,00\nComprar agora", True),
+    ("branca", "De R$ 2.873,16\nR$ 1.637,71 no Pix\nou R$ 1.723,90 em 10x de R$ 172,39\nComprar agora", False),
+    ("branca", "Por R$ 1.723,90\nComprar agora", False),
+    ("branca", "R$ 1.603,00\nNo Pix\nComprar agora", False),
+    ("preta", "Por R$ 1.603,00\nComprar agora", False),
+    ("branca", "37 itens\nFiltrar por\nR$ 1.603,00\nComprar agora", False),
+    ("branca", "R$ 1.603,00\nProduto indisponível", None),
+    ("branca", "R$ 1.603,00\nAnúncio encerrado", None),
+    ("branca", "Erro 404: página não encontrada", None),
+])
+def test_preco_da_loja_so_vira_link_quando_confirmado(mundo, monkeypatch, titulo_pagina, pagina, confirmado):
+    import tavily
+    import src.paginas_produto as lojas
+
+    item = ItemEntrada(id="1", descricao="Bacia sanitária Deca Vogue Plus", quantidade=2, unidade="un")
+    titulo = item.descricao + " branca"
+    url = "https://www.magazineluiza.com.br/bacia-vogue-plus/p/123/"
+    oferta = Oferta(loja="Magalu", dominio="magazineluiza.com.br", url=url, titulo=titulo,
+                   preco=1603, embalagem="unidade", mesmo_produto="sim", link_verificado=True)
+    mundo({}, padrao=[oferta])
+    monkeypatch.setattr(p.get_settings(), "tavily_api_keys", "tvly-teste-sintetico")
+    monkeypatch.setattr(p.get_settings(), "pesquisa_paginas_por_rodada", 2)
+    monkeypatch.setattr(lojas, "_rodizio_global", lambda: NS(atual="tvly-teste-sintetico"))
+
+    class LojaFalsa:
+        def __init__(self, **kwargs): pass
+
+        async def extract(self, urls, **kwargs):
+            assert urls == [url]
+            return {"results": [{"url": url, "raw_content": f"# {item.descricao} {titulo_pagina}\n{pagina}"}]}
+
+    monkeypatch.setattr(tavily, "AsyncTavilyClient", LojaFalsa)
+    resultado = rodar(item, usar_agente=False)
+    if confirmado is None:
+        assert resultado.fontes == []
+    else:
+        fonte, = resultado.fontes
+        assert fonte.preco_anunciado == 1603
+        assert fonte.link_verificado is confirmado
+
+
 # ---------------------------------------------------------------- caminho fixo
 def test_cache_valido_responde_sem_buscar(mundo):
     entrada = EntradaCache(chave="x", descricao=TINTA.descricao, imagem_url="https://img/cache.jpg", provedor="tavily",

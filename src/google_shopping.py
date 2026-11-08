@@ -327,12 +327,13 @@ def trocar_links_do_google(descricao: str, ofertas: list[Oferta], organicos: lis
     MESMO produto do anúncio. Medido em 08/11: só comparar com o nome do item ligava "Deca Vogue Plus" (bacia) à página
     do assento "Vogue Plus" e "Hydra Max" a uma máscara de cabelo. Por isso o título da página também precisa
     combinar com o título do anúncio do Shopping. Na dúvida, o link continua o do Google (a tela avisa)."""
-    from .busca import dominio_de, eh_pagina_de_busca
+    from .busca import dominio_de, eh_pagina_de_busca, eh_pagina_de_listagem
     paginas: list[tuple[str, str, str]] = []   # (domínio, link, título+trecho)
     for o in organicos:
         link, titulo = str(o.get("link") or ""), str(o.get("title") or "")
         dom = dominio_de(link)
-        if dom and not eh_pagina_de_busca(link) and semelhanca(descricao, f"{titulo} {o.get('snippet') or ''}"[:300]) >= MIN_MESMO:
+        if (dom and not eh_pagina_de_busca(link) and not eh_pagina_de_listagem(dom, link)
+                and semelhanca(descricao, f"{titulo} {o.get('snippet') or ''}"[:300]) >= MIN_MESMO):
             paginas.append((dom, link, f"{titulo} {o.get('snippet') or ''}"[:300]))
     saida = []
     for o in ofertas:
@@ -390,12 +391,13 @@ def _dominio_combina_com_loja(dominio: str, loja: str) -> bool:
 
 def pagina_da_loja(oferta: Oferta, dominio_conhecido: str | None, organicos: list[dict], descricao: str) -> tuple[str, str] | None:
     """Núcleo puro: (link, domínio) da página do MESMO produto na loja da oferta, ou None."""
-    from .busca import dominio_de, eh_pagina_de_busca, fonte_nao_e_loja
+    from .busca import dominio_de, eh_pagina_de_busca, eh_pagina_de_listagem, fonte_nao_e_loja
     melhor, nota = None, 0.0
     for o in organicos:
         link, titulo = str(o.get("link") or ""), str(o.get("title") or "")
         dom = dominio_de(link)
-        if not dom or "google." in dom or eh_pagina_de_busca(link) or fonte_nao_e_loja(dom, link):
+        if (not dom or "google." in dom or eh_pagina_de_busca(link)
+                or eh_pagina_de_listagem(dom, link) or fonte_nao_e_loja(dom, link)):
             continue
         da_loja = (dom == dominio_conhecido or dom.endswith("." + dominio_conhecido)) if dominio_conhecido             else _dominio_combina_com_loja(dom, oferta.loja)
         texto = f"{titulo} {o.get('snippet') or ''}"[:300]

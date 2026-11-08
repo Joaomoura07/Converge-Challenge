@@ -222,8 +222,11 @@ describe("fonte mostra o preço do anúncio", () => {
     expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 69,90 / galão 3,6 L");
     expect(tela.fontes[0].url).toBe(fonte.url);
   });
-  it("item antigo sem verificação mantém o orçamento e oculta o valor do link", () => {
-    const fonte = { loja: "Telhanorte", dominio: "telhanorte.com.br", url: "https://t/s", preco_embalagem: 239.9,
+  it.each([
+    { url: "https://t/s", link_verificado: undefined },
+    { url: "https://www.lojadexco.com.br/ceusa/bacias/bacia-sanitaria-para-caixa-acoplada", link_verificado: true },
+  ])("mantém o orçamento e oculta o valor e o link de $url", (link) => {
+    const fonte = { loja: "Loja", dominio: new URL(link.url).hostname, ...link, preco_embalagem: 239.9,
       preco_anunciado: 239.9, embalagem: "lata 18 L" };
     const tela = itemParaTela({ id: "s", descricao: "Selador", status: "definido", qtd_embalagens: 1, embalagem: "lata 18 L",
       preco_emb_min: 239.9, preco_emb_med: 239.9, preco_emb_max: 239.9, fontes: [fonte] } as never);
