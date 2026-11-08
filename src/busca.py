@@ -70,7 +70,6 @@ class ResultadoWeb:
     loja: str
     trecho: str
     pagina_lida: bool = False
-    preco_pagina: float | None = None
 
 
 @dataclass

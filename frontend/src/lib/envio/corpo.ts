@@ -28,12 +28,12 @@ export type ItemEnvio = {
 export type CorpoEnvio = {
   orcamento_id: string;
   obra: { nome: string; cep: string; orcamento_cliente: number };
-  origem: { tipo: "arquivo" | "manual" | "misto"; modo: string; demo?: true };
+  origem: { tipo: "arquivo" | "manual" | "misto"; modo: string };
   itens: ItemEnvio[];
 };
 
 /** Monta o corpo a partir da lista da tela. Devolve null se ainda houver erro na lista (o botão já fica bloqueado). */
-export function montarCorpo(args: { orcamentoId: string; obra: Obra; linhas: Linha[]; modo: string; demo?: boolean }): CorpoEnvio | null {
+export function montarCorpo(args: { orcamentoId: string; obra: Obra; linhas: Linha[]; modo: string }): CorpoEnvio | null {
   const { orcamentoId, obra, linhas, modo } = args;
   const limpos = itensValidados(linhas);
   if (!limpos) return null;
@@ -67,13 +67,12 @@ export function montarCorpo(args: { orcamentoId: string; obra: Obra; linhas: Lin
   return {
     orcamento_id: orcamentoId,
     obra: { nome: obra.nome, cep: obra.cep, orcamento_cliente: obra.orcamentoCliente },
-    origem: { tipo: deArquivo === 0 ? "manual" : deArquivo === itens.length ? "arquivo" : "misto", modo,
-      ...(args.demo ? { demo: true as const } : {}) },
+    origem: { tipo: deArquivo === 0 ? "manual" : deArquivo === itens.length ? "arquivo" : "misto", modo },
     itens,
   };
 }
 
 /** Conteúdo que identifica o envio (obra + itens, sem o orcamento_id): decide se um reenvio é o MESMO pedido. */
 export function conteudoDoEnvio(c: CorpoEnvio): string {
-  return JSON.stringify({ obra: c.obra, itens: c.itens, ...(c.origem.demo ? { demo: true } : {}) });
+  return JSON.stringify({ obra: c.obra, itens: c.itens });
 }

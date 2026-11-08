@@ -93,29 +93,32 @@ def nao_confirmados(pedido: str, evidencia: str, *, titulo: str | None = None) -
         b[campo] |= {v for v in a[campo] if _presente(v, t)}
     b["dimensão"] |= {bruta for _, bruta in _dimensoes(t) if bruta in a["dimensão"]}
     faltam = {f"{campo}: {valor}" for campo, valores in a.items() for valor in valores - b[campo]}
-    if acessorio_incompativel(pedido, titulo or evidencia):
-        faltam.add("tipo: acessório para o produto pedido")
-    if titulo:
-        # Um trecho com outras variantes não pode corrigir uma especificação incompatível do título.
-        principal = atributos(titulo)
-        for campo in ("cor", "tonalidade", "material", "conexão", "aplicação", "classe", "dimensão", "referência"):
-            if principal[campo] and a[campo] and not a[campo] <= principal[campo]:
-                # Dimensão sem unidade no pedido aceita a mesma medida escrita com unidade no anúncio.
-                if campo == "dimensão" and a[campo] <= principal[campo] | {d for _, d in _dimensoes(normalizar(titulo))}:
-                    continue
-                faltam.add(f"{campo}: título incompatível com o pedido")
-        for campo in ("cor", "classe", "referência"):
-            if a[campo] and principal[campo] - a[campo]:
-                faltam.add(f"{campo}: título informa outra variante")
-        # Grandezas diferentes não conflitam: 220V e 7500W podem coexistir.
-        for medida in a["medida"] - principal["medida"]:
-            unidade = re.sub(r"^[\d.]+", "", medida)
-            if any(re.sub(r"^[\d.]+", "", v) == unidade for v in principal["medida"]):
-                faltam.add(f"medida: título incompatível ({medida})")
-        exclusivos = {"fosco", "acetinado", "polido", "semibrilho"}
-        if a["acabamento"] & exclusivos and (principal["acabamento"] & exclusivos) - a["acabamento"]:
-            faltam.add("acabamento: título incompatível com o pedido")
+    faltam.update(conflitos_explicitos(pedido, titulo or evidencia))
     return sorted(faltam)
+
+
+def conflitos_explicitos(pedido: str, titulo: str) -> list[str]:
+    """Só contradições do título. Uma característica ausente não exclui a oferta."""
+    a, b = atributos(pedido), atributos(titulo)
+    conflitos = []
+    if acessorio_incompativel(pedido, titulo):
+        conflitos.append("tipo: acessório para o produto pedido")
+    b["dimensão"] |= {d for _, d in _dimensoes(normalizar(titulo)) if d in a["dimensão"]}
+    for campo in ("tonalidade", "material", "conexão", "aplicação", "dimensão", "marca/linha", "marca explícita"):
+        if a[campo] and b[campo] and a[campo].isdisjoint(b[campo]):
+            conflitos.append(f"{campo}: título incompatível com o pedido")
+    for campo in ("cor", "classe", "referência"):
+        if a[campo] and b[campo] - a[campo]:
+            conflitos.append(f"{campo}: título informa outra variante")
+    # Grandezas diferentes não conflitam: 220 V e 7500 W podem coexistir.
+    for medida in a["medida"] - b["medida"]:
+        unidade = re.sub(r"^[\d.]+", "", medida)
+        if any(re.sub(r"^[\d.]+", "", v) == unidade for v in b["medida"]):
+            conflitos.append(f"medida: título incompatível ({medida})")
+    exclusivos = {"fosco", "acetinado", "polido", "semibrilho"}
+    if a["acabamento"] & exclusivos and (b["acabamento"] & exclusivos) - a["acabamento"]:
+        conflitos.append("acabamento: título incompatível com o pedido")
+    return conflitos
 
 
 def orientacao(descricao: str) -> str:

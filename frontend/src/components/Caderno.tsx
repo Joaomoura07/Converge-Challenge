@@ -109,7 +109,7 @@ export function Caderno({ demo = false }: { demo?: boolean } = {}) {
   function enviar() {
     if (!obra || !orcamentoId || envioBloqueado) return;
     let id = orcamentoId;
-    let corpo = montarCorpo({ orcamentoId: id, obra, linhas: lista.linhas, modo: lista.modo, demo });
+    let corpo = montarCorpo({ orcamentoId: id, obra, linhas: lista.linhas, modo: lista.modo });
     if (!corpo) return;
     const conteudo = conteudoDoEnvio(corpo);
     // Mesmo código com conteúdo diferente daria conflito (409): um pedido novo recebe um código novo.

@@ -5,10 +5,8 @@ passavam de 50% de diferença; nos piores casos o nosso preço vinha de UMA loja
 O Shopping devolve dezenas de anúncios estruturados (título, preço, loja, link) por produto, inclusive de lojas menores.
 Entrar com eles no cálculo (mediana sem outliers, 1 oferta por loja) deixa o preço muito mais perto do mercado.
 
-Regras para não comparar banana com laranja (anúncio só entra se):
-- o título tem TODAS as medidas do item ("18L", "60x60", "3/4", "25 mm") e a marca/linha (palavras próprias);
-- atributos solicitados precisam estar confirmados; a similaridade textual apenas complementa essa verificação;
-- a embalagem sai do próprio título ("18L", "20kg", "kit 2 latas") ou é unidade, quando o item é contado em unidades.
+Anúncios com título abreviado podem servir para estimar, inclusive para itens especificados.
+A embalagem sai do título ("18L", "20kg", "kit 2 latas") ou é unidade para itens contados em unidades.
 Preço e URL precisam vir da mesma oferta. Links do Shopping e de listagens não são fontes de compra.
 """
 
@@ -25,7 +23,7 @@ from .compra import conteudo_embalagem, normalizar_unidade
 from .config import get_settings
 from .precos import Oferta
 from .regiao import regional_por_nome
-from .especificacao import nao_confirmados, texto_para_similaridade
+from .especificacao import conflitos_explicitos, nao_confirmados, texto_para_similaridade
 from .busca import dominio_de, link_direto_produto, nome_da_loja
 from .validacao_serper import _buscar, converter_preco
 
@@ -64,18 +62,22 @@ def _numeros(tokens: set[str]) -> set[float]:
 
 
 def semelhanca(descricao: str, titulo: str) -> float:
-    """Fração das palavras do item que aparecem no título; 0 se faltar alguma medida do item.
-    Medida compara pelo NÚMERO: "2,5" do item casa com "2,5mm" ou "2.50mm" do anúncio (medido em 08/11: o cabo SIL
-    2,5 ficava sem preço porque "2.5" ≠ "2.5mm")."""
-    if nao_confirmados(descricao, titulo, titulo=titulo):
+    """Ordena por relevância; um título abreviado pode servir como estimativa."""
+    if conflitos_explicitos(descricao, titulo):
         return 0.0
     item = _tokens(texto_para_similaridade(descricao)) - FRACAS
-    anuncio = _tokens(texto_para_similaridade(titulo))
-    if len(item) < 2 or not _numeros(_medidas(item)) <= _numeros(anuncio):
+    anuncio = _tokens(texto_para_similaridade(titulo)) - FRACAS
+    medidas = _medidas(item)
+    palavras = item - medidas
+    comuns = len(palavras & anuncio)
+    if not comuns or comuns < min(2, len(palavras)):
         return 0.0
-    palavras = item - _medidas(item)
-    comuns = len(palavras & anuncio) + len(_medidas(item))
-    return comuns / len(item) if len(palavras & anuncio) >= min(2, len(palavras)) else 0.0
+    numeros = _numeros(anuncio)
+    medidas_comuns = sum(_numeros({v}) <= numeros for v in medidas)
+    score = min(1.0, (comuns + medidas_comuns) / min(len(item), len(anuncio)))
+    if len(item) == 1 or medidas_comuns < len(medidas) or nao_confirmados(descricao, titulo):
+        return min(score, MIN_MESMO - 0.01)
+    return score
 
 
 _ROTULO_UNIDADE = {"l": "L", "kg": "kg", "m2": "m²", "m3": "m³", "m": "m"}
@@ -159,7 +161,7 @@ def ler_anuncios(descricao: str, unidade_item: str | None, anuncios: list[dict],
         if not titulo or not loja or preco is None:
             continue
         s = semelhanca(descricao, titulo)
-        igual = "sim" if s >= MIN_MESMO else "parecido" if (generico and s >= MIN_PARECIDO) else None
+        igual = "sim" if s >= MIN_MESMO else "parecido" if s >= MIN_PARECIDO else None
         emb = _embalagem(titulo, unidade_item, descricao)
         if igual is None or emb is None:
             continue
@@ -203,7 +205,8 @@ def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos
         if loja is None or loja.nome in lojas or not achou or eh_pagina_de_busca(link):
             continue
         texto = f"{titulo} {trecho[:achou.start()]}"   # o nome do produto vem antes do preço no trecho
-        if semelhanca(descricao, texto) < MIN_MESMO:
+        score = semelhanca(descricao, texto)
+        if score < MIN_PARECIDO:
             continue
         emb = _embalagem(texto, unidade_item, descricao)
         preco = converter_preco(achou.group(1))
@@ -211,7 +214,7 @@ def ler_resultados_regionais(descricao: str, unidade_item: str | None, organicos
             continue
         lojas.add(loja.nome)
         saida.append(Oferta(loja=loja.nome, dominio=loja.dominio, url=link, titulo=texto[:200], preco=preco,
-                            embalagem=emb, mesmo_produto="sim"))
+                            embalagem=emb, mesmo_produto="sim" if score >= MIN_MESMO else "parecido"))
     return saida
 
 
@@ -257,7 +260,7 @@ async def ofertas_google(descricao: str, unidade_item: str | None, generico: boo
     diretas = ler_anuncios(descricao, unidade_item, anuncios, generico)
     # Uma busca adicional em lote, sem LLM: preço e URL vêm da mesma evidência.
     # Não transplanta preço do Shopping para uma URL de outra variante/loja.
-    if len(diretas) >= get_settings().pesquisa_min_lojas:
+    if sum(generico or o.mesmo_produto == "sim" for o in diretas) >= get_settings().pesquisa_min_lojas:
         return diretas
     import httpx
     try:
@@ -273,8 +276,11 @@ async def ofertas_google(descricao: str, unidade_item: str | None, generico: boo
                 organicos.append({"title": titulo, "link": url, "price": preco.group(1),
                                   "source": nome_da_loja(dominio_de(url), titulo)})
         novas = ler_anuncios(descricao, unidade_item, organicos, generico)
-        vistos = {o.url for o in diretas}
-        return diretas + [o for o in novas if o.url not in vistos]
+        por_url = {o.url: o for o in diretas}
+        for o in novas:
+            if o.url not in por_url or (por_url[o.url].mesmo_produto == "parecido" and o.mesmo_produto == "sim"):
+                por_url[o.url] = o
+        return list(por_url.values())
     except Exception as exc:
         logger.info("Busca de links diretos falhou (%s)", type(exc).__name__)
         return diretas

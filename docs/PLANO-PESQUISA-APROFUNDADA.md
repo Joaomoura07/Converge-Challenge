@@ -35,10 +35,10 @@ Testes: última suíte Python ampla com 861 aprovados e uma divergência entre s
 
 check_setup confirmou Featherless, tool calling, Langfuse e Supabase. Uma das três chaves Tavily estava sem cota; as outras duas responderam. DuckDuckGo atingiu timeout, por isso o diagnóstico geral não ficou totalmente verde. Não houve deploy nem migração no Supabase de produção. Para publicar, aplicar `sql/005_pesquisa_detalhes.sql` e publicar backend/frontend compatíveis. A validação determinística cobre atributos reconhecidos; marcas/modelos arbitrários ainda dependem da evidência e da extração.
 
-## Preço ao lado do link na demonstração
+## Pesquisa com menos filtros
 
-Em orçamentos novos criados por `/demo`, `origem.demo` ativa a conferência também nas repesquisas. Buscadores fornecem links candidatos; o preço deve estar na página da loja, lida com Tavily Extract, e a extração precisa devolver o mesmo valor de venda. Preços antigos, parcelas, valores exclusivos de pagamento/cupom e páginas ambíguas ou indisponíveis não servem como confirmação. A demo ignora o cache de preços, inclusive o vencido, e não publica a comparação de valores do Shopping. Sem evidência suficiente, o item fica sem cotação.
+A demo e a entrada normal usam a mesma pesquisa. A leitura da página é opcional e os preços podem vir de anúncios ou fontes de busca vinculados ao produto. A busca pode reformular uma consulta sem repetir cada especificação; a descrição completa do pedido continua disponível para comparar as ofertas. Títulos abreviados não eliminam a oferta e itens similares podem servir de estimativa. Contradições explícitas não confirmam o produto como igual.
 
 A lista de fontes mostra o preço anunciado e sua embalagem. O preço convertido permanece nos cálculos do orçamento. Resultados antigos sem preço anunciado mostram a ausência do dado ao lado do link. A loja pode variar preço por horário, região ou condições da compra; pesquisar de novo consulta a página novamente.
 
-O modo usa a coluna JSON de origem existente, sem migração própria. A demonstração depende da leitura de páginas estar habilitada no backend (`PESQUISA_PAGINAS_POR_RODADA` maior que zero e Tavily configurado). Validação local com páginas simuladas: preço antigo no buscador foi substituído pelo da página, repesquisa atualizou o valor, e página com apenas parcela deixou o item sem preço. Suíte completa: 976 aprovados, 16 ignorados e 16 testes reais excluídos. Sem chamadas ao servidor ou `check_setup` nesta rodada.
+O cliente pode adicionar especificações e pesquisar de novo. Permanecem a exigência de fonte para o preço, a distinção entre preços anunciados e convertidos e a identificação de estimativas.

@@ -17,11 +17,11 @@ CASOS = [
     ("cor", "Tomada Tramontina Liz branca 20A", "Tomada Tramontina Liz branco 20A", "Tomada Tramontina Liz preta 20A", "unidade"),
     ("material", "Cabo flexível SIL cobre 2,5mm² 750V", "Cabo flexível SIL cobre 2.5mm2 750V", "Cabo flexível SIL alumínio 2,5mm² 750V", "1 m"),
     ("conexao", "Joelho Tigre soldável 25mm", "Joelho Tigre soldavel 25mm", "Joelho Tigre roscável 25mm", "unidade"),
-    ("referencia", "Spot Stella ref. STH123 7W 3000K", "Spot Stella STH123 7W 3000K", "Spot Stella STH124 7W 3000K", "unidade"),
+    ("referencia", "Spot Stella ref. STH123 7W 3000K", "Spot Stella STH123 7W 3000K", "Spot Stella ref. STH124 7W 3000K", "unidade"),
     ("dimensao", "Porcelanato Portobello 60x60cm polido", "Porcelanato Portobello 600x600mm polido", "Porcelanato Portobello 60x60mm polido", "1 m²"),
     ("acessorio", "Bacia Deca Vogue Plus branca", "Bacia Deca Vogue Plus branco", "Assento para bacia Deca Vogue Plus branca", "unidade"),
     ("aplicacao", "Tinta Suvinil fosca uso externo 18L", "Tinta Suvinil fosca para exterior 18L", "Tinta Suvinil fosca uso interno 18L", "18 L"),
-    ("marca_explicita", "Torneira marca TesteFlux modelo AX100 cromada", "Torneira TesteFlux AX100 cromada", "Torneira OutraFlux AX100 cromada", "unidade"),
+    ("marca_explicita", "Torneira marca TesteFlux modelo AX100 cromada", "Torneira TesteFlux AX100 cromada", "Torneira marca OutraFlux AX100 cromada", "unidade"),
     ("tensao", "Chuveiro Lorenzetti 220V 7500W", "Chuveiro Lorenzetti 220 V 7500 W", "Chuveiro Lorenzetti 127V 7500W", "unidade"),
 ]
 
@@ -47,6 +47,34 @@ def test_cor_de_produto_relacionado_nao_corrige_titulo_incompativel():
     item = ItemEntrada(id="cor", descricao=CASOS[1][1], quantidade=1, unidade="un")
     o = oferta(CASOS[1][3], "unidade", evidencia="R$ 87,90. Veja também: Tomada Tramontina Liz branca 20A.")
     assert not calcular(item, ResultadoExtracao(ofertas=[o]), generico=False).tem_preco
+
+
+def test_anuncio_abreviado_pode_precificar_ou_servir_de_estimativa():
+    from src.google_shopping import ler_anuncios
+    from src.pesquisa import Coleta
+    item = ItemEntrada(id="spot", descricao="Spot Stella 7W 3000K branco", quantidade=1, unidade="un")
+    titulo = "Spot Stella 7W"
+    # A extração pode reconhecer a identidade mesmo sem todos os detalhes repetidos no título.
+    assert calcular(item, ResultadoExtracao(ofertas=[oferta(titulo, "unidade")]), generico=False).tem_preco
+    anuncios = [{"title": titulo, "source": "Loja sintética", "price": "R$ 87,90", "link": "https://loja.example/produto"}]
+    ofertas = ler_anuncios(item.descricao, item.unidade, anuncios, generico=False)
+    assert ofertas[0].mesmo_produto == "parecido"
+    assert calcular(item, ResultadoExtracao(ofertas=ofertas), generico=True).estimativa
+    coleta = Coleta(ofertas=ofertas)
+    coleta.juntar([oferta(item.descricao, "unidade")])
+    assert len(coleta.ofertas) == 1 and coleta.ofertas[0].mesmo_produto == "sim"
+
+
+def test_consulta_pode_ser_curta_sem_alterar_as_especificacoes_do_pedido(monkeypatch):
+    from src import pesquisa
+    from src.busca import RespostaBusca
+    item = ItemEntrada(id="spot", descricao="Spot Stella 7W 3000K branco", quantidade=1, unidade="un")
+    async def buscar(consulta, descricao):
+        assert consulta == "Spot Stella" and descricao == item.descricao
+        return RespostaBusca(consulta, "sintetico"), ResultadoExtracao()
+    monkeypatch.setattr(pesquisa, "buscar_e_extrair", buscar)
+    r = asyncio.run(pesquisa._executar_busca(item, pesquisa.Coleta(), '{"consulta":"Spot Stella"}'))
+    assert r["ok"]
 
 
 @pytest.mark.parametrize("caso,pedido,certo,errado,emb", CASOS, ids=[c[0] for c in CASOS])

@@ -53,9 +53,6 @@ describe("montarCorpo", () => {
     expect(conteudoDoEnvio(a)).toBe(conteudoDoEnvio(b));
     const mudou = montarCorpo({ orcamentoId: ID, obra, linhas: [{ ...linhas[0], quantidade: "181" }], modo: "csv" })!;
     expect(conteudoDoEnvio(mudou)).not.toBe(conteudoDoEnvio(a));
-    const demo = montarCorpo({ orcamentoId: ID, obra, linhas, modo: "csv", demo: true })!;
-    expect(demo.origem.demo).toBe(true);
-    expect(conteudoDoEnvio(demo)).not.toBe(conteudoDoEnvio(a));
   });
 });
 

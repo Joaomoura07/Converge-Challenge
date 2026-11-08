@@ -26,7 +26,7 @@ from . import chaves_llm
 from .busca import ResultadoWeb
 from .config import get_settings, load_prompt
 from .modelos import Fonte
-from .especificacao import nao_confirmados
+from .especificacao import conflitos_explicitos, nao_confirmados
 
 logger = logging.getLogger(__name__)
 
@@ -104,11 +104,7 @@ def preco_no_texto(preco: float, texto: str) -> bool:
 
 # ------------------------------------------------------------------ montagem e leitura
 def montar_anuncios(resultados: list[ResultadoWeb]) -> str:
-    linhas = []
-    for i, r in enumerate(resultados):
-        venda = f" (preço de venda encontrado na página: R$ {r.preco_pagina:.2f})" if r.preco_pagina is not None else ""
-        linhas.append(f"[{i}] {r.loja}: {r.titulo}{venda} — {r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO]}")
-    return "\n".join(linhas)
+    return "\n".join(f"[{i}] {r.loja}: {r.titulo} — {r.trecho[:1400 if r.pagina_lida else LIMITE_TRECHO]}" for i, r in enumerate(resultados))
 
 
 def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Oferta], int]:
@@ -130,8 +126,8 @@ def ler_resposta(texto: str, resultados: list[ResultadoWeb]) -> tuple[list[Ofert
         except ValueError:
             preco = None
         evidencia_preco = r.trecho if r.pagina_lida else f"{r.titulo} {r.trecho}"
-        if preco and (not preco_no_texto(preco, evidencia_preco) or (r.preco_pagina is not None and preco != r.preco_pagina)):
-            logger.warning("Preço %.2f sem confirmação no anúncio %d (%s): descartado", preco, i, r.loja)
+        if preco and not preco_no_texto(preco, evidencia_preco):
+            logger.warning("Preço %.2f não aparece no anúncio %d (%s): descartado", preco, i, r.loja)
             preco, alucinadas = None, alucinadas + 1
         emb = partes[2] if partes[2] not in ("", "-") else None
         igual = MAPA_IGUAL.get(partes[3].upper().strip(" .*"))
@@ -281,7 +277,7 @@ async def _tentar(cliente, modelo: str, produto: str, anuncios: str, resultados:
     ofertas, alucinadas = ler_resposta(r.choices[0].message.content or "", resultados)
     for o in ofertas:
         o.especificacoes_nao_confirmadas = nao_confirmados(produto, f"{o.titulo} {o.evidencia}", titulo=o.titulo)
-        if o.mesmo_produto == "sim" and o.especificacoes_nao_confirmadas:
+        if o.mesmo_produto == "sim" and conflitos_explicitos(produto, o.titulo):
             o.mesmo_produto = "parecido"
     return _Tentativa(modelo, ofertas, alucinadas, r.usage, None if ofertas else f"{modelo}: resposta sem linhas válidas",
                       f"{modelo}: {time.perf_counter() - t:.1f}s, {len(ofertas)} linhas válidas")

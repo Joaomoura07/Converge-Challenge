@@ -23,7 +23,7 @@ from .compra import Conteudo, conteudo_embalagem, necessidade_na_unidade, normal
 from .modelos import Fonte, ItemEntrada
 from .precos import Oferta, ResultadoExtracao
 from .regiao import regional_por_dominio, regional_por_nome
-from .especificacao import acessorio_incompativel, nao_confirmados
+from .especificacao import acessorio_incompativel, conflitos_explicitos
 
 OUTLIER_MIN, OUTLIER_MAX = 0.4, 2.5
 MIN_EMBALAGEM_OBRA = {"l": 0.9, "kg": 0.9}   # genérico: descarta 60 ml / 250 ml (artesanato, amostra)
@@ -208,11 +208,10 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         if motivo := motivo_descarte(o, item.descricao):
             descartadas[motivo] += 1
             continue
-        faltam = nao_confirmados(item.descricao, f"{o.titulo} {o.evidencia}", titulo=o.titulo)
-        if o.mesmo_produto == "sim" and faltam:
+        if o.mesmo_produto == "sim" and conflitos_explicitos(item.descricao, o.titulo):
             o = o.model_copy(update={"mesmo_produto": "parecido"})
             if not generico:
-                descartadas["especificações não confirmadas"] += 1
+                descartadas["especificações incompatíveis"] += 1
         if o.mesmo_produto == "sim" and eh_pagina_de_listagem(o.dominio, o.url):
             # listagem serve para estimar (item genérico), nunca para afirmar o preço do produto exato
             o = o.model_copy(update={"mesmo_produto": "parecido"})

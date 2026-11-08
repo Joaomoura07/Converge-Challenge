@@ -12,7 +12,7 @@ Você pode chamar a ferramenta **no máximo 2 vezes**.
 
 # Como reformular (escolha pelo que veio de errado)
 - Vieram produtos de outra linha/modelo → inclua o **código ou a referência** do modelo, ou o nome exato da linha.
-- Veio quase nada → remova somente palavras de busca (preço/comprar). Preserve marca, linha, cor, acabamento, referência e medidas.
+- Veio quase nada → simplifique a consulta usando os termos mais úteis para achar o produto. A comparação continua usando a descrição completa do pedido.
 - Vieram kits, embalagens ou tamanhos diferentes → deixe a **medida/embalagem** explícita (ex.: "18L", "56x34").
 - Nunca troque a marca nem a medida pedidas: isso seria outro produto.
 - Escreva a consulta como alguém digitaria numa loja online, em português, curta (até ~8 palavras).
