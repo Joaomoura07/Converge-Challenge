@@ -30,6 +30,7 @@ class Acumulador:
     paginas: int = 0
     urls: set[str] = field(default_factory=set)
     urls_indisponiveis: set[str] = field(default_factory=set)
+    compras_lidas: dict[str, tuple[str, float]] = field(default_factory=dict)
 
     def resumo(self) -> dict:
         return {"tokens_entrada": self.entrada, "tokens_saida": self.saida,

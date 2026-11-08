@@ -3,7 +3,7 @@
 // cota de preço, confiança, lojas e, quando pendente, a pergunta do agente com "Responder".
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDiretoProduto, precoDoAnuncio } from "./formato";
+import { OBJETIVOS, distanciaDaLoja, embalagens, quantidade, reais, linkDeCompra, precoDoAnuncio } from "./formato";
 import { PriceDimension } from "./PriceDimension";
 import { StatusBadge } from "./StatusBadge";
 import { ImagemProduto } from "../imagens/ImagemProduto";
@@ -97,7 +97,6 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
   const [resposta, setResposta] = useState("");
   const nome = item.produto_normalizado || item.descricao;
   const lojas = item.fontes ?? [];
-  const linkGoogle = lojas.find((f) => f.dominio === "google.com" && f.url.startsWith("http"))?.url ?? null;
   // "1 un → 1 unidade" não informa nada: a frase de compra só aparece quando a embalagem muda a conta
   const porUnidade = !item.embalagem || /^unidade$/i.test(item.embalagem.trim());
   const compra = item.qtd_embalagens && item.embalagem && !porUnidade ? embalagens(item.qtd_embalagens, item.embalagem) : null;
@@ -212,36 +211,23 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
 
       {lojas.length > 0 && !carregando && (
         <ul className="orc-item__lojas" aria-label="Lojas onde o preço foi encontrado">
-          {lojas.map((f) => (
-            <li key={f.url}>
-              {f.dominio === "google.com" ? (
-                // O Shopping só entrega o link da página do produto NO GOOGLE, não o da loja: mostrar a loja como link
-                // levava o usuário a uma página do Google achando que era o site dela (medido em 08/11).
-                <>
-                  <span>{f.loja}</span>
-                  <span className="orc-item__google" title="Preço do Google Shopping. O link da loja não está disponível">
-                    preço do Google
+          {lojas.map((f) => {
+            const link = linkDeCompra(f);
+            return (
+              <li key={f.url}>
+                {link
+                  ? <a href={link} target="_blank" rel="noopener noreferrer">{f.loja} · Ver produto</a>
+                  : <span>{f.loja} · Link da loja não confirmado</span>}
+                {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
+                  <span className="orc-item__perto" title={f.endereco ?? undefined}>
+                    perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
                   </span>
-                </>
-              ) : (
-                linkDiretoProduto(f.url)
-                  ? <a href={f.url} target="_blank" rel="noopener noreferrer">{f.loja} · Ver produto</a>
-                  : <span>{f.loja} · Link direto indisponível. Use Pesquisar de novo.</span>
-              )}
-              {(f.perto_da_obra || distanciaDaLoja(f.distancia_km)) && (
-                <span className="orc-item__perto" title={f.endereco ?? undefined}>
-                  perto da obra{distanciaDaLoja(f.distancia_km) ? ` · ${distanciaDaLoja(f.distancia_km)}` : ""}
-                </span>
-              )}
-              {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
-              <span>{precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada)}</span>
-            </li>
-          ))}
-          {linkGoogle && (
-            <li>
-              <a href={linkGoogle} target="_blank" rel="noopener noreferrer">Comparar no Google Shopping ↗</a>
-            </li>
-          )}
+                )}
+                {f.endereco && <span className="orc-item__endereco">{f.endereco}</span>}
+                {link && <span>{precoDoAnuncio(f.preco_anunciado, f.embalagem_anunciada)}</span>}
+              </li>
+            );
+          })}
         </ul>
       )}
     </article>
