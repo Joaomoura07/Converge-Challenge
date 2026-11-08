@@ -227,3 +227,10 @@ describe("fonte mostra o preço do anúncio", () => {
     expect(tela.fontes[0].preco.replace(/\s/g, " ")).toBe("R$ 239,90 / lata 18 L");
   });
 });
+
+describe("exportar em PDF e distância da loja", () => {
+  it("o link do PDF usa o mesmo caminho do Excel, com outra extensão", () => {
+    expect(urlExportar("abc", "https://api.exemplo.app/", "pdf")).toBe("https://api.exemplo.app/orcamentos/abc/exportar.pdf");
+    expect(urlExportar("abc", "", "pdf")).toBeNull();
+  });
+});

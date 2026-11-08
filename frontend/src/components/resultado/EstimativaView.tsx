@@ -8,6 +8,7 @@ import { CabecalhoPagina } from "../shell/CabecalhoPagina";
 import type { ItemLinha, Orcamento } from "@/lib/orcamento/tipos";
 import { BlocoViabilidade } from "./BlocoViabilidade";
 import { DocumentoOrcamento } from "./DocumentoOrcamento";
+import { LojasProximas } from "./LojasProximas";
 import { contagem, foraDoSubtotal, itensParaTela, linhasDocumento, linkRaciocinio, mesAno, subtotal, tituloEditorial, urlExportar } from "./resultado";
 import "./resultado.css";
 
@@ -28,6 +29,7 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
 
   const { titulo, destaque } = tituloEditorial(orcamento.nome);
   const excel = urlExportar(orcamento.id);
+  const pdf = urlExportar(orcamento.id, undefined, "pdf");
   const raciocinio = linkRaciocinio(orcamento.trace_url);
   const cep = orcamento.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
 
@@ -69,6 +71,11 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
                 Baixar plano em Excel ↓
               </a>
             ) : null}
+            {pdf ? (
+              <a className="sh-link" href={pdf} download="plano-de-compra.pdf" style={{ display: "block", marginTop: 8 }}>
+                Baixar plano em PDF ↓
+              </a>
+            ) : null}
           </div>
         }
       />
@@ -77,6 +84,8 @@ export function EstimativaView({ orcamento, itens }: { orcamento: Orcamento; ite
         <span className="ok">{contagem(linhas.length, "item precificado", "itens precificados")}</span>
         <span className="pend">{contagem(fora.total, "item pendente", "itens pendentes")}</span>
       </p>
+
+      <LojasProximas cep={orcamento.cep} />
 
       <div className="sh-duas">
         <div>

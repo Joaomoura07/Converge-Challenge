@@ -178,3 +178,45 @@ def test_preco_da_loja_da_regiao_sai_do_trecho_do_google():
     with rg.na_obra(RECIFE, lojas):
         ofs = g.ler_resultados_regionais("Argamassa Quartzolit AC-III 20kg", "m2", organicos)
     assert [(o.loja, o.preco, o.dominio) for o in ofs] == [("Tupan", 66.99, "tupan.com.br")]
+
+
+# ---------------------------------------------------------------- medido em 08/11 (Cozinha Graças, sem o LLM)
+@pytest.mark.parametrize("titulo,area", [
+    ("MDF Branco Tx 18mm 2 Faces 185 x 275cm Duratex", 5.09),
+    ("Chapa de MDF Flora 2F TX branco nordico 18 x 1850 x 2750 mm", 5.09),
+    ("Mdf Branco 18mm 2l Tx 275cmx183cm", 5.03),            # "2l" são os 2 lados, não 2 litros
+    ("Piso polido granito Branco Itaúnas 90x90x2", 0.81),    # a espessura "2" não é 2 metros
+    ("Balcão granito Branco Itaúnas 100x40x2 cm", 0.4),
+    ("Pedra Granito Branco Itaunas 0,50x0,15m", None),       # pedrinha de 0,075 m²: não é o material em m²
+    ("Cuba inox sem medidas", None),
+])
+def test_area_pelas_dimensoes(titulo, area):
+    assert g.area_pelas_dimensoes(titulo) == area
+
+
+def test_chapa_vira_embalagem_em_m2_e_nao_em_litros():
+    assert g._embalagem("Mdf Branco 18mm 2l Tx 275cmx183cm", "m2", "MDF branco TX 18") == "5,03 m²"
+    assert g._embalagem("Pedra Granito Branco Itaunas 0,50x0,15m", "m2", "Granito Branco Itaúnas") is None
+    # fora de chapa/pedra nada muda: tinta continua em litros, mesmo com "2l" no título
+    assert g._embalagem("Tinta Suvinil Fosco 18L", "m2", "Tinta Suvinil") == "18 L"
+
+
+def test_chapa_de_mdf_dos_anuncios_reais_entra_no_calculo_por_m2():
+    anuncios = [{"title": t, "price": p, "source": s, "link": "https://x/" + s} for t, p, s in [
+        ("MDF Branco Tx 18mm 2 Faces 185 x 275cm Duratex", "R$ 345,56", "Madeiranit"),
+        ("MDF Guararapes Branco TX 18mm 2 Faces 275x185cm", "R$ 289,98", "Rudegon"),
+        ("Mdf Branco 18mm 2l Tx 275cmx183cm", "R$ 329,90", "LAB Madeiras"),
+        ("Tampo de Mesa em MDF Redondo 70cm X 18mm", "R$ 126,00", "Domm 7")]]
+    ofertas = g.ler_anuncios("MDF branco TX 18", "m2", anuncios, False)
+    assert {o.embalagem for o in ofertas} <= {"5,09 m²", "5,03 m²"} and len(ofertas) == 3
+
+
+def test_kit_grande_com_desconto_nao_puxa_o_preco_do_kit_pequeno():
+    def of(loja, preco, emb):
+        return Oferta(loja=loja, dominio=f"{loja}.com.br", url=f"https://{loja}.com.br/p", titulo=f"Espaçador Cortag {emb}",
+                      preco=preco, embalagem=emb, mesmo_produto="sim")
+    ofertas = [of("a", 18.91, "kit 50 unidades"), of("b", 19.70, "kit 50 unidades"),
+               of("c", 71.92, "kit 500 unidades"), of("d", 121.99, "kit 500 unidades"), of("e", 110.02, "kit 1000 unidades")]
+    r = calcular(ItemEntrada(id="1", descricao="Espaçador nivelador Cortag", quantidade=50, unidade="un"),
+                 ResultadoExtracao(ofertas=ofertas), generico=False)
+    assert r.tem_preco and 18 <= r.preco_emb_med <= 20.5 and r.embalagem == "kit 50 unidades"

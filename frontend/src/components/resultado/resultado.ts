@@ -109,9 +109,10 @@ export function resumoParaTela(v: Viabilidade): string {
 }
 
 /** Link do Excel (E11). `base` vem de NEXT_PUBLIC_API_URL; sem ele não há como baixar (botão desativado). */
-export function urlExportar(id: string, base: string | undefined = process.env.NEXT_PUBLIC_API_URL): string | null {
+export function urlExportar(id: string, base: string | undefined = process.env.NEXT_PUBLIC_API_URL,
+                            formato: "xlsx" | "pdf" = "xlsx"): string | null {
   const b = normalizarApiUrl(base);
-  return b ? `${b}/orcamentos/${encodeURIComponent(id)}/exportar.xlsx` : null;
+  return b ? `${b}/orcamentos/${encodeURIComponent(id)}/exportar.${formato}` : null;
 }
 
 /** Link público do trace no Langfuse ("raciocínio da IA", gravado pela B em `orcamentos.trace_url`).

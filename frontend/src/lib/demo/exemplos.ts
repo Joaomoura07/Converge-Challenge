@@ -23,12 +23,24 @@ export const EXEMPLOS_DEMO: ExemploDemo[] = [
   { arquivo: "teste_2.csv", modo: "csv", obra: "Banheiro social, Casa Forte (SketchUp)" },
   { arquivo: "teste_1.xlsx", modo: "excel", obra: "Escritório corporativo, Ilha do Leite" },
   { arquivo: "teste_2.xlsx", modo: "excel", obra: "Restaurante, Recife Antigo" },
-  { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, apto Boa Viagem" },
+  // Tabela agregada (louças por contagem). A de louças do apto Boa Viagem listava as mesmas peças em 2 banheiros e
+  // o revisor apontava 5 "duplicados" falsos (a lista do site não guarda o ambiente): trocada em 08/11.
+  { arquivo: "teste_1.txt", modo: "revit", obra: "Louças e metais, casa térrea em Aldeia" },
   { arquivo: "teste_2.txt", modo: "revit", obra: "Elétrica, casa térrea em Aldeia" },
   { arquivo: "teste_1.pdf", modo: "pdf", obra: "Pedido de cotação, fachada Madalena" },
   { arquivo: "teste_2.pdf", modo: "pdf", obra: "Quadro de acabamentos, escritório" },
   { arquivo: "teste_1.dxf", modo: "dxf", obra: "Planta baixa simples (cm)" },
   { arquivo: "teste_2.dxf", modo: "dxf", obra: "Planta exportada do AutoCAD" },
+];
+
+/** Um MODELO por formato: o arquivo-padrão que mostra ao usuário como montar a lista para enviar ao sistema.
+ *  Aparece destacado, antes dos testes. CSV, Excel, TXT e PDF trazem uma lista genérica de 5 materiais; o DXF é a planta simples do teste_1. */
+export const MODELOS_DEMO: ExemploDemo[] = [
+  { arquivo: "MODELO.csv", modo: "csv", obra: "Modelo de lista em CSV" },
+  { arquivo: "MODELO.xlsx", modo: "excel", obra: "Modelo de lista em Excel" },
+  { arquivo: "MODELO.txt", modo: "revit", obra: "Modelo de tabela exportada do Revit" },
+  { arquivo: "MODELO.pdf", modo: "pdf", obra: "Modelo de lista em PDF com texto" },
+  { arquivo: "MODELO.dxf", modo: "dxf", obra: "Modelo de planta DXF" },
 ];
 
 const MODO_POR_EXTENSAO: Record<string, FormatoDemo["modo"]> = {
