@@ -253,6 +253,16 @@ def test_item_em_unidades_com_embalagem_de_capacidade_tem_total():
     assert r.tem_preco and r.embalagem == "1000 L" and r.qtd_embalagens == 2
 
 
+def test_selador_em_unidades_nao_ganha_lata_extra_pela_perda():
+    # medido em 08/11 no site: complemento "Selador acrílico 18 L (lata) · 1 un" virava 2 latas (1 × 1,05)
+    def of(loja, preco):
+        return Oferta(loja=loja, dominio=f"{loja}.com.br", url=f"https://{loja}.com.br/p", titulo="Selador acrílico 18L",
+                      preco=preco, embalagem="lata 18 L", mesmo_produto="sim")
+    r = calcular(ItemEntrada(id="1", descricao="Selador acrílico 18 L (lata)", quantidade=1, unidade="un"),
+                 ResultadoExtracao(ofertas=[of("a", 250.0), of("b", 260.0)]), generico=False)
+    assert r.tem_preco and r.qtd_embalagens == 1
+
+
 # ---------------------------------------------------------------- link da loja no lugar do link do Google (08/11)
 @pytest.mark.parametrize("loja,dominio", [
     ("Leroy Merlin", "leroymerlin.com.br"), ("Amazon.com.br - Retail", "amazon.com.br"),

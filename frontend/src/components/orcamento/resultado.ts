@@ -109,7 +109,17 @@ export async function repesquisarItem(
 }
 
 /** Junta o resultado da rota ao item da tela (o Realtime traz o mesmo dado logo depois). */
+// Campos que a pesquisa (re)calcula. A rota omite os nulos (`exclude_none`): sem zerar, a pergunta antiga ficava
+// num item já "Definido" depois do "Responder" (medido em 08/11, até recarregar a página).
+const CAMPOS_DO_RESULTADO = [
+  "pesquisa_detalhes", "produto_normalizado", "imagem_url", "embalagem", "qtd_embalagens", "preco_emb_min",
+  "preco_emb_med", "preco_emb_max", "preco_un_min", "preco_un_med", "preco_un_max", "unidade_preco", "confianca",
+  "fontes", "premissa", "pergunta", "motivo", "preco_data", "validacao",
+] as const;
+
 export function aplicarResultado(item: ItemOrcamento, r: ResultadoApi): ItemOrcamento {
   const { item_id: _ignorado, ...campos } = r;
-  return { ...item, ...campos };
+  const base: ItemOrcamento = { ...item, estimativa: false };
+  for (const k of CAMPOS_DO_RESULTADO) delete base[k];
+  return { ...base, ...campos };
 }

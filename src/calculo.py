@@ -301,7 +301,8 @@ def calcular(item: ItemEntrada, extracao: ResultadoExtracao, generico: bool | No
         # Peça contada em unidades cuja embalagem é a CAPACIDADE ("Caixa d'água Fortlev 1000", 1 un, "1000 L"):
         # cada unidade é uma embalagem. Antes ficava sem total e a tela dizia "1 item sem preço" (medido em 08/11).
         if ui == "un" and ref.unidade != "un" and item.quantidade:
-            n_emb = max(math.ceil(item.quantidade * (1 + perda) - 1e-9), 1)
+            # sem perda: "1 un" de selador é 1 lata (com 5% de perda virava 2 latas, medido em 08/11)
+            n_emb = max(math.ceil(item.quantidade - 1e-9), 1)
 
     lojas = len({n.oferta.loja for n in validas})
     todos = [n.unitario for n in validas]   # a confiança olha TODAS as lojas, não só as da embalagem exata

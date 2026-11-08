@@ -135,9 +135,11 @@ export function ItemRow({ item, onResponder, onPesquisarDeNovo, onPesquisarAlter
         </p>
         {item.premissa && !carregando && <p className="orc-item__premissa">Conta: {item.premissa}</p>}
 
+        {/* A orientação termina em "Sem confirmação, o preço continua sendo uma estimativa": só vale para pendente.
+            Medido em 08/11: aparecia num item já "Definido" logo depois do Responder. */}
         {!carregando && onResponder && (
           <div className="orc-item__pergunta">
-            <p>{item.pergunta || item.pesquisa_detalhes?.orientacao || "Complete marca, modelo/código, medidas, cor, acabamento e embalagem para pesquisar o produto específico."}</p>
+            <p>{item.pergunta || (item.status === "pendente_especificacao" ? item.pesquisa_detalhes?.orientacao : null) || "Complete marca, modelo/código, medidas, cor, acabamento e embalagem para pesquisar o produto específico."}</p>
             {respondendo ? (
               <form onSubmit={enviar} className="orc-item__resposta">
                 <label className="orc-visivel-so-leitor" htmlFor={`resp-${item.id}`}>Especificação do item</label>

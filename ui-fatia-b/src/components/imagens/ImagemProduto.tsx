@@ -33,8 +33,9 @@ function Foto({ url, nome, carregando, destaque }: Omit<Props, "src"> & { url: s
         </svg>
         <span aria-hidden="true">{carregando ? "Buscando" : "Ilustração"}</span>
       </span>}
+      {/* eager: na lista da estimativa o "lazy" deixava fotos sem carregar e a tela mostrava a Ilustração (08/11) */}
       {url && !carregando && estado !== "erro" && <img
-        className={styles.foto} src={url} alt={nome} loading={destaque ? "eager" : "lazy"}
+        className={styles.foto} src={url} alt={nome} loading="eager"
         decoding="async" referrerPolicy="no-referrer" aria-hidden={!pronta} width={destaque ? 320 : 56} height={destaque ? 200 : 56}
         style={{ opacity: pronta ? 1 : 0 }}
         onLoad={() => setEstado("pronta")} onError={() => setEstado("erro")}

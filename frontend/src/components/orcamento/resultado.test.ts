@@ -93,4 +93,13 @@ describe("repesquisarItem (rota POST /orcamento-itens/{id}/repesquisar)", () => 
     expect(r).toMatchObject({ id: "7", status: "definido", preco_emb_med: 10, descricao: "item 7" });
     expect("item_id" in r).toBe(false);
   });
+
+  it("depois do Responder, a pergunta antiga some quando a rota não manda o campo (medido em 08/11)", () => {
+    const antes = { ...item("7", "pendente_especificacao"), pergunta: "Informe a marca", estimativa: true, imagem_url: "https://x/a.jpg" };
+    const r = aplicarResultado(antes, { item_id: "7", status: "definido", preco_emb_med: 739.9 } as never);
+    expect(r.pergunta).toBeUndefined();
+    expect(r.estimativa).toBe(false);
+    expect(r.imagem_url).toBeUndefined();
+    expect(r).toMatchObject({ status: "definido", preco_emb_med: 739.9, descricao: "item 7" });
+  });
 });

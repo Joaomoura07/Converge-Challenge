@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, type Dispatch } from "react";
-import type { Acao, EstadoLista } from "@/lib/lista";
-import { aplicarCorrecao, complementoParaLinha, planejarAceiteTodas, quantidadeParaTexto } from "@/lib/revisao/aplicar";
+import type { Acao, EstadoLista, Linha } from "@/lib/lista";
+import {
+  aplicarCorrecao,
+  complementoParaLinha,
+  numeroNaTabela,
+  numerosNaTabela,
+  planejarAceiteTodas,
+  quantidadeParaTexto,
+} from "@/lib/revisao/aplicar";
 import type { EstadoRevisor } from "@/lib/revisao/revisor";
 import type { ComplementoSugerido, ErroRevisao } from "@/lib/revisao/tipos";
 import { idCampo } from "./TabelaMateriais";
@@ -24,14 +31,14 @@ const ROTULO_REGRA: Record<string, string> = {
 
 const vazioTxt = (v: string) => (v.trim() === "" ? "(vazio)" : v);
 
-function descreverProposta(e: ErroRevisao): string[] {
+function descreverProposta(e: ErroRevisao, linhas: Linha[]): string[] {
   const c = e.correcao;
   if (!c) return [];
   return [
     ...c.alteracoes.map(
-      (a) => `Linha ${a.linha}: ${a.campo === "unidade" ? "unidade" : "quantidade"} ${vazioTxt(a.de)} → ${vazioTxt(a.para)}`,
+      (a) => `Linha ${numeroNaTabela(linhas, a.linha)}: ${a.campo === "unidade" ? "unidade" : "quantidade"} ${vazioTxt(a.de)} → ${vazioTxt(a.para)}`,
     ),
-    ...c.remover.map((r) => `Remover a linha ${r.linha}`),
+    ...c.remover.map((r) => `Remover a linha ${numeroNaTabela(linhas, r.linha)}`),
   ];
 }
 
@@ -129,14 +136,15 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
         )}
         <ul className="sugestoes" hidden={erros.length === 0}>
           {erros.map((e) => {
-            const proposta = descreverProposta(e);
+            const proposta = descreverProposta(e, lista.linhas);
+            const nums = numerosNaTabela(lista.linhas, e.linhas);
             const aplicavel = Boolean(e.correcao) && aplicarCorrecao(lista.linhas, e.correcao!) !== null;
             return (
               <li key={e.id} className="sugestao" data-sugestao-id={e.id} data-regra={e.regra}>
                 <p className="sugestao-tipo">
                   {ROTULO_REGRA[e.regra] ?? e.regra}
                   <span className="sugestao-linhas">
-                    {e.linhas.length === 1 ? ` · linha ${e.linhas[0]}` : ` · ${e.linhas.length} linhas`}
+                    {nums.length === 1 ? ` · linha ${nums[0]}` : ` · ${nums.length} linhas`}
                   </span>
                 </p>
                 <p className="sugestao-texto">{e.texto}</p>
@@ -156,7 +164,7 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
                     className="botao-primario"
                     disabled={!aplicavel || travado}
                     onClick={() => aceitarErro(e)}
-                    aria-label={`Aceitar a correção: ${ROTULO_REGRA[e.regra] ?? e.regra}, ${e.linhas.length === 1 ? `linha ${e.linhas[0]}` : `${e.linhas.length} linhas`}`}
+                    aria-label={`Aceitar a correção: ${ROTULO_REGRA[e.regra] ?? e.regra}, ${e.linhas.length === 1 ? `linha ${nums[0]}` : `${nums.length} linhas`}`}
                   >
                     Aceitar
                   </button>
@@ -164,7 +172,7 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
                     type="button"
                     className="botao-secundario"
                     onClick={() => recusar(e.id, ROTULO_REGRA[e.regra] ?? e.regra)}
-                    aria-label={`Recusar a sugestão: ${ROTULO_REGRA[e.regra] ?? e.regra}, ${e.linhas.length === 1 ? `linha ${e.linhas[0]}` : `${e.linhas.length} linhas`}`}
+                    aria-label={`Recusar a sugestão: ${ROTULO_REGRA[e.regra] ?? e.regra}, ${e.linhas.length === 1 ? `linha ${nums[0]}` : `${nums.length} linhas`}`}
                   >
                     Recusar
                   </button>
@@ -228,7 +236,7 @@ export function PainelSugestoes({ lista, despachar, revisor, repetir, novoId }: 
               )}
               <p className="sugestao-texto">{c.motivo}</p>
               <p className="nota">
-                Motivado {c.origem_linhas.length === 1 ? "pela linha" : "pelas linhas"} {c.origem_linhas.join(", ")}.
+                Motivado {c.origem_linhas.length === 1 ? "pela linha" : "pelas linhas"} {numerosNaTabela(lista.linhas, c.origem_linhas).join(", ")}.
               </p>
               <div className="sugestao-acoes">
                 <button

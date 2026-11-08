@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { Linha } from "../lista";
-import { aplicarCorrecao, complementoParaLinha, paraItensRevisao, quantidadeParaTexto, versaoDaLista } from "./aplicar";
+import {
+  aplicarCorrecao,
+  complementoParaLinha,
+  numeroNaTabela,
+  numerosNaTabela,
+  paraItensRevisao,
+  quantidadeParaTexto,
+  versaoDaLista,
+} from "./aplicar";
 import type { ComplementoSugerido, CorrecaoSugerida } from "./tipos";
 
 const L = (id: string, descricao: string, quantidade: string, unidade: string, extra: Partial<Linha> = {}): Linha => ({
@@ -104,5 +112,21 @@ describe("complementoParaLinha", () => {
   it("quantidade decimal sai com vírgula", () => {
     expect(quantidadeParaTexto(2.5)).toBe("2,5");
     expect(quantidadeParaTexto(3)).toBe("3");
+  });
+});
+
+describe("numeroNaTabela", () => {
+  it("traduz a linha do arquivo (CSV conta o cabeçalho) para o número da coluna # (medido em 08/11: 'linha 6' no 5º item)", () => {
+    const csv = [2, 3, 4, 5, 6].map((n, i) => L(`l${i}`, `item ${i}`, "1", "un", { linhaOrigem: n }));
+    expect(numeroNaTabela(csv, 6)).toBe(5);
+    expect(numerosNaTabela(csv, [2, 6])).toEqual([1, 5]);
+  });
+  it("linha digitada usa a posição; complemento aceito sem linhaOrigem não rouba a linha do arquivo", () => {
+    const misto = [L("a", "x", "1", "un", { linhaOrigem: 2 }), L("b", "y", "1", "un"), L("c", "z", "1", "un", { linhaOrigem: 3 })];
+    expect(numeroNaTabela(misto, 3)).toBe(3);
+    expect(numeroNaTabela(misto, 2)).toBe(1);
+  });
+  it("linha que saiu da tabela mantém o número original", () => {
+    expect(numeroNaTabela([L("a", "x", "1", "un", { linhaOrigem: 2 })], 9)).toBe(9);
   });
 });
