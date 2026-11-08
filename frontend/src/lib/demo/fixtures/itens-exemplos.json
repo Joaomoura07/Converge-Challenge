@@ -1,0 +1,708 @@
+{
+ "teste_1.csv": [
+  {
+   "descricao": "Fundo preparador Suvinil",
+   "quantidade": 1450,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Massa acrílica Coral",
+   "quantidade": 220,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Metalatex verde oliva",
+   "quantidade": 900,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Decor Colors vermelho cardinal",
+   "quantidade": 180,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Esmalte Suvinil preto",
+   "quantidade": 120,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Fita 3M azul 2090",
+   "quantidade": 40,
+   "unidade": "un",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Rolo Atlas 23 cm",
+   "quantidade": 30,
+   "unidade": "un",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Lixa Norton 150",
+   "quantidade": 200,
+   "unidade": "un",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Castelatto concreto 40x80",
+   "quantidade": 38,
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas"
+  },
+  {
+   "descricao": "Quartzolit AC-III",
+   "quantidade": 38,
+   "unidade": "m2",
+   "categoria": "Revestimentos e argamassas"
+  },
+  {
+   "descricao": "Sikatop 107",
+   "quantidade": 85,
+   "unidade": "m2",
+   "categoria": "Estrutura e alvenaria"
+  },
+  {
+   "descricao": "Vedacit",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Estrutura e alvenaria"
+  }
+ ],
+ "teste_2.csv": [
+  {
+   "descricao": "Roca_Debba_Suspensa",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Cuba_De_Apoio_Deca",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Torneira_Docol_Bica_Alta",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Ducha_Docol_20_Cm",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Base_Registro_Deca_3_4",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Acabamento_Registro_Deca",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Caixa_Sifonada_Tigre_150",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Ralo_Linear_Tigre_50",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Assento_Astra_Soft_Close",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Box_Temperado_1_20",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "ESQUADRIAS"
+  },
+  {
+   "descricao": "Spot_Stella_7W",
+   "quantidade": 3,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Interruptor_Pial_Plus",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Tomada_Liz_10A",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Caixa_Sifonada_Tigre_150",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  }
+ ],
+ "teste_1.xlsx": [
+  {
+   "descricao": "Porcelanato Portobello Cimento 90x90 acetinado",
+   "quantidade": 120,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Cimento CP-II Votoran 50 kg",
+   "quantidade": 20,
+   "unidade": "m2",
+   "categoria": "Alvenaria"
+  },
+  {
+   "descricao": "Tinta acrílica branca fosca",
+   "quantidade": 240,
+   "unidade": "m2",
+   "categoria": "Pintura"
+  },
+  {
+   "descricao": "Luminária LED de embutir 60x60 Taschibra 40W",
+   "quantidade": 18,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  },
+  {
+   "descricao": "Interruptor Pial Plus 1 tecla",
+   "quantidade": 12,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  },
+  {
+   "descricao": "Tomada Pial Plus 10A",
+   "quantidade": 30,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  },
+  {
+   "descricao": "Divisória de vidro temperado 10 mm",
+   "quantidade": 24,
+   "unidade": "m2",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Porta de madeira semi-oca 80x210",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Bacia sanitária Deca Vogue Plus com caixa acoplada",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Louças e metais"
+  },
+  {
+   "descricao": "Cuba de embutir Deca L.37 branca",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Louças e metais"
+  },
+  {
+   "descricao": "Torneira de mesa Docol Stillo cromada",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Louças e metais"
+  }
+ ],
+ "teste_2.xlsx": [
+  {
+   "descricao": "Arandela_Taschibra_Preta",
+   "quantidade": 10,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Lampada_Philips_9W",
+   "quantidade": 40,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Fonte_12V_5A",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  },
+  {
+   "descricao": "Cuba_Tramontina_Morgana",
+   "quantidade": 3,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Aquecedor_Rinnai_21_L",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Caixa_Sifonada_Tigre_150",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Ralo_Linear_Tigre_50",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Celite_Azalea",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "LOUCAS_METAIS"
+  },
+  {
+   "descricao": "Split_LG_18000",
+   "quantidade": 5,
+   "unidade": "un",
+   "categoria": "CLIMATIZACAO"
+  },
+  {
+   "descricao": "Lampada_Philips_9W",
+   "quantidade": 12,
+   "unidade": "un",
+   "categoria": "ILUMINACAO_ELETRICA"
+  }
+ ],
+ "teste_1.txt": [
+  {
+   "descricao": "Deca Vogue Plus : Padrão",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Hydra Max : Padrão",
+   "quantidade": 3,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Lorenzetti Acqua Duo : Padrão",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Caixa sifonada Tigre 150 : Padrão",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Bacia sanitária com caixa acoplada : Padrão",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Caixa sifonada Tigre 150 : Padrão",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Caixa d'água Fortlev 1000 : Padrão",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Joelho Tigre 25 : Padrão",
+   "quantidade": 40,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Celite Azalea : Padrão",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": null
+  }
+ ],
+ "teste_2.txt": [
+  {
+   "descricao": "PAREDE - Metalatex verde oliva",
+   "quantidade": 140,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Massa acrílica Coral",
+   "quantidade": 140,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Selador Coral",
+   "quantidade": 520,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Coral Rende Muito branco",
+   "quantidade": 260,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Massa corrida Suvinil",
+   "quantidade": 380,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Massa corrida Suvinil",
+   "quantidade": 380,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "PAREDE - Tinta acrílica branca fosca",
+   "quantidade": 45,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "TETO - Coral Rende Muito branco",
+   "quantidade": 120,
+   "unidade": "m2",
+   "categoria": null
+  }
+ ],
+ "teste_1.pdf": [
+  {
+   "descricao": "Fundo preparador Suvinil",
+   "quantidade": 1450,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Metalatex verde oliva",
+   "quantidade": 900,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Massa acrílica Coral",
+   "quantidade": 220,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Decor Colors vermelho cardinal",
+   "quantidade": 180,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Esmalte Suvinil preto",
+   "quantidade": 120,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Castelatto concreto 40x80",
+   "quantidade": 38,
+   "unidade": "m2",
+   "categoria": "Parede"
+  }
+ ],
+ "teste_2.pdf": [
+  {
+   "descricao": "Portinari cotto 60x60",
+   "quantidade": 110,
+   "unidade": "m2",
+   "categoria": "Piso"
+  },
+  {
+   "descricao": "Textura Coral palha",
+   "quantidade": 60,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Metalatex verde oliva",
+   "quantidade": 80,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Portinari cotto 60x60",
+   "quantidade": 40,
+   "unidade": "m2",
+   "categoria": "Piso"
+  },
+  {
+   "descricao": "Portinari metrô branco",
+   "quantidade": 46,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "Esmalte Suvinil preto",
+   "quantidade": 25,
+   "unidade": "m2",
+   "categoria": "Parede"
+  },
+  {
+   "descricao": "PROJETO: Restaurante — Recife Antigo",
+   "quantidade": 150,
+   "unidade": "m2",
+   "categoria": "Piso"
+  }
+ ],
+ "teste_1.dxf": [
+  {
+   "descricao": "Porta",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Janela",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Piso (área)",
+   "quantidade": 20,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Parede (comprimento)",
+   "quantidade": 9,
+   "unidade": "m",
+   "categoria": "Alvenaria"
+  },
+  {
+   "descricao": "LAYER_X (área)",
+   "quantidade": 0.5,
+   "unidade": "m2",
+   "categoria": null
+  },
+  {
+   "descricao": "Porta (área)",
+   "quantidade": 1.68,
+   "unidade": "m2",
+   "categoria": "Esquadrias"
+  }
+ ],
+ "teste_2.dxf": [
+  {
+   "descricao": "Porta",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Piso (área)",
+   "quantidade": 12,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Parede (comprimento)",
+   "quantidade": 24.5,
+   "unidade": "m",
+   "categoria": "Alvenaria"
+  },
+  {
+   "descricao": "Porta (área)",
+   "quantidade": 1.68,
+   "unidade": "m2",
+   "categoria": "Esquadrias"
+  }
+ ],
+ "teste_1.ifc": [
+  {
+   "descricao": "Piso Sala (área)",
+   "quantidade": 20,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Piso Banheiro (área)",
+   "quantidade": 5,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Porta 80",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Porta 70",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Janela 120x100",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Vaso Sanitario",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Louças e metais"
+  },
+  {
+   "descricao": "Lavatorio",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Louças e metais"
+  },
+  {
+   "descricao": "Parede 15cm (área)",
+   "quantidade": 30,
+   "unidade": "m2",
+   "categoria": "Alvenaria"
+  },
+  {
+   "descricao": "Laje de concreto (área)",
+   "quantidade": 25,
+   "unidade": "m2",
+   "categoria": "Estrutura"
+  }
+ ],
+ "teste_2.ifc": [
+  {
+   "descricao": "Piso Cozinha (área)",
+   "quantidade": 12.5,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Revestimento cerâmico (área) — Porcelanato 60x60",
+   "quantidade": 16,
+   "unidade": "m2",
+   "categoria": "Revestimentos"
+  },
+  {
+   "descricao": "Contrapiso (área)",
+   "quantidade": 12.5,
+   "unidade": "m2",
+   "categoria": "Estrutura"
+  },
+  {
+   "descricao": "Guarda-corpo vidro (comprimento)",
+   "quantidade": 4.2,
+   "unidade": "m",
+   "categoria": "Serralheria"
+  },
+  {
+   "descricao": "Janela 120x100",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Janela 120x100",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Spot LED d'Embutir",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  }
+ ],
+ "teste_1.skp": [
+  {
+   "descricao": "Bacia sanitária Deca Vogue Plus",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Lavatório de louça branca",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Torneira de mesa Docol",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Chuveiro elétrico Lorenzetti",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Elétrica"
+  }
+ ],
+ "teste_2.skp": [
+  {
+   "descricao": "Luminária LED de embutir 60x60",
+   "quantidade": 8,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Porta de madeira 80x210",
+   "quantidade": 4,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  },
+  {
+   "descricao": "Cadeira de escritório giratória",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Mesa de trabalho 120x60",
+   "quantidade": 6,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Vaso sanitário com caixa acoplada",
+   "quantidade": 2,
+   "unidade": "un",
+   "categoria": null
+  },
+  {
+   "descricao": "Porta de madeira 80x210",
+   "quantidade": 1,
+   "unidade": "un",
+   "categoria": "Esquadrias"
+  }
+ ]
+}
